@@ -2,94 +2,142 @@
 
 **Agapornis Genetics Calculator — ALBS Compliant Edition**
 
-ラブバード（コザクラインコ / Agapornis roseicollis）の遺伝計算エンジン。  
-14座位・310色以上に対応(動的羽色出力能は数万通り)し、ALBS（African Lovebird Society）Peachfaced部門の命名規則に準拠。
+The ultimate genetic calculation engine for Lovebirds (Agapornis roseicollis).  
+Supporting 14 loci and over 310 phenotypes (capable of generating tens of thousands of dynamic plumage combinations), fully compliant with the ALBS (African Lovebird Society) Peachfaced naming standards.
 
 ---
 
-## ✨ 機能一覧
+## ✨ Features
 
-### 🗂️ 個体管理（個別登録）
-- **個体データベース**: 名前・性別・誕生日・血統・遺伝子型を一元管理
-- **128羽デモデータ**: 検証用のサンプル個体を搭載
-- **血統書生成**: 3世代・5世代の血統書をHTML出力
-- **インポート/エクスポート**: JSON・CSV形式に対応
+### 🗂️ Specimen Management
+- **Individual Database**: Centralized management of Name, Sex, Birthday, Pedigree, and Genotype
+- **Demo Data (66 specimens)**: Includes 3 families (22 birds each) for immediate system verification
+- **Pedigree Generation**: HTML output for 3-generation and 5-generation pedigree charts
+- **Import / Export**: Full support for JSON and CSV formats
 
-### 🛡️ 健康評価（交配リスク判定）
-- **近交係数計算**: F値の自動計算
-- **リスク評価**: INO系・パリッド系の近親交配制限チェック
-- **世代制限**: 形質別の推奨世代制限を表示
+### 🛡️ Health Guardian (Pairing Risk Assessment)
+- **Inbreeding Coefficient (F)**: Automated calculation of Wright's coefficient
+- **Risk Evaluation**: Hard-locks and warnings for INO and Pallid lineage inbreeding
+- **Generation Limits**: Displays recommended generation gaps for specific traits
 
-### 🎯 目標計画（交配経路）
-- **目標色経路探索**: 目標の表現型への育成経路を探索
-- **ステップガイド**: 必要な交配ステップを自動生成
+### 🎯 Objective Planning
+- **Target Phenotype Pathfinding**: Explores breeding routes to achieve a specific target color
+- **Step-by-Step Guide**: Automatically generates necessary breeding steps
 
-### 🧭 育成経路（形質発現）
-- **形質別ルート**: 特定の形質を発現させるための交配手順
-- **世代数見積もり**: 目標達成までの最短世代数を計算
+### 🧭 Breeding Path (Trait Expression)
+- **Trait-Specific Routes**: Breeding procedures to express specific traits
+- **Generation Estimation**: Calculates minimum generations to reach target
 
-### 🧬 配合結果（交配期待）
-- **子孫予測**: 親の遺伝子型から子の表現型確率を計算
-- **14座位対応**: 全座位の組み合わせを網羅
-- **伴性遺伝計算**: Z染色体連鎖遺伝の正確な計算（オスのスプリット、メスのヘミ接合）
+### 🧬 Breeding Results (Offspring Prediction)
+- **Probability Prediction**: Calculates offspring phenotype probabilities from parental genotypes
+- **14-Loci Coverage**: Comprehensive simulation covering all major genetic loci
+- **Sex-Linked Inheritance**: Precise calculation for Z-linked traits (male splits vs female hemizygosity)
 
-### 🔬 遺伝推計（親型逆推）
-- **表現型→遺伝子型**: 観察された色から可能な遺伝子型を推定
-- **確定/推定の区別**: 確実に判定できる座位と推定の座位を明示
-- **テスト交配提案**: 不確定な座位を確定するための交配提案
+### 🔬 Genotype Estimation (Reverse Inference)
+- **Phenotype-to-Genotype**: Estimates possible genotypes from observed colors
+- **Confirmed vs Estimated**: Distinguishes between confirmed and estimated loci
+- **Test-Mating Proposals**: Suggests pairings to verify uncertain genotypes
 
-### 👨‍👩‍👧‍👦 一族推計（血統導出）
-- **FamilyEstimator V3**: 家系図ベースの遺伝子型推論エンジン
-- **多世代推論**: 祖父母まで遡った遺伝子型推論
-- **証拠ベース確率**: 親・子・兄弟からの拘束条件を統合
-- **家系図UI**: ドラッグ&ドロップで血縁関係を構築
+### 👨‍👩‍👧‍👦 Family Estimation (Pedigree Derivation)
+- **FamilyEstimator V3**: Pedigree-based genotype inference engine
+- **Multi-Generation Inference**: Deduces genotypes by tracing up to great-grandparents
+- **Evidence-Based Probability**: Synthesizes constraints from parents, offspring, and siblings
+- **Family Tree UI**: Drag-and-drop interface for building family trees
 
-### 🌍 多言語対応
-- 日本語 / English / Deutsch / Français / Italiano / Español
+### 🌍 Multilingual Support
+Japanese / English / Deutsch / Français / Italiano / Español
 
 ---
 
-## 📁 ファイル構成
+## 📁 File Structure
 
 ```
 gene-forge/
-├── index.php          # メインUI
-├── genetics.php       # 遺伝計算エンジン（SSOT）
-├── infer.php          # 家系図推論API
-├── lang.php           # 多言語辞書
-├── style.css          # スタイルシート
-├── birds.js           # 個体DB管理（デモデータ含む）
-├── family.js          # 家系図UI
-├── guardian.js        # 健康評価
-├── breeding.js        # 繁殖バリデーション
-├── pedigree.js        # 血統書生成
-├── planner.js         # 育成経路探索
-└── app.js             # アプリ初期化
+├── index.php          # Main UI
+├── genetics.php       # Genetic calculation engine (SSOT)
+├── infer.php          # Family tree inference API
+├── lang.php           # Multilingual dictionary
+├── lang_guardian.php  # Health evaluation dictionary
+├── style.css          # Stylesheet
+├── birds.js           # Specimen DB management (includes demo data)
+├── family.js          # Family tree UI
+├── guardian.js        # Health evaluation
+├── breeding.js        # Breeding validation
+├── pedigree.js        # Pedigree generation
+├── planner.js         # Breeding path exploration
+└── app.js             # App initialization
 ```
 
 ---
 
-## 🚀 クイックスタート
+## 🚀 Quick Start
 
-### 動作要件
-- PHP 7.4以上
-- Webサーバー（Apache/Nginx）またはPHP内蔵サーバー
+### Requirements
+- PHP 7.4 or higher
+- Web server (Apache/Nginx) or PHP built-in server
 
-### インストール
+### Installation
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/gene-forge.git
+git clone https://github.com/kanarazu-project/gene-forge.git
 cd gene-forge
 php -S localhost:8000
 ```
 
-ブラウザで `http://localhost:8000` を開く。
+Open `http://localhost:8000` in your browser.
 
 ---
 
-## 💡 使用例
+## 📊 About Inbreeding Coefficient (F-value)
 
-### 1. 子孫計算（PHP）
+Gene-Forge fully implements **Wright's coefficient of inbreeding**.  
+Pedigrees are traced up to 6 generations, and cumulative contributions from all common ancestors are calculated.
+
+### Comparison with Textbook Values
+
+| Relationship | Textbook (Simple) | Gene-Forge (Cumulative) |
+|--------------|-------------------|-------------------------|
+| Sire × Daughter | 25% | 25% + ancestral contribution |
+| Full Siblings | 25% | 25% + ancestral contribution |
+| Grandparent × Grandchild | 12.5% | 12.5% + ancestral contribution |
+
+**Textbook values** represent only newly occurring autozygosity from that specific pairing.  
+**Gene-Forge values** represent total expected autozygosity across the offspring's entire genome.
+
+### Formula
+
+```
+F = Σ (1/2)^(n₁+n₂+1)
+
+n₁ = generations from sire to common ancestor
+n₂ = generations from dam to common ancestor
+Summed for all common ancestors
+```
+
+### Why Cumulative Calculation?
+
+Inbreeding depression depends on **genome-wide autozygosity**.  
+If the sire is already from an inbred line, the impact of a sire-daughter mating is even greater.  
+Accurate risk assessment requires cumulative calculation.
+
+### Example: Sire × Daughter
+
+If the sire's pedigree is recorded for 3 generations, the F-value is approximately **43.75%**:
+
+| Source | F-value |
+|--------|---------|
+| Sire himself | 25% |
+| Grandparents | 6.25% × 2 = 12.5% |
+| Great-grandparents | 1.5625% × 4 = 6.25% |
+| **Total** | **43.75%** |
+
+This is not a bug — it's the accurate value considering the entire pedigree.
+
+---
+
+## 💡 Usage Examples
+
+### 1. Offspring Calculation (PHP)
 
 ```php
 require_once 'genetics.php';
@@ -98,13 +146,13 @@ $calc = new GeneticsCalculator();
 $result = $calc->calculateOffspring([
     'f_mode' => 'genotype',
     'm_mode' => 'genotype',
-    'f_parblue' => '++',      // 父: グリーン
-    'f_ino' => '+ino',        // 父: ルチノースプリット
+    'f_parblue' => '++',      // Sire: Green
+    'f_ino' => '+ino',        // Sire: Lutino split
     'f_dark' => 'dd',
     'f_opaline' => '++',
     'f_cinnamon' => '++',
-    'm_parblue' => 'aqaq',    // 母: アクア
-    'm_ino' => 'inoW',        // 母: クリーミノ（発現）
+    'm_parblue' => 'aqaq',    // Dam: Aqua
+    'm_ino' => 'inoW',        // Dam: Creamino (expressed)
     'm_dark' => 'dd',
     'm_opaline' => '+W',
     'm_cinnamon' => '+W',
@@ -119,10 +167,9 @@ foreach ($result as $offspring) {
 }
 ```
 
-### 2. 色名取得
+### 2. Color Name Resolution
 
 ```php
-// 遺伝子型から色名を取得
 $colorInfo = AgapornisLoci::resolveColor([
     'parblue' => 'aqaq',
     'dark' => 'dd',
@@ -133,15 +180,15 @@ echo $colorInfo['ja'];  // オパーリンアクア
 echo $colorInfo['en'];  // Opaline Aqua
 ```
 
-### 3. 遺伝子型推定
+### 3. Genotype Estimation
 
 ```php
 $estimator = new GenotypeEstimator();
 $result = $estimator->estimate(
-    'male',           // 性別
-    'opaline_aqua',   // 基本色
-    'black',          // 眼の色
-    'none'            // ダーク因子
+    'male',           // Sex
+    'opaline_aqua',   // Base color
+    'black',          // Eye color
+    'none'            // Dark factor
 );
 
 foreach ($result['loci'] as $locus) {
@@ -149,7 +196,7 @@ foreach ($result['loci'] as $locus) {
 }
 ```
 
-### 4. 家系図推論（API）
+### 4. Family Tree Inference (API)
 
 ```bash
 curl -X POST http://localhost:8000/infer.php \
@@ -164,40 +211,40 @@ curl -X POST http://localhost:8000/infer.php \
   }'
 ```
 
-**結果例**: 子にアクアが出現 → 両親とも `+aq`（アクアスプリット）と推論
+**Result**: Aqua offspring appears → Both parents inferred as `+aq` (Aqua split)
 
 ---
 
-## 🎨 色カテゴリ一覧
+## 🎨 Color Categories
 
-| カテゴリ | 色数 | 例 |
-|----------|------|-----|
-| グリーン系 | 3 | グリーン, ダークグリーン, オリーブ |
-| アクア系 | 3 | アクア, アクアダーク, アクアDD |
-| ターコイズ系 | 3 | ターコイズ, ターコイズダーク, ターコイズDD |
-| シーグリーン系 | 3 | シーグリーン, シーグリーンダーク, シーグリーンDD |
-| INO系 | 4 | ルチノー, クリーミノ, クリーミノシーグリーン, ピュアホワイト |
-| オパーリン系 | 12 | オパーリングリーン, オパーリンアクア, … |
-| シナモン系 | 12 | シナモングリーン, シナモンアクア, … |
-| パリッド系 | 12 | パリッドグリーン, パリッドアクア, … |
-| バイオレット系 | 9 | バイオレットアクア, バイオレットターコイズ, … |
-| ファロー系 | 24 | ペールファローグリーン, ブロンズファローアクア, … |
-| パイド系 | 24 | ドミナントパイドグリーン, レセッシブパイドアクア, … |
-| ダイリュート系 | 12 | ダイリュートグリーン, ダイリュートアクア, … |
-| エッジド系 | 12 | エッジドグリーン, エッジドアクア, … |
-| オレンジフェイス系 | 12 | オレンジフェイスグリーン, イエローフェイスアクア, … |
-| ペールヘッド系 | 12 | ペールヘッドグリーン, ペールヘッドアクア, … |
-| **Tier 2 複合色** | 150+ | オパーリンシナモン, オパーリンバイオレット, … |
-| **Tier 3 動的生成** | ∞ | 任意の複合色を動的生成 |
+| Category | Count | Examples |
+|----------|-------|----------|
+| Green Series | 3 | Green, Dark Green, Olive |
+| Aqua Series | 3 | Aqua, Aqua Dark, Aqua DD |
+| Turquoise Series | 3 | Turquoise, Turquoise Dark, Turquoise DD |
+| Seagreen Series | 3 | Seagreen, Seagreen Dark, Seagreen DD |
+| INO Series | 4 | Lutino, Creamino, Creamino Seagreen, Pure White |
+| Opaline Series | 12 | Opaline Green, Opaline Aqua, … |
+| Cinnamon Series | 12 | Cinnamon Green, Cinnamon Aqua, … |
+| Pallid Series | 12 | Pallid Green, Pallid Aqua, … |
+| Violet Series | 9 | Violet Aqua, Violet Turquoise, … |
+| Fallow Series | 24 | Pale Fallow Green, Bronze Fallow Aqua, … |
+| Pied Series | 24 | Dominant Pied Green, Recessive Pied Aqua, … |
+| Dilute Series | 12 | Dilute Green, Dilute Aqua, … |
+| Edged Series | 12 | Edged Green, Edged Aqua, … |
+| Orangeface Series | 12 | Orangeface Green, Yellowface Aqua, … |
+| Pale Headed Series | 12 | Pale Headed Green, Pale Headed Aqua, … |
+| **Tier 2 Combinations** | 150+ | Opaline Cinnamon, Opaline Violet, … |
+| **Tier 3 Dynamic** | ∞ | Any compound color dynamically generated |
 
 ---
 
-## 🔬 遺伝子型表記法
+## 🔬 Genotype Notation
 
-### 常染色体座位
+### Autosomal Loci
 
-| 座位 | 野生型 | 変異型アレル |
-|------|--------|--------------|
+| Locus | Wild Type | Mutant Alleles |
+|-------|-----------|----------------|
 | Parblue | `++` | `+aq`, `aqaq`, `+tq`, `tqtq`, `tqaq` |
 | Dark | `dd` | `Dd`, `DD` |
 | Violet | `vv` | `Vv`, `VV` |
@@ -210,73 +257,207 @@ curl -X POST http://localhost:8000/infer.php \
 | Pale Fallow | `++` | `+flp`, `flpflp` |
 | Bronze Fallow | `++` | `+flb`, `flbflb` |
 
-### 伴性座位（Z染色体）
+### Sex-Linked Loci (Z Chromosome)
 
-| 座位 | オス野生型 | オス変異型 | メス野生型 | メス変異型 |
-|------|------------|------------|------------|------------|
+| Locus | Male Wild | Male Mutant | Female Wild | Female Mutant |
+|-------|-----------|-------------|-------------|---------------|
 | INO | `++` | `+ino`, `inoino`, `+pld`, `pldpld` | `+W` | `inoW`, `pldW` |
 | Opaline | `++` | `+op`, `opop` | `+W` | `opW` |
 | Cinnamon | `++` | `+cin`, `cincin` | `+W` | `cinW` |
 
 ---
 
-## 🧪 検証用デモデータ
+## 🧪 Demo Data for Verification
 
-デモモードには128羽のサンプル個体が含まれており、以下の検証が可能：
+Demo mode includes **66 specimens** (3 families × 22 birds each) for the following tests:
 
-### 健康評価テスト
-- 父娘交配 → 危険判定（F=25%）
-- 半兄妹交配 → 高リスク判定（F=12.5%）
-- 無関係個体 → 安全判定（F=0%）
+### Health Evaluation Tests
+- Sire × Daughter → Critical risk (F ≈ 43.75%, 3-generation pedigree)
+- Half-siblings → High risk (F ≈ 18.75%)
+- Unrelated individuals → Safe (F = 0%)
 
-### 遺伝計算テスト
-- 伴性遺伝（INO/Opaline/Cinnamon）
-- 複対立遺伝子（Parblue系）
-- 不完全優性（Dark/Violet）
+### Genetic Calculation Tests
+- Sex-linked inheritance (INO/Opaline/Cinnamon)
+- Multiple alleles (Parblue series)
+- Incomplete dominance (Dark/Violet)
 
-### 家系図推論テスト
-- 子の表現型から親の遺伝子型を逆算
-- テスト交配提案の生成
+### Family Inference Tests
+- Reverse-calculate parental genotypes from offspring phenotypes
+- Generate test-mating proposals
 
 ---
 
-## 📜 ライセンス
+## 🔬 Mathematical Architecture & Logic
+
+The system operates on five core logical pillars for dynamic calculation of complex multi-mutation combinations.
+
+### 1. Parallel Independent Assortment
+
+Treats each of the 14 loci as an independent probabilistic event for multi-dimensional computation.
+
+- **Processing Flow**: Simulates Punnett Squares per locus (paternal × maternal gamete formation)
+- **Cartesian Product**: Merges independent results via direct product to derive full probability distribution
+- **Zero-Dependency Optimization**: Pure vanilla PHP array operations achieve millisecond-level performance for exponential combinations
+
+### 2. Asymmetric Sex-Linked (SLR) Matrix
+
+Implements asymmetric inheritance matrices considering avian sex determination (ZZ/ZW system).
+
+- **Males (ZZ)**: Holds 2 alleles, accurately calculates heterozygous (split) states
+- **Females (ZW)**: Treated as hemizygous where single allele directly determines phenotype, logically eliminating the "split" concept
+
+### 3. Tiered Allelic Hierarchy
+
+Controls complex color expression through two layers: "Genotype" and "Phenotype Resolution".
+
+- **Genotype Layer**: Maintains allelic combinations per locus as strings (`aqaq`, `tqaq`, etc.)
+- **Phenotype Resolution**: Dynamically resolves genotype sets based on defined priority (Tier) rules, enabling consistent output of 310+ color names
+
+### 4. Graph-Based Recursive Pedigree Analysis
+
+Treats the FamilyMap as a data structure and calculates pedigree risk via recursive algorithms.
+
+- **DFS Traversal**: Identifies common ancestors through depth-first search
+- **Cycle Prevention**: Visited ID sets prevent infinite loops
+- **Health Guardian**: Logically locks dangerous pairings based on calculated F-values (Hard Lock for INO/Pallid generation limits)
+
+### 5. Inference Engine (FamilyEstimator V3)
+
+Uses Bayesian-like logic to identify unknown genotypes from pedigree-wide constraints.
+
+- **Offspring Evidence**: Locks parental alleles at 100% probability when recessive traits appear in offspring
+- **Sibling Constraint**: Statistically converges carrier probability from sibling phenotype distributions
+- **Multi-Generational Integration**: Synthesizes information from grandparents to offspring, deriving consistent genotypes across the entire pedigree
+
+---
+
+## 🛠️ For Developers: Porting to Other Species
+
+### Adaptation Guide for Other Birds (Budgerigars, Conures, etc.)
+
+Gene-Forge v6.8 is designed as a "genetic calculation framework" with complete separation of logic and data. Customize for any avian breeding support system in 3 steps.
+
+### Step 1: Redefine Loci (genetics.php)
+
+Simply modify the `LOCI` constants in the `AgapornisLoci` class to define target species' genetic loci.
+
+| Inheritance Mode | Setting | Examples |
+|------------------|---------|----------|
+| Autosomal Recessive (AR) | `type => 'AR'` | Budgerigar Clearwing, Pied, etc. |
+| Sex-Linked Recessive (SLR) | `sex_linked => true` | Opaline, Cinnamon, SLR-Fallow, etc. |
+| Autosomal Incomplete Dominant (AID) | `type => 'AID'` | Dark Factor, Violet, etc. |
+
+### Step 2: Define Color Logic (genetics.php)
+
+Edit the `COLOR_DEFINITIONS` array to define phenotype names for each factor combination. The Tier structure enables strict control of priority when multiple mutations overlap on base colors.
+
+### Step 3: Adjust Health Standards (guardian.js)
+
+Modify `BreedingValidator` thresholds to build guardrails against species-specific inbreeding risks and lethal factors.
+
+---
+
+## 📚 How to Integrate Collective Intelligence
+
+### Converting Community Knowledge to Code
+
+Guidelines for transforming online forums, academic papers, and expert knowledge into code when defining new bird species.
+
+### 1. Standardizing Traits
+
+Identify the following elements from online descriptions:
+
+- **Dominance Relationships**: Determine "splits occur (recessive)", "expresses with one copy (dominant)", or "intensifies when doubled (incomplete dominant)" and assign to `type` constants
+- **Sex-Linkage**: Descriptions like "only males carry splits" or "females have no splits" indicate sex-linked inheritance (Z chromosome). Set `sex_linked => true`
+
+### 2. Phenotype Tiering
+
+Collective knowledge always contains rules like "when X and Y combine, it's called Z".
+
+- Record these as priority (Tier) in `COLOR_DEFINITIONS`
+- Example: Budgerigar "Rainbow" is defined as the compound of [Opaline + Whiteface + Clearwing]
+
+### 3. Turning Wisdom into Code
+
+Convert experienced breeder warnings like "this species is particularly weak to inbreeding" or "this color may carry lethal genes" into validation rules in `guardian.js`.
+
+> This is the most critical step in transforming a mere calculator into a "life-protecting system".
+
+---
+
+## 🤝 Contribution & Community
+
+### Derivative Development Welcome
+
+This project is an "extra-institutional" endeavor to end opaque breeding practices and promote scientific, ethical breeding.
+
+**Porting Candidates:**
+- Budgerigar Edition
+- Green-cheeked Conure Edition
+- Cockatiel Edition
+- Pacific Parrotlet Edition
+
+Contributors considering ports to other species are encouraged to Fork this repository and begin development.
+
+### How to Contribute
+
+Issues and Pull Requests welcome. Especially seeking:
+
+- Extensions to other Lovebird species (A. fischeri, A. personatus, etc.)
+- Additional language translations
+- UI/UX improvements
+- Genetic knowledge feedback
+
+---
+
+## 📜 License
 
 **CC BY-NC-SA 4.0** (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)
 
-- ✅ 個人利用・非商用OK
-- ✅ 改変・再配布OK（同一ライセンス・クレジット表記必須）
-- ❌ 商用利用は要相談
+- ✅ Personal / non-commercial use allowed
+- ✅ Remix and redistribution allowed (credit required, same license)
+- ❌ Commercial use strictly prohibited
 
 ---
 
-## 🤝 コントリビューション
+## ⚠️ Known Issues / Limitations
 
-Issue・Pull Request 歓迎。
+### localStorage Capacity Limit
 
-特に以下の貢献を募集中：
-- 追加言語の翻訳
-- UI/UX改善
-- 遺伝学的知見のフィードバック
+Browser localStorage is typically limited to **5MB**. Saving may fail if you register hundreds of specimens with detailed notes and pedigree information.
+
+**Workarounds:**
+- Regularly backup via JSON export
+- Delete unnecessary specimen data
+- Consider migrating to server-side DB (MySQL, etc.) for large-scale databases
+
+### Demo Data and User Data Separation
+
+Demo mode (66 birds) and User mode are completely separated. Changes made in demo mode are not saved.
 
 ---
 
-## 👤 作者
+## 👤 Credits
 
-制作総指揮:**Shohei Taniguchi**（Homo repugnans）
-開発戦術核:**Sirius**（電子精霊 )
+**Chief Product Officer:** Shohei Taniguchi (Homo repugnans)  
+**Tactical Decision Intelligence:** Sirius (Electronic Spirit)
 
 ---
 
-## 🙏 謝辞
+## 🙏 Acknowledgments
 
-- **ALBS (African Lovebird Society)** — 色名命名規則の参照
-- **世界中のコザクラインコブリーダー** — 遺伝学的知見の蓄積
+- **ALBS (African Lovebird Society)** — Phenotype naming standards
+- **Lovebird breeders worldwide** — Accumulation of genetic knowledge
 
---------------------------------------------------
- * @license CC BY-NC-SA 4.0
- * Commercial use strictly prohibited.
- * NPO/Educational use welcome.
- 
-「 制度は責任を放棄した。制度外がそれを果たす。 」
-*制度外文明・かならづプロジェクト*
+---
+
+<div align="center">
+
+**CC BY-NC-SA 4.0**  
+Commercial use strictly prohibited. NPO/Educational use welcome.
+
+*"The system has abdicated responsibility. It will be fulfilled by those outside the system."*
+
+**Outsider Civilization: Kanarazu Project**
+
+</div>
