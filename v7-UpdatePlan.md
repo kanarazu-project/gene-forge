@@ -106,5 +106,5 @@ public const LINKAGE_GROUPS = [
 - [x] Phase 1: cinnamon-ino 3%
 - [x] Phase 2: dark-parblue 7%
 - [x] Phase 3: ino-opaline 30%, cinnamon-opaline 33%
-- [ ] テスト
+- [x] テスト
 - [ ] リリース
