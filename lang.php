@@ -37,7 +37,10 @@ function t(string $key): string {
 }
 
 function getLangDict(): array {
-    global $translations;
+    global $translations, $guardian_translations;
     $lang = getLang();
-    return $translations[$lang] ?? $translations['ja'];
+    $main = $translations[$lang] ?? $translations['ja'];
+    $guardian = $guardian_translations[$lang] ?? $guardian_translations['ja'] ?? [];
+    return array_merge($main, $guardian);
 }
+

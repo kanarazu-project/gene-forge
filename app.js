@@ -5,16 +5,10 @@
  */
 
 // ========================================
-// 多言語サポート
+// 多言語サポート (SSOT: index.php → window.T)
 // ========================================
-let LANG = {};
-
-function initLang(dict) {
-    LANG = dict || {};
-}
-
 function t(key) {
-    return LANG[key] || key;
+    return (window.T && window.T[key]) || key;
 }
 
 // ========================================

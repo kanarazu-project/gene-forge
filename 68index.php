@@ -7,7 +7,7 @@
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v7.0
+ * Agapornis Gene-Forge v6.8
  * FamilyEstimator V3 搭載
  * ALBS Peachfaced部門準拠版
  * 
@@ -106,7 +106,7 @@ $result = $estimator->estimate(
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>🦜 Gene-Forge v7.0</title>
+    <title>🦜 Gene-Forge v6.8</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=674">
     <style>
@@ -423,7 +423,7 @@ $result = $estimator->estimate(
     }
     </script>
     <script>
-    // v7.0修正: T辞書を先に定義（customConfirm等で使用）
+    // v6.8修正: T辞書を先に定義（customConfirm等で使用）
     const LANG = '<?= $lang ?>';
     const T = <?= json_encode(getLangDict()) ?>;
     const T_GUARDIAN = <?= json_encode(getGuardianLangDict()) ?>;
@@ -455,7 +455,6 @@ function getBirdColorLabel(bird) {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels(false)) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
-const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
 </script>
 </head>
 
@@ -473,9 +472,6 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
     <a href="?lang=fr" class="<?= $lang === 'fr' ? 'active' : '' ?>">FR</a>
     <a href="?lang=it" class="<?= $lang === 'it' ? 'active' : '' ?>">IT</a>
     <a href="?lang=es" class="<?= $lang === 'es' ? 'active' : '' ?>">ES</a>
-    <a href="?lang=id" class="<?= $lang === 'id' ? 'active' : '' ?>">ID</a>
-    <a href="?lang=tl" class="<?= $lang === 'tl' ? 'active' : '' ?>">TL</a>
-    <a href="?lang=pt" class="<?= $lang === 'pt' ? 'active' : '' ?>">PT</a>
 </div>
                         <span class="version-tag"><a href="readme.php" style="color:#888;text-decoration:none;">README</a><br><a href="https://github.com/kanarazu-project/gene-forge" target="_blank" style="color:#888;text-decoration:none;">GitHub</a></span>
             <h1 class="logo">🦜 GENE-FORGE</h1>
@@ -888,7 +884,7 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
                 $mOpaline = $_POST['m_opaline'] ?? '+W';
                 $mCinnamon = $_POST['m_cinnamon'] ?? '+W';
                 $mPied = $_POST['m_pirec'] ?? '++';
-                // v7.0追加: 14座位対応
+                // v6.8追加: 14座位対応
 $fVio = $_POST['f_vio'] ?? 'vv';
 $fPidom = $_POST['f_pidom'] ?? '++';
 $fFlp = $_POST['f_flp'] ?? '++';
@@ -2017,7 +2013,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 <?php
 // ============================================================================
-// GENE-FORGE v7.0 完全デバッグパネル
+// GENE-FORGE v6.8 完全デバッグパネル
 // index.php の </body> 直前に挿入
 // ============================================================================
 
@@ -2025,7 +2021,7 @@ if ($action === 'calculate' && isset($_POST)):
 ?>
 <div id="debugPanel" style="position:fixed;bottom:0;left:0;right:0;max-height:50vh;overflow-y:auto;background:#0a0a0a;border-top:3px solid #ff0066;font-family:'JetBrains Mono',monospace;font-size:11px;z-index:99999;padding:1rem;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-        <h3 style="color:#ff0066;margin:0;">🔬 GENE-FORGE DEBUG v7.0</h3>
+        <h3 style="color:#ff0066;margin:0;">🔬 GENE-FORGE DEBUG v6.8</h3>
         <button onclick="document.getElementById('debugPanel').style.display='none'" style="background:#333;color:#fff;border:none;padding:0.5rem 1rem;cursor:pointer;">×</button>
     </div>
     
