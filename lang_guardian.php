@@ -501,46 +501,46 @@ $guardian_translations = [
     'bv_sex_female' => 'Por favor especifique una hembra como madre',
     'bv_same_bird' => 'Mismo individuo',
     'bv_pedigree_conflict' => 'No se puede colocar este ave. Por favor modifique manualmente los datos del pedigrí.',
-    
+
     // --- HealthGuardian INBREEDING_LIMITS reason ---
     'hg_ino_reason' => 'Debilidad inmune por deficiencia de melanina (Lutino/Creamino/Blanco puro)',
     'hg_pallid_reason' => 'Debilidad inmune por reducción de melanina',
     'hg_fallow_reason' => 'Debilidad por anomalía en la síntesis de melanina',
     'hg_dark_df_reason' => 'Reducción de tamaño y disminución de la capacidad reproductiva',
     'hg_general_reason' => 'Disminución de la vitalidad',
-    
+
     // --- HealthGuardian RISK_LEVELS label ---
     'risk_critical' => 'Crítico',
     'risk_high' => 'Alto riesgo',
     'risk_moderate' => 'Precaución',
     'risk_safe' => 'Seguro',
-    
+
     // --- INO系チェックメッセージ ---
     'ino_limit_exceeded' => 'Línea {type} consanguinidad gen {gen} - Riesgo de colapso inmune',
     'ino_limit_warning' => 'Línea {type} consanguinidad gen {gen} - Límite alcanzado próxima generación',
     'ino_limit_detail' => 'Introducir otra línea es obligatorio para la descendencia',
     'ino_limit_action' => 'Por favor introduzca aves {type} de otra línea',
     'ino_limit_action_plan' => 'Planifique adquirir aves {type} de otra línea antes de la próxima cría',
-    
+
     // --- パリッド系チェックメッセージ ---
     'pallid_limit_exceeded' => 'Línea Pallid consanguinidad gen {gen} - Riesgo de debilidad',
     'pallid_limit_warning' => 'Línea Pallid consanguinidad gen {gen} - Límite próxima generación',
     'pallid_limit_detail' => 'Introducir otra línea es obligatorio para la descendencia',
     'pallid_limit_action' => 'Por favor introduzca aves Pallid de otra línea',
     'pallid_limit_action_plan' => 'Planifique adquirir aves Pallid de otra línea',
-    
+
     // --- ファロー系チェックメッセージ ---
     'fallow_limit_exceeded' => 'Línea Fallow consanguinidad gen {gen} - Riesgo de fijación de debilidad',
     'fallow_limit_warning' => 'Línea Fallow consanguinidad gen {gen} - Límite próxima generación',
     'fallow_limit_detail' => 'Riesgo de fijación de la debilidad',
     'fallow_limit_action' => 'Por favor introduzca aves Fallow de otra línea',
     'fallow_limit_action_plan' => 'Considere adquirir aves Fallow de otra línea',
-    
+
     // --- ダークDF蓄積チェック ---
     'dark_df_message' => 'Cría DF×DF - Riesgo de reducción de tamaño',
     'dark_df_detail' => 'Toda la descendencia será DF (D/D) con tendencia a reducción de tamaño',
     'dark_df_action' => 'Recomendado introducir aves SF/Light',
-    
+
     // --- 近交係数チェック ---
     'f_critical_message' => 'Coeficiente consanguinidad F={f}% - Nivel de prohibición de cría',
     'f_critical_detail' => 'Equivalente a padre-hijo o hermanos completos',
@@ -551,35 +551,320 @@ $guardian_translations = [
     'f_moderate_message' => 'Coeficiente consanguinidad F={f}%',
     'f_moderate_detail' => 'Equivalente a primos',
     'f_moderate_action' => 'Requiere gestión continua de línea',
-    
+
     // --- 多重スプリット交配 ---
     'multi_split_message' => 'Cría multi-split ({m}×{f})',
     'multi_split_detail' => 'Riesgo de resultados impredecibles o individuos débiles',
     'multi_split_action' => 'Reducir rasgos objetivo y fijar gradualmente',
-    
+
     // --- 一般形質制限 ---
     'general_limit_message' => 'Rasgos generales gen {gen}',
     'general_limit_detail' => 'Posible disminución de la vitalidad',
     'general_limit_action' => 'Considere refrescar toda la línea',
-    
+
     // --- サマリー ---
     'summary_blocked' => '⛔ Cría no recomendada: {msg}',
     'summary_high' => '⚠️ Alto riesgo: {msg}',
     'summary_moderate' => '⚡ Precaución requerida',
     'summary_safe' => '✓ Riesgo salud: Bajo',
-    
+
     // --- needsRefresh ---
     'refresh_ino' => 'Línea INO (Lutino/Creamino/Blanco puro) alcanzó 2 generaciones',
     'refresh_pallid' => 'Línea Pallid alcanzó 2 generaciones',
     'refresh_fallow' => 'Línea Fallow alcanzó 2 generaciones',
     'refresh_general' => 'Rasgos generales alcanzaron 4 generaciones',
-    
+
     // --- INO系色名フォールバック ---
     'color_pure_white' => 'Blanco puro',
     'color_creamino' => 'Creamino',
     'color_creamino_seagreen' => 'Creamino Verde mar',
     'color_lutino' => 'Lutino',
-    
+
+    // --- 確定/推定ステータス ---
+    'status_confirmed' => '✓Confirmado',
+    'status_estimated' => '?Estimado',
+],
+
+// ============================================================
+// インドネシア語 (Indonesian)
+// ============================================================
+'id' => [
+    // --- BreedingValidator メッセージ ---
+    'bv_danger' => 'Pasangan berbahaya. Penurunan tingkat kelangsungan hidup tidak dapat dihindari.',
+    'bv_warning' => 'Pasangan ini dilarang dalam penangkaran thoroughbred',
+    'bv_sex_male' => 'Silakan tentukan jantan sebagai ayah',
+    'bv_sex_female' => 'Silakan tentukan betina sebagai ibu',
+    'bv_same_bird' => 'Individu yang sama',
+    'bv_pedigree_conflict' => 'Tidak dapat menempatkan burung ini. Silakan ubah data silsilah secara manual.',
+
+    // --- HealthGuardian INBREEDING_LIMITS reason ---
+    'hg_ino_reason' => 'Kelemahan imun akibat kekurangan melanin (Lutino/Creamino/Pure White)',
+    'hg_pallid_reason' => 'Kelemahan imun akibat pengurangan melanin',
+    'hg_fallow_reason' => 'Kelemahan akibat kelainan sintesis melanin',
+    'hg_dark_df_reason' => 'Pengurangan ukuran dan penurunan kemampuan berkembang biak',
+    'hg_general_reason' => 'Penurunan vitalitas',
+
+    // --- HealthGuardian RISK_LEVELS label ---
+    'risk_critical' => 'Kritis',
+    'risk_high' => 'Risiko Tinggi',
+    'risk_moderate' => 'Perhatian',
+    'risk_safe' => 'Aman',
+
+    // --- INO系チェックメッセージ ---
+    'ino_limit_exceeded' => 'Garis {type} inbreeding gen {gen} - Risiko keruntuhan imun',
+    'ino_limit_warning' => 'Garis {type} inbreeding gen {gen} - Batas tercapai generasi berikutnya',
+    'ino_limit_detail' => 'Memperkenalkan garis keturunan berbeda wajib untuk keturunan',
+    'ino_limit_action' => 'Silakan perkenalkan burung {type} dari garis keturunan berbeda',
+    'ino_limit_action_plan' => 'Rencanakan untuk mendapatkan burung {type} dari garis berbeda sebelum penangkaran berikutnya',
+
+    // --- パリッド系チェックメッセージ ---
+    'pallid_limit_exceeded' => 'Garis Pallid inbreeding gen {gen} - Risiko kelemahan',
+    'pallid_limit_warning' => 'Garis Pallid inbreeding gen {gen} - Batas generasi berikutnya',
+    'pallid_limit_detail' => 'Memperkenalkan garis keturunan berbeda wajib untuk keturunan',
+    'pallid_limit_action' => 'Silakan perkenalkan burung Pallid dari garis keturunan berbeda',
+    'pallid_limit_action_plan' => 'Rencanakan untuk mendapatkan burung Pallid dari garis berbeda',
+
+    // --- ファロー系チェックメッセージ ---
+    'fallow_limit_exceeded' => 'Garis Fallow inbreeding gen {gen} - Risiko fiksasi kelemahan',
+    'fallow_limit_warning' => 'Garis Fallow inbreeding gen {gen} - Batas generasi berikutnya',
+    'fallow_limit_detail' => 'Risiko kelemahan menjadi tetap',
+    'fallow_limit_action' => 'Silakan perkenalkan burung Fallow dari garis keturunan berbeda',
+    'fallow_limit_action_plan' => 'Pertimbangkan untuk mendapatkan burung Fallow dari garis berbeda',
+
+    // --- ダークDF蓄積チェック ---
+    'dark_df_message' => 'Penangkaran DF×DF - Risiko pengurangan ukuran',
+    'dark_df_detail' => 'Semua keturunan akan menjadi DF (D/D) dengan kecenderungan pengurangan ukuran',
+    'dark_df_action' => 'Disarankan memperkenalkan burung SF/Light',
+
+    // --- 近交係数チェック ---
+    'f_critical_message' => 'Koefisien inbreeding F={f}% - Tingkat larangan penangkaran',
+    'f_critical_detail' => 'Setara dengan induk-anak atau saudara kandung penuh',
+    'f_critical_action' => 'Silakan perkenalkan burung dari garis keturunan yang benar-benar berbeda',
+    'f_high_message' => 'Koefisien inbreeding F={f}% - Risiko tinggi',
+    'f_high_detail' => 'Setara dengan saudara tiri',
+    'f_high_action' => 'Sangat disarankan memperkenalkan garis keturunan berbeda',
+    'f_moderate_message' => 'Koefisien inbreeding F={f}%',
+    'f_moderate_detail' => 'Setara dengan sepupu',
+    'f_moderate_action' => 'Diperlukan manajemen garis keturunan berkelanjutan',
+
+    // --- 多重スプリット交配 ---
+    'multi_split_message' => 'Penangkaran multi-split ({m}×{f})',
+    'multi_split_detail' => 'Risiko hasil yang tidak dapat diprediksi atau individu lemah',
+    'multi_split_action' => 'Persempit sifat target dan fiksasi secara bertahap',
+
+    // --- 一般形質制限 ---
+    'general_limit_message' => 'Sifat umum gen {gen}',
+    'general_limit_detail' => 'Kemungkinan penurunan vitalitas',
+    'general_limit_action' => 'Pertimbangkan untuk menyegarkan seluruh garis keturunan',
+
+    // --- サマリー ---
+    'summary_blocked' => '⛔ Penangkaran tidak disarankan: {msg}',
+    'summary_high' => '⚠️ Risiko tinggi: {msg}',
+    'summary_moderate' => '⚡ Perhatian diperlukan',
+    'summary_safe' => '✓ Risiko kesehatan: Rendah',
+
+    // --- needsRefresh ---
+    'refresh_ino' => 'Garis INO (Lutino/Creamino/Pure White) mencapai 2 generasi',
+    'refresh_pallid' => 'Garis Pallid mencapai 2 generasi',
+    'refresh_fallow' => 'Garis Fallow mencapai 2 generasi',
+    'refresh_general' => 'Sifat umum mencapai 4 generasi',
+
+    // --- INO系色名フォールバック ---
+    'color_pure_white' => 'Pure White',
+    'color_creamino' => 'Creamino',
+    'color_creamino_seagreen' => 'Creamino Seagreen',
+    'color_lutino' => 'Lutino',
+
+    // --- 確定/推定ステータス ---
+    'status_confirmed' => '✓Terkonfirmasi',
+    'status_estimated' => '?Diperkirakan',
+],
+
+// ============================================================
+// タガログ語 (Tagalog/Filipino)
+// ============================================================
+'tl' => [
+    // --- BreedingValidator メッセージ ---
+    'bv_danger' => 'Mapanganib na pares. Hindi maiiwasan ang pagbaba ng survival rate.',
+    'bv_warning' => 'Ipinagbabawal ang pares na ito sa pagpapalahi ng thoroughbred',
+    'bv_sex_male' => 'Pakitukoy ang lalaki bilang ama',
+    'bv_sex_female' => 'Pakitukoy ang babae bilang ina',
+    'bv_same_bird' => 'Parehong indibidwal',
+    'bv_pedigree_conflict' => 'Hindi mailagay ang ibong ito. Pakibago nang mano-mano ang pedigree data.',
+
+    // --- HealthGuardian INBREEDING_LIMITS reason ---
+    'hg_ino_reason' => 'Kahinaan ng immune dahil sa kakulangan ng melanin (Lutino/Creamino/Pure White)',
+    'hg_pallid_reason' => 'Kahinaan ng immune dahil sa pagbawas ng melanin',
+    'hg_fallow_reason' => 'Kahinaan dahil sa abnormalidad sa synthesis ng melanin',
+    'hg_dark_df_reason' => 'Pagliit ng sukat at pagbaba ng kakayahang magpalahi',
+    'hg_general_reason' => 'Pagbaba ng vitalidad',
+
+    // --- HealthGuardian RISK_LEVELS label ---
+    'risk_critical' => 'Kritikal',
+    'risk_high' => 'Mataas na Panganib',
+    'risk_moderate' => 'Mag-ingat',
+    'risk_safe' => 'Ligtas',
+
+    // --- INO系チェックメッセージ ---
+    'ino_limit_exceeded' => 'Linya {type} inbreeding gen {gen} - Panganib ng pagbagsak ng immune',
+    'ino_limit_warning' => 'Linya {type} inbreeding gen {gen} - Aabot sa limit sa susunod na henerasyon',
+    'ino_limit_detail' => 'Kinakailangan ang pagpapakilala ng ibang linya para sa mga anak',
+    'ino_limit_action' => 'Pakipakilala ng mga ibong {type} mula sa ibang linya',
+    'ino_limit_action_plan' => 'Magplano na kumuha ng mga ibong {type} mula sa ibang linya bago ang susunod na pagpapalahi',
+
+    // --- パリッド系チェックメッセージ ---
+    'pallid_limit_exceeded' => 'Linya Pallid inbreeding gen {gen} - Panganib ng kahinaan',
+    'pallid_limit_warning' => 'Linya Pallid inbreeding gen {gen} - Limit sa susunod na henerasyon',
+    'pallid_limit_detail' => 'Kinakailangan ang pagpapakilala ng ibang linya para sa mga anak',
+    'pallid_limit_action' => 'Pakipakilala ng mga ibong Pallid mula sa ibang linya',
+    'pallid_limit_action_plan' => 'Magplano na kumuha ng mga ibong Pallid mula sa ibang linya',
+
+    // --- ファロー系チェックメッセージ ---
+    'fallow_limit_exceeded' => 'Linya Fallow inbreeding gen {gen} - Panganib ng pagiging permanente ng kahinaan',
+    'fallow_limit_warning' => 'Linya Fallow inbreeding gen {gen} - Limit sa susunod na henerasyon',
+    'fallow_limit_detail' => 'Panganib na magiging permanente ang kahinaan',
+    'fallow_limit_action' => 'Pakipakilala ng mga ibong Fallow mula sa ibang linya',
+    'fallow_limit_action_plan' => 'Isaalang-alang ang pagkuha ng mga ibong Fallow mula sa ibang linya',
+
+    // --- ダークDF蓄積チェック ---
+    'dark_df_message' => 'Pagpapalahi DF×DF - Panganib ng pagliit ng sukat',
+    'dark_df_detail' => 'Lahat ng anak ay magiging DF (D/D) na may tendensiyang lumiliit ang sukat',
+    'dark_df_action' => 'Inirerekomenda ang pagpapakilala ng mga ibong SF/Light',
+
+    // --- 近交係数チェック ---
+    'f_critical_message' => 'Coefficient ng inbreeding F={f}% - Antas ng pagbabawal sa pagpapalahi',
+    'f_critical_detail' => 'Katumbas ng magulang-anak o buong magkakapatid',
+    'f_critical_action' => 'Pakipakilala ng mga ibon mula sa ganap na ibang linya',
+    'f_high_message' => 'Coefficient ng inbreeding F={f}% - Mataas na panganib',
+    'f_high_detail' => 'Katumbas ng kalahating magkakapatid',
+    'f_high_action' => 'Matinding inirerekomenda ang pagpapakilala ng ibang linya',
+    'f_moderate_message' => 'Coefficient ng inbreeding F={f}%',
+    'f_moderate_detail' => 'Katumbas ng mga pinsan',
+    'f_moderate_action' => 'Kinakailangan ang tuloy-tuloy na pamamahala ng linya',
+
+    // --- 多重スプリット交配 ---
+    'multi_split_message' => 'Pagpapalahi ng multi-split ({m}×{f})',
+    'multi_split_detail' => 'Panganib ng hindi mahulaan na resulta o mahihinang indibidwal',
+    'multi_split_action' => 'Paliitin ang target na katangian at i-fix nang unti-unti',
+
+    // --- 一般形質制限 ---
+    'general_limit_message' => 'Pangkalahatang katangian gen {gen}',
+    'general_limit_detail' => 'Posibleng pagbaba ng vitalidad',
+    'general_limit_action' => 'Isaalang-alang ang pag-refresh ng buong linya',
+
+    // --- サマリー ---
+    'summary_blocked' => '⛔ Hindi inirerekomenda ang pagpapalahi: {msg}',
+    'summary_high' => '⚠️ Mataas na panganib: {msg}',
+    'summary_moderate' => '⚡ Kailangan ng pag-iingat',
+    'summary_safe' => '✓ Panganib sa kalusugan: Mababa',
+
+    // --- needsRefresh ---
+    'refresh_ino' => 'Linya INO (Lutino/Creamino/Pure White) umabot sa 2 henerasyon',
+    'refresh_pallid' => 'Linya Pallid umabot sa 2 henerasyon',
+    'refresh_fallow' => 'Linya Fallow umabot sa 2 henerasyon',
+    'refresh_general' => 'Pangkalahatang katangian umabot sa 4 na henerasyon',
+
+    // --- INO系色名フォールバック ---
+    'color_pure_white' => 'Pure White',
+    'color_creamino' => 'Creamino',
+    'color_creamino_seagreen' => 'Creamino Seagreen',
+    'color_lutino' => 'Lutino',
+
+    // --- 確定/推定ステータス ---
+    'status_confirmed' => '✓Nakumpirma',
+    'status_estimated' => '?Tinantiya',
+],
+
+// ============================================================
+// ポルトガル語 (Portuguese)
+// ============================================================
+'pt' => [
+    // --- BreedingValidator メッセージ ---
+    'bv_danger' => 'Pareamento perigoso. A redução da taxa de sobrevivência é inevitável.',
+    'bv_warning' => 'Este pareamento é proibido na criação de puro-sangue',
+    'bv_sex_male' => 'Por favor, especifique um macho como pai',
+    'bv_sex_female' => 'Por favor, especifique uma fêmea como mãe',
+    'bv_same_bird' => 'Mesmo indivíduo',
+    'bv_pedigree_conflict' => 'Não é possível colocar esta ave. Por favor, modifique manualmente os dados do pedigree.',
+
+    // --- HealthGuardian INBREEDING_LIMITS reason ---
+    'hg_ino_reason' => 'Fraqueza imunológica devido à deficiência de melanina (Lutino/Creamino/Branco Puro)',
+    'hg_pallid_reason' => 'Fraqueza imunológica devido à redução de melanina',
+    'hg_fallow_reason' => 'Fraqueza devido à anormalidade na síntese de melanina',
+    'hg_dark_df_reason' => 'Redução de tamanho e diminuição da capacidade reprodutiva',
+    'hg_general_reason' => 'Diminuição da vitalidade',
+
+    // --- HealthGuardian RISK_LEVELS label ---
+    'risk_critical' => 'Crítico',
+    'risk_high' => 'Alto Risco',
+    'risk_moderate' => 'Cautela',
+    'risk_safe' => 'Seguro',
+
+    // --- INO系チェックメッセージ ---
+    'ino_limit_exceeded' => 'Linha {type} consanguinidade ger {gen} - Risco de colapso imunológico',
+    'ino_limit_warning' => 'Linha {type} consanguinidade ger {gen} - Limite alcançado na próxima geração',
+    'ino_limit_detail' => 'Introduzir linhagem diferente é obrigatório para os descendentes',
+    'ino_limit_action' => 'Por favor, introduza aves {type} de uma linhagem diferente',
+    'ino_limit_action_plan' => 'Planeje adquirir aves {type} de linhagem diferente antes da próxima criação',
+
+    // --- パリッド系チェックメッセージ ---
+    'pallid_limit_exceeded' => 'Linha Pallid consanguinidade ger {gen} - Risco de fraqueza',
+    'pallid_limit_warning' => 'Linha Pallid consanguinidade ger {gen} - Limite na próxima geração',
+    'pallid_limit_detail' => 'Introduzir linhagem diferente é obrigatório para os descendentes',
+    'pallid_limit_action' => 'Por favor, introduza aves Pallid de uma linhagem diferente',
+    'pallid_limit_action_plan' => 'Planeje adquirir aves Pallid de linhagem diferente',
+
+    // --- ファロー系チェックメッセージ ---
+    'fallow_limit_exceeded' => 'Linha Fallow consanguinidade ger {gen} - Risco de fixação de fraqueza',
+    'fallow_limit_warning' => 'Linha Fallow consanguinidade ger {gen} - Limite na próxima geração',
+    'fallow_limit_detail' => 'Risco de a fraqueza se tornar permanente',
+    'fallow_limit_action' => 'Por favor, introduza aves Fallow de uma linhagem diferente',
+    'fallow_limit_action_plan' => 'Considere adquirir aves Fallow de linhagem diferente',
+
+    // --- ダークDF蓄積チェック ---
+    'dark_df_message' => 'Criação DF×DF - Risco de redução de tamanho',
+    'dark_df_detail' => 'Todos os descendentes serão DF (D/D) com tendência à redução de tamanho',
+    'dark_df_action' => 'Recomenda-se introduzir aves SF/Light',
+
+    // --- 近交係数チェック ---
+    'f_critical_message' => 'Coeficiente de consanguinidade F={f}% - Nível de proibição de criação',
+    'f_critical_detail' => 'Equivalente a pai-filho ou irmãos completos',
+    'f_critical_action' => 'Por favor, introduza aves de uma linhagem completamente diferente',
+    'f_high_message' => 'Coeficiente de consanguinidade F={f}% - Alto risco',
+    'f_high_detail' => 'Equivalente a meio-irmãos',
+    'f_high_action' => 'Fortemente recomendado introduzir linhagem diferente',
+    'f_moderate_message' => 'Coeficiente de consanguinidade F={f}%',
+    'f_moderate_detail' => 'Equivalente a primos',
+    'f_moderate_action' => 'Gestão contínua da linhagem necessária',
+
+    // --- 多重スプリット交配 ---
+    'multi_split_message' => 'Criação multi-split ({m}×{f})',
+    'multi_split_detail' => 'Risco de resultados imprevisíveis ou indivíduos fracos',
+    'multi_split_action' => 'Reduza as características alvo e fixe gradualmente',
+
+    // --- 一般形質制限 ---
+    'general_limit_message' => 'Características gerais ger {gen}',
+    'general_limit_detail' => 'Possível diminuição da vitalidade',
+    'general_limit_action' => 'Considere renovar toda a linhagem',
+
+    // --- サマリー ---
+    'summary_blocked' => '⛔ Criação não recomendada: {msg}',
+    'summary_high' => '⚠️ Alto risco: {msg}',
+    'summary_moderate' => '⚡ Cautela necessária',
+    'summary_safe' => '✓ Risco de saúde: Baixo',
+
+    // --- needsRefresh ---
+    'refresh_ino' => 'Linha INO (Lutino/Creamino/Branco Puro) alcançou 2 gerações',
+    'refresh_pallid' => 'Linha Pallid alcançou 2 gerações',
+    'refresh_fallow' => 'Linha Fallow alcançou 2 gerações',
+    'refresh_general' => 'Características gerais alcançaram 4 gerações',
+
+    // --- INO系色名フォールバック ---
+    'color_pure_white' => 'Branco Puro',
+    'color_creamino' => 'Creamino',
+    'color_creamino_seagreen' => 'Creamino Verde-mar',
+    'color_lutino' => 'Lutino',
+
     // --- 確定/推定ステータス ---
     'status_confirmed' => '✓Confirmado',
     'status_estimated' => '?Estimado',

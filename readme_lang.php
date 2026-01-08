@@ -1,7 +1,7 @@
 <?php
 /**
  * README専用多言語辞書
- * Gene-Forge v6.8
+ * Gene-Forge v7.0
  */
 
 function getReadmeLang(): string {
@@ -21,7 +21,7 @@ function rt(string $key): string {
 
 const README_LANG = [
     'ja' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Agapornis Genetics Calculator — ALBS Compliant Edition',
         'description' => 'ラブバード（コザクラインコ / Agapornis roseicollis）の遺伝計算エンジン。<br>14座位・310色以上に対応し、ALBS（African Lovebird Society）Peachfaced部門の命名規則に準拠。',
         
@@ -138,7 +138,7 @@ const README_LANG = [
     ],
     
     'en' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Agapornis Genetics Calculator — ALBS Compliant Edition',
         'description' => 'Genetics calculation engine for Lovebirds (Rosy-faced Lovebird / Agapornis roseicollis).<br>Supports 14 loci and 310+ colors, compliant with ALBS (African Lovebird Society) Peachfaced section nomenclature.',
         
@@ -255,7 +255,7 @@ const README_LANG = [
     ],
     
     'de' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Agapornis Genetik-Rechner — ALBS-konform',
         'description' => 'Genetik-Berechnungsmaschine für Unzertrennliche (Rosenköpfchen / Agapornis roseicollis).<br>Unterstützt 14 Loci und 310+ Farben, konform mit ALBS (African Lovebird Society) Peachfaced-Nomenklatur.',
         
@@ -372,7 +372,7 @@ const README_LANG = [
     ],
     
     'fr' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Calculateur Génétique Agapornis — Conforme ALBS',
         'description' => 'Moteur de calcul génétique pour Inséparables (Inséparable rosegorge / Agapornis roseicollis).<br>Supporte 14 loci et 310+ couleurs, conforme à la nomenclature ALBS Peachfaced.',
         
@@ -489,7 +489,7 @@ const README_LANG = [
     ],
     
     'it' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Calcolatore Genetico Agapornis — Conforme ALBS',
         'description' => 'Motore di calcolo genetico per Inseparabili (Inseparabile dal collo rosa / Agapornis roseicollis).<br>Supporta 14 loci e 310+ colori, conforme alla nomenclatura ALBS Peachfaced.',
         
@@ -606,7 +606,7 @@ const README_LANG = [
     ],
     
     'es' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Calculadora Genética Agapornis — Conforme ALBS',
         'description' => 'Motor de cálculo genético para Agapornis (Inseparable de Namibia / Agapornis roseicollis).<br>Soporta 14 loci y 310+ colores, conforme a la nomenclatura ALBS Peachfaced.',
         
@@ -720,5 +720,356 @@ const README_LANG = [
         'footer_license' => '@license CC BY-NC-SA 4.0 | Uso comercial prohibido. | NPO/Educación bienvenido.',
         'footer_quote' => '«La institución abandonó la responsabilidad. Lo extra-institucional la cumple.»',
         'footer_project' => 'Civilización extra-institucional / Proyecto Kanarazu',
+    ],
+
+    'id' => [
+        'title' => 'Gene-Forge v7.0',
+        'subtitle' => 'Kalkulator Genetika Agapornis — Edisi Sesuai ALBS',
+        'description' => 'Mesin perhitungan genetika untuk Lovebird (Lovebird Muka Mawar / Agapornis roseicollis).<br>Mendukung 14 lokus dan 310+ warna, sesuai dengan nomenklatur ALBS (African Lovebird Society) Peachfaced.',
+
+        'features' => 'Fitur',
+
+        'feat_db' => 'Manajemen Burung',
+        'feat_db_1' => 'Database Burung: Manajemen terpusat nama, jenis kelamin, tanggal lahir, garis keturunan, dan genotipe',
+        'feat_db_2' => '128 Burung Demo: Sampel burung untuk pengujian',
+        'feat_db_3' => 'Generasi Silsilah: Output HTML untuk silsilah 3 atau 5 generasi',
+        'feat_db_4' => 'Import/Export: Dukungan format JSON dan CSV',
+
+        'feat_health' => 'Evaluasi Kesehatan',
+        'feat_health_1' => 'Koefisien Inbreeding: Perhitungan nilai-F otomatis',
+        'feat_health_2' => 'Penilaian Risiko: Pemeriksaan pembatasan inbreeding INO dan Pallid',
+        'feat_health_3' => 'Batas Generasi: Batas yang direkomendasikan per sifat',
+
+        'feat_planner' => 'Perencana Target',
+        'feat_planner_1' => 'Pencarian Warna Target: Temukan jalur penangkaran ke fenotipe target',
+        'feat_planner_2' => 'Panduan Langkah: Otomatis menghasilkan langkah penangkaran yang diperlukan',
+
+        'feat_path' => 'Jalur Penangkaran',
+        'feat_path_1' => 'Rute Sifat: Prosedur penangkaran untuk ekspresi sifat tertentu',
+        'feat_path_2' => 'Estimasi Generasi: Hitung generasi minimum ke tujuan',
+
+        'feat_calc' => 'Kalkulator Keturunan',
+        'feat_calc_1' => 'Prediksi Keturunan: Hitung probabilitas fenotipe dari genotipe induk',
+        'feat_calc_2' => 'Dukungan 14 Lokus: Mencakup semua kombinasi lokus',
+        'feat_calc_3' => 'Perhitungan Sex-Linked: Pewarisan kromosom Z yang akurat (split jantan, hemizigot betina)',
+
+        'feat_estimate' => 'Estimator Genotipe',
+        'feat_estimate_1' => 'Fenotipe→Genotipe: Estimasi genotipe yang mungkin dari warna yang diamati',
+        'feat_estimate_2' => 'Dikonfirmasi/Diestimasi: Bedakan lokus pasti dari yang disimpulkan',
+        'feat_estimate_3' => 'Proposal Penangkaran Uji: Saran untuk mengkonfirmasi lokus yang tidak pasti',
+
+        'feat_family' => 'Estimator Keluarga',
+        'feat_family_1' => 'FamilyEstimator V3: Mesin inferensi genotipe berbasis silsilah',
+        'feat_family_2' => 'Inferensi Multi-Generasi: Lacak kembali ke kakek-nenek',
+        'feat_family_3' => 'Probabilitas Berbasis Bukti: Integrasikan batasan dari induk, keturunan, saudara',
+        'feat_family_4' => 'UI Pohon Keluarga: Bangun hubungan dengan seret & lepas',
+
+        'feat_lang' => 'Dukungan Multibahasa',
+        'feat_lang_list' => 'Jepang / Inggris / Jerman / Prancis / Italia / Spanyol / Indonesia / Tagalog / Portugis',
+
+        'files' => 'Struktur File',
+        'quickstart' => 'Mulai Cepat',
+        'requirements' => 'Persyaratan',
+        'req_1' => 'PHP 7.4 atau lebih tinggi',
+        'req_2' => 'Server web (Apache/Nginx) atau server built-in PHP',
+        'installation' => 'Instalasi',
+        'open_browser' => 'Buka <code>http://localhost:8000</code> di browser Anda.',
+
+        'examples' => 'Contoh Penggunaan',
+        'example_1' => 'Perhitungan Keturunan (PHP)',
+        'example_2' => 'Pengambilan Nama Warna',
+        'example_3' => 'Estimasi Genotipe',
+        'example_4' => 'Inferensi Keluarga (API)',
+        'example_4_result' => 'Hasil: Keturunan Aqua muncul → Kedua induk disimpulkan sebagai <code>+aq</code> (split Aqua)',
+
+        'colors' => 'Kategori Warna',
+        'col_category' => 'Kategori',
+        'col_count' => 'Warna',
+        'col_example' => 'Contoh',
+
+        'genotypes' => 'Notasi Genotipe',
+        'autosomal' => 'Lokus Autosomal',
+        'sex_linked' => 'Lokus Sex-Linked (Kromosom Z)',
+        'col_locus' => 'Lokus',
+        'col_wildtype' => 'Tipe Liar',
+        'col_mutant' => 'Alel Mutan',
+        'col_male_wt' => 'Jantan Liar',
+        'col_male_mut' => 'Jantan Mutan',
+        'col_female_wt' => 'Betina Liar',
+        'col_female_mut' => 'Betina Mutan',
+
+        'demo' => 'Data Demo untuk Pengujian',
+        'demo_desc' => 'Mode demo mencakup 128 sampel burung untuk pengujian berikut:',
+        'demo_health' => 'Tes Evaluasi Kesehatan',
+        'demo_health_1' => 'Pasangan ayah-anak → Kritis (F=25%)',
+        'demo_health_2' => 'Pasangan saudara tiri → Risiko tinggi (F=12.5%)',
+        'demo_health_3' => 'Burung tidak berhubungan → Aman (F=0%)',
+        'demo_genetics' => 'Tes Perhitungan Genetika',
+        'demo_genetics_1' => 'Pewarisan sex-linked (INO/Opaline/Cinnamon)',
+        'demo_genetics_2' => 'Alel berganda (seri Parblue)',
+        'demo_genetics_3' => 'Dominansi tidak lengkap (Dark/Violet)',
+        'demo_family' => 'Tes Inferensi Keluarga',
+        'demo_family_1' => 'Hitung balik genotipe induk dari fenotipe keturunan',
+        'demo_family_2' => 'Hasilkan proposal penangkaran uji',
+
+        'license' => 'Lisensi',
+        'license_desc' => 'CC BY-NC-SA 4.0 (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)',
+        'license_1' => '✅ Penggunaan pribadi/non-komersial OK',
+        'license_2' => '✅ Modifikasi/Redistribusi OK (lisensi sama, kredit diperlukan)',
+        'license_3' => '❌ Penggunaan komersial memerlukan konsultasi',
+
+        'contrib' => 'Kontribusi',
+        'contrib_desc' => 'Issues dan Pull Requests diterima.',
+        'contrib_note' => 'Terutama mencari:',
+        'contrib_1' => 'Perluasan ke spesies Lovebird lain (A. fischeri, A. personatus, dll.)',
+        'contrib_2' => 'Terjemahan bahasa tambahan',
+        'contrib_3' => 'Perbaikan UI/UX',
+        'contrib_4' => 'Umpan balik pengetahuan genetika',
+
+        'author' => 'Penulis',
+        'author_1' => 'Direktur: <strong>Shohei Taniguchi</strong> (Homo repugnans)',
+        'author_2' => 'Inti Taktis Dev: <strong>Sirius</strong> (Roh Elektronik)',
+
+        'thanks' => 'Ucapan Terima Kasih',
+        'thanks_1' => '<strong>ALBS (African Lovebird Society)</strong> — Referensi nomenklatur warna',
+        'thanks_2' => '<strong>Peternak Lovebird di seluruh dunia</strong> — Akumulasi pengetahuan genetika',
+
+        'footer_license' => '@license CC BY-NC-SA 4.0 | Penggunaan komersial dilarang. | NPO/Pendidikan diterima.',
+        'footer_quote' => '"Institusi meninggalkan tanggung jawab. Ekstra-institusional memenuhinya."',
+        'footer_project' => 'Peradaban Ekstra-Institusional / Proyek Kanarazu',
+    ],
+
+    'tl' => [
+        'title' => 'Gene-Forge v7.0',
+        'subtitle' => 'Kalkulator ng Genetika ng Agapornis — Edisyong Sumusunod sa ALBS',
+        'description' => 'Engine ng pagkalkula ng genetika para sa Lovebirds (Rosy-faced Lovebird / Agapornis roseicollis).<br>Sumusuporta sa 14 loci at 310+ kulay, sumusunod sa nomenclature ng ALBS (African Lovebird Society) Peachfaced section.',
+
+        'features' => 'Mga Tampok',
+
+        'feat_db' => 'Pamamahala ng Ibon',
+        'feat_db_1' => 'Database ng Ibon: Sentralisadong pamamahala ng pangalan, kasarian, petsa ng kapanganakan, linya, at genotype',
+        'feat_db_2' => '128 Demo na Ibon: Mga sample na ibon para sa pagsusuri',
+        'feat_db_3' => 'Pagbuo ng Pedigree: HTML output para sa 3 o 5 henerasyong pedigree',
+        'feat_db_4' => 'Import/Export: Suporta sa format na JSON at CSV',
+
+        'feat_health' => 'Ebalwasyon ng Kalusugan',
+        'feat_health_1' => 'Coefficient ng Inbreeding: Awtomatikong pagkalkula ng F-value',
+        'feat_health_2' => 'Pagsusuri ng Panganib: Mga pagsusuri sa paghihigpit ng inbreeding ng INO at Pallid',
+        'feat_health_3' => 'Mga Limitasyon ng Henerasyon: Mga inirerekomendang limitasyon ayon sa katangian',
+
+        'feat_planner' => 'Tagaplano ng Target',
+        'feat_planner_1' => 'Paghahanap ng Target na Kulay: Humanap ng mga landas ng pagpapalahi patungo sa target na phenotype',
+        'feat_planner_2' => 'Gabay sa Hakbang: Awtomatikong bumuo ng mga kinakailangang hakbang sa pagpapalahi',
+
+        'feat_path' => 'Landas ng Pagpapalahi',
+        'feat_path_1' => 'Mga Ruta ng Katangian: Mga pamamaraan ng pagpapalahi para sa tiyak na pagpapahayag ng katangian',
+        'feat_path_2' => 'Tantiya ng Henerasyon: Kalkulahin ang minimum na henerasyon patungo sa layunin',
+
+        'feat_calc' => 'Kalkulator ng Anak',
+        'feat_calc_1' => 'Prediksyon ng Anak: Kalkulahin ang mga probabilidad ng phenotype mula sa mga genotype ng magulang',
+        'feat_calc_2' => 'Suporta sa 14 Loci: Sinasaklaw ang lahat ng kombinasyon ng locus',
+        'feat_calc_3' => 'Kalkulasyon na Nakaugnay sa Kasarian: Tumpak na pamana ng Z-chromosome (split ng lalaki, hemizygous ng babae)',
+
+        'feat_estimate' => 'Tagapagtantya ng Genotype',
+        'feat_estimate_1' => 'Phenotype→Genotype: Tantiyahin ang mga posibleng genotype mula sa mga kulay na naobserbahan',
+        'feat_estimate_2' => 'Nakumpirma/Tinantiya: Makilala ang mga siguradong loci mula sa mga hinuha',
+        'feat_estimate_3' => 'Mga Mungkahi sa Test Breeding: Mga suhestiyon upang kumpirmahin ang mga hindi siguradong loci',
+
+        'feat_family' => 'Tagapagtantya ng Pamilya',
+        'feat_family_1' => 'FamilyEstimator V3: Engine ng inferensiya ng genotype batay sa pedigree',
+        'feat_family_2' => 'Inferensiya ng Maraming Henerasyon: Subaybayan pabalik hanggang sa mga lolo at lola',
+        'feat_family_3' => 'Probabilidad Batay sa Ebidensya: I-integrate ang mga pagbabawal mula sa mga magulang, anak, kapatid',
+        'feat_family_4' => 'UI ng Family Tree: Bumuo ng mga relasyon gamit ang drag & drop',
+
+        'feat_lang' => 'Suporta sa Maraming Wika',
+        'feat_lang_list' => 'Hapon / Ingles / Aleman / Pranses / Italyano / Espanyol / Indonesian / Tagalog / Portuges',
+
+        'files' => 'Istruktura ng File',
+        'quickstart' => 'Mabilis na Pagsisimula',
+        'requirements' => 'Mga Kinakailangan',
+        'req_1' => 'PHP 7.4 o mas mataas',
+        'req_2' => 'Web server (Apache/Nginx) o PHP built-in server',
+        'installation' => 'Pag-install',
+        'open_browser' => 'Buksan ang <code>http://localhost:8000</code> sa iyong browser.',
+
+        'examples' => 'Mga Halimbawa ng Paggamit',
+        'example_1' => 'Pagkalkula ng Anak (PHP)',
+        'example_2' => 'Pagkuha ng Pangalan ng Kulay',
+        'example_3' => 'Pagtatantya ng Genotype',
+        'example_4' => 'Inferensiya ng Pamilya (API)',
+        'example_4_result' => 'Resulta: Lumitaw ang Aqua na anak → Parehong magulang ay hinuha bilang <code>+aq</code> (Aqua split)',
+
+        'colors' => 'Mga Kategorya ng Kulay',
+        'col_category' => 'Kategorya',
+        'col_count' => 'Mga Kulay',
+        'col_example' => 'Mga Halimbawa',
+
+        'genotypes' => 'Notasyon ng Genotype',
+        'autosomal' => 'Mga Autosomal Loci',
+        'sex_linked' => 'Mga Loci na Nakaugnay sa Kasarian (Z Chromosome)',
+        'col_locus' => 'Locus',
+        'col_wildtype' => 'Wild Type',
+        'col_mutant' => 'Mga Mutant Allele',
+        'col_male_wt' => 'Lalaking Wild',
+        'col_male_mut' => 'Lalaking Mutant',
+        'col_female_wt' => 'Babaeng Wild',
+        'col_female_mut' => 'Babaeng Mutant',
+
+        'demo' => 'Data ng Demo para sa Pagsusuri',
+        'demo_desc' => 'Ang demo mode ay may kasamang 128 sample na ibon para sa mga sumusunod na pagsubok:',
+        'demo_health' => 'Mga Pagsubok sa Ebalwasyon ng Kalusugan',
+        'demo_health_1' => 'Pares ng ama-anak → Kritikal (F=25%)',
+        'demo_health_2' => 'Pares ng kalahating kapatid → Mataas na panganib (F=12.5%)',
+        'demo_health_3' => 'Hindi magkakaugnay na ibon → Ligtas (F=0%)',
+        'demo_genetics' => 'Mga Pagsubok sa Pagkalkula ng Genetika',
+        'demo_genetics_1' => 'Pamana na nakaugnay sa kasarian (INO/Opaline/Cinnamon)',
+        'demo_genetics_2' => 'Maramihang allele (serye ng Parblue)',
+        'demo_genetics_3' => 'Hindi kumpletong dominance (Dark/Violet)',
+        'demo_family' => 'Mga Pagsubok sa Inferensiya ng Pamilya',
+        'demo_family_1' => 'Kalkulahin pabalik ang mga genotype ng magulang mula sa mga phenotype ng anak',
+        'demo_family_2' => 'Bumuo ng mga mungkahi sa test breeding',
+
+        'license' => 'Lisensya',
+        'license_desc' => 'CC BY-NC-SA 4.0 (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)',
+        'license_1' => '✅ Personal/Non-commercial na paggamit OK',
+        'license_2' => '✅ Pagbabago/Redistribusyon OK (parehong lisensya, kailangan ng kredito)',
+        'license_3' => '❌ Komersyal na paggamit ay nangangailangan ng konsultasyon',
+
+        'contrib' => 'Kontribusyon',
+        'contrib_desc' => 'Tinatanggap ang mga Issues at Pull Requests.',
+        'contrib_note' => 'Lalo na hinahanap:',
+        'contrib_1' => 'Extension sa ibang species ng Lovebird (A. fischeri, A. personatus, atbp.)',
+        'contrib_2' => 'Mga karagdagang pagsasalin ng wika',
+        'contrib_3' => 'Mga pagpapabuti sa UI/UX',
+        'contrib_4' => 'Feedback sa kaalaman sa genetika',
+
+        'author' => 'May-akda',
+        'author_1' => 'Direktor: <strong>Shohei Taniguchi</strong> (Homo repugnans)',
+        'author_2' => 'Dev Tactical Core: <strong>Sirius</strong> (Electronic Spirit)',
+
+        'thanks' => 'Pagkilala',
+        'thanks_1' => '<strong>ALBS (African Lovebird Society)</strong> — Sanggunian sa nomenclature ng kulay',
+        'thanks_2' => '<strong>Mga nagpapalahi ng Lovebird sa buong mundo</strong> — Naipon na kaalaman sa genetika',
+
+        'footer_license' => '@license CC BY-NC-SA 4.0 | Mahigpit na ipinagbabawal ang komersyal na paggamit. | Tinatanggap ang NPO/Educational use.',
+        'footer_quote' => '"Iniwan ng institusyon ang responsibilidad. Tinutupad ito ng extra-institutional."',
+        'footer_project' => 'Extra-Institutional Civilization / Kanarazu Project',
+    ],
+
+    'pt' => [
+        'title' => 'Gene-Forge v7.0',
+        'subtitle' => 'Calculadora Genética Agapornis — Edição Conforme ALBS',
+        'description' => 'Motor de cálculo genético para Agapornis (Agapornis Roseicollis / Agapornis roseicollis).<br>Suporta 14 loci e 310+ cores, em conformidade com a nomenclatura ALBS (African Lovebird Society) Peachfaced.',
+
+        'features' => 'Funcionalidades',
+
+        'feat_db' => 'Gestão de Aves',
+        'feat_db_1' => 'Base de Dados de Aves: Gestão centralizada de nome, sexo, data de nascimento, linhagem e genótipo',
+        'feat_db_2' => '128 Aves Demo: Aves de amostra para testes',
+        'feat_db_3' => 'Geração de Pedigree: Saída HTML para pedigrees de 3 ou 5 gerações',
+        'feat_db_4' => 'Import/Export: Suporte a formatos JSON e CSV',
+
+        'feat_health' => 'Avaliação de Saúde',
+        'feat_health_1' => 'Coeficiente de Consanguinidade: Cálculo automático do valor F',
+        'feat_health_2' => 'Avaliação de Risco: Verificações de restrição de consanguinidade INO e Pallid',
+        'feat_health_3' => 'Limites de Geração: Limites recomendados por característica',
+
+        'feat_planner' => 'Planejador de Objetivo',
+        'feat_planner_1' => 'Busca de Cor Alvo: Encontre caminhos de criação para fenótipos alvo',
+        'feat_planner_2' => 'Guia de Passos: Geração automática dos passos de criação necessários',
+
+        'feat_path' => 'Caminho de Criação',
+        'feat_path_1' => 'Rotas de Características: Procedimentos de criação para expressão específica de características',
+        'feat_path_2' => 'Estimativa de Gerações: Calcule gerações mínimas até o objetivo',
+
+        'feat_calc' => 'Calculadora de Descendentes',
+        'feat_calc_1' => 'Previsão de Descendentes: Calcule probabilidades de fenótipo a partir de genótipos parentais',
+        'feat_calc_2' => 'Suporte a 14 Loci: Cobre todas as combinações de locus',
+        'feat_calc_3' => 'Cálculo Ligado ao Sexo: Herança precisa do cromossomo Z (splits masculinos, fêmeas hemizigóticas)',
+
+        'feat_estimate' => 'Estimador de Genótipo',
+        'feat_estimate_1' => 'Fenótipo→Genótipo: Estime genótipos possíveis a partir de cores observadas',
+        'feat_estimate_2' => 'Confirmado/Estimado: Distingua loci certos dos inferidos',
+        'feat_estimate_3' => 'Propostas de Cruzamento Teste: Sugestões para confirmar loci incertos',
+
+        'feat_family' => 'Estimador Familiar',
+        'feat_family_1' => 'FamilyEstimator V3: Motor de inferência de genótipo baseado em pedigree',
+        'feat_family_2' => 'Inferência Multi-Geração: Rastreie até os avós',
+        'feat_family_3' => 'Probabilidade Baseada em Evidências: Integre restrições de pais, descendentes, irmãos',
+        'feat_family_4' => 'UI de Árvore Familiar: Construa relacionamentos com arrastar e soltar',
+
+        'feat_lang' => 'Suporte Multilíngue',
+        'feat_lang_list' => 'Japonês / Inglês / Alemão / Francês / Italiano / Espanhol / Indonésio / Tagalo / Português',
+
+        'files' => 'Estrutura de Arquivos',
+        'quickstart' => 'Início Rápido',
+        'requirements' => 'Requisitos',
+        'req_1' => 'PHP 7.4 ou superior',
+        'req_2' => 'Servidor web (Apache/Nginx) ou servidor built-in do PHP',
+        'installation' => 'Instalação',
+        'open_browser' => 'Abra <code>http://localhost:8000</code> no seu navegador.',
+
+        'examples' => 'Exemplos de Uso',
+        'example_1' => 'Cálculo de Descendentes (PHP)',
+        'example_2' => 'Obtenção de Nome de Cor',
+        'example_3' => 'Estimativa de Genótipo',
+        'example_4' => 'Inferência Familiar (API)',
+        'example_4_result' => 'Resultado: Descendente Aqua aparece → Ambos os pais inferidos como <code>+aq</code> (split Aqua)',
+
+        'colors' => 'Categorias de Cores',
+        'col_category' => 'Categoria',
+        'col_count' => 'Cores',
+        'col_example' => 'Exemplos',
+
+        'genotypes' => 'Notação de Genótipo',
+        'autosomal' => 'Loci Autossômicos',
+        'sex_linked' => 'Loci Ligados ao Sexo (Cromossomo Z)',
+        'col_locus' => 'Locus',
+        'col_wildtype' => 'Tipo Selvagem',
+        'col_mutant' => 'Alelos Mutantes',
+        'col_male_wt' => 'Macho Selvagem',
+        'col_male_mut' => 'Macho Mutante',
+        'col_female_wt' => 'Fêmea Selvagem',
+        'col_female_mut' => 'Fêmea Mutante',
+
+        'demo' => 'Dados Demo para Testes',
+        'demo_desc' => 'O modo demo inclui 128 aves de amostra para os seguintes testes:',
+        'demo_health' => 'Testes de Avaliação de Saúde',
+        'demo_health_1' => 'Pareamento pai-filha → Crítico (F=25%)',
+        'demo_health_2' => 'Pareamento de meio-irmãos → Alto risco (F=12.5%)',
+        'demo_health_3' => 'Aves não relacionadas → Seguro (F=0%)',
+        'demo_genetics' => 'Testes de Cálculo Genético',
+        'demo_genetics_1' => 'Herança ligada ao sexo (INO/Opaline/Cinnamon)',
+        'demo_genetics_2' => 'Alelos múltiplos (série Parblue)',
+        'demo_genetics_3' => 'Dominância incompleta (Dark/Violet)',
+        'demo_family' => 'Testes de Inferência Familiar',
+        'demo_family_1' => 'Calcule inversamente genótipos parentais a partir de fenótipos de descendentes',
+        'demo_family_2' => 'Gere propostas de cruzamento teste',
+
+        'license' => 'Licença',
+        'license_desc' => 'CC BY-NC-SA 4.0 (Creative Commons Attribution-NonCommercial-ShareAlike 4.0)',
+        'license_1' => '✅ Uso pessoal/não-comercial OK',
+        'license_2' => '✅ Modificação/Redistribuição OK (mesma licença, crédito necessário)',
+        'license_3' => '❌ Uso comercial requer consulta',
+
+        'contrib' => 'Contribuição',
+        'contrib_desc' => 'Issues e Pull Requests são bem-vindos.',
+        'contrib_note' => 'Especialmente procurando:',
+        'contrib_1' => 'Extensão para outras espécies de Agapornis (A. fischeri, A. personatus, etc.)',
+        'contrib_2' => 'Traduções adicionais',
+        'contrib_3' => 'Melhorias de UI/UX',
+        'contrib_4' => 'Feedback de conhecimento genético',
+
+        'author' => 'Autor',
+        'author_1' => 'Diretor: <strong>Shohei Taniguchi</strong> (Homo repugnans)',
+        'author_2' => 'Núcleo Tático de Dev: <strong>Sirius</strong> (Espírito Eletrônico)',
+
+        'thanks' => 'Agradecimentos',
+        'thanks_1' => '<strong>ALBS (African Lovebird Society)</strong> — Referência de nomenclatura de cores',
+        'thanks_2' => '<strong>Criadores de Agapornis em todo o mundo</strong> — Conhecimento genético acumulado',
+
+        'footer_license' => '@license CC BY-NC-SA 4.0 | Uso comercial estritamente proibido. | Uso NPO/Educacional bem-vindo.',
+        'footer_quote' => '"A instituição abandonou a responsabilidade. O extra-institucional a cumpre."',
+        'footer_project' => 'Civilização Extra-Institucional / Projeto Kanarazu',
     ],
 ];

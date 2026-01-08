@@ -41,6 +41,9 @@ hr{border:none;border-top:1px solid #2a3545;margin:2rem 0}
 <a href="?lang=fr" class="<?= $lang==='fr'?'active':'' ?>">FR</a>
 <a href="?lang=it" class="<?= $lang==='it'?'active':'' ?>">IT</a>
 <a href="?lang=es" class="<?= $lang==='es'?'active':'' ?>">ES</a>
+<a href="?lang=id" class="<?= $lang==='id'?'active':'' ?>">ID</a>
+<a href="?lang=tl" class="<?= $lang==='tl'?'active':'' ?>">TL</a>
+<a href="?lang=pt" class="<?= $lang==='pt'?'active':'' ?>">PT</a>
 </div>
 
 <h1>🦜 <?= rt('title') ?></h1>

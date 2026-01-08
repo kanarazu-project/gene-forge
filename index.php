@@ -450,6 +450,9 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
     <a href="?lang=fr" class="<?= $lang === 'fr' ? 'active' : '' ?>">FR</a>
     <a href="?lang=it" class="<?= $lang === 'it' ? 'active' : '' ?>">IT</a>
     <a href="?lang=es" class="<?= $lang === 'es' ? 'active' : '' ?>">ES</a>
+    <a href="?lang=id" class="<?= $lang === 'id' ? 'active' : '' ?>">ID</a>
+    <a href="?lang=tl" class="<?= $lang === 'tl' ? 'active' : '' ?>">TL</a>
+    <a href="?lang=pt" class="<?= $lang === 'pt' ? 'active' : '' ?>">PT</a>
 </div>
                         <span class="version-tag"><a href="https://github.com/kanarazu-project/gene-forge" target="_blank" style="text-decoration:none;color:inherit;">Github</a><br><a href="https://kanarazu-project.com/gene-forge/Rosy-faced-Lovebird/readme.php?lang=en" target="_blank" style="color:#666;font-size:.65rem;text-decoration:none;">README</a></span>
             <h1 class="logo">🦜 GENE-FORGE</h1>
