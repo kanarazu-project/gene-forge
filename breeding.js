@@ -658,13 +658,13 @@ const BreedingEngine = {
         if (!val || val === '++' || val === 'dd' || val === 'vv') {
             return [val?.[0] || '+', val?.[1] || '+'];
         }
+        // +X形式を先にチェック（+dil, +aq等）
+        if (val.startsWith('+')) return ['+', val.substring(1)];
         // 2文字形式（Dd, DD等）
         if (val.length === 2) return [val[0], val[1]];
-        // 4文字形式（aqaq等）
-        if (val.length === 4) return [val.substring(0, 2), val.substring(2)];
-        // +X形式
-        if (val.startsWith('+')) return ['+', val.substring(1)];
-        return ['+', '+'];
+        // 4文字以上形式（aqaq, dildil等）
+        const half = val.length / 2;
+        return [val.substring(0, half), val.substring(half)];
     },
     
     /**
