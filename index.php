@@ -34,7 +34,7 @@ function renderPhenotypeSelect(string $prefix, string $field, bool $isJa = true,
         foreach ($grouped as $category => $colors) {
             $html .= '<optgroup label="' . htmlspecialchars(AgapornisLoci::categoryLabel($category, $isJa)) . '">';
             foreach ($colors as $key => $data) {
-                $label = $isJa ? $data['ja'] : $data['en'];
+                                $label = $data['en'];
                 $sel = ($selected === $key) ? ' selected' : '';
                 $html .= '<option value="' . $key . '"' . $sel . '>' . htmlspecialchars($label) . '</option>';
             }
@@ -78,12 +78,13 @@ if ($action === 'calculate') {
     $activeTab = 'pathfinder';
 } elseif ($action === 'estimate') {
     $estimator = new GenotypeEstimator();
-    $result = $estimator->estimate(
-        $_POST['sex'] ?? 'male',
-        $_POST['est_baseColor'] ?? 'green',
-        $_POST['est_eyeColor'] ?? 'black',
-        $_POST['est_darkness'] ?? 'none'
-    );
+$result = $estimator->estimate(
+    $_POST['sex'] ?? 'male',
+    $_POST['est_baseColor'] ?? 'green',
+    $_POST['est_eyeColor'] ?? 'black',
+    $_POST['est_darkness'] ?? 'none',
+    $lang === 'ja'
+);
     $activeTab = 'estimator';
 } elseif ($action === 'family_infer') {
     $familyEstimator = new FamilyEstimatorV3();
@@ -422,16 +423,37 @@ if ($action === 'calculate') {
     }
     </script>
     <script>
-    // v6.8修正: T辞書を先に定義（customConfirm等で使用）
+    // v7.0修正: T辞書を先に定義（customConfirm等で使用）
     const LANG = '<?= $lang ?>';
-    window.T = <?= json_encode(getLangDict()) ?>;
-    
+    const T = <?= json_encode(getLangDict()) ?>;
+    const T_GUARDIAN = <?= json_encode(getGuardianLangDict()) ?>;
+    // 安全な翻訳関数（辞書未初期化時のフォールバック）
+function t(key, params = {}) {
+    if (!T || Object.keys(T).length === 0) {
+        console.warn('[GeneForge] Translation dict empty, key:', key);
+        return key;
+    }
+    let text = T[key] || key;
+    for (const [k, v] of Object.entries(params)) {
+        text = text.replace(new RegExp(':' + k, 'g'), v);
+    }
+    return text;
+}
+
+    // SSOT: 鳥の色ラベル取得（言語対応）
+function getBirdColorLabel(bird) {
+    var colorKey = bird.observed?.baseColor || bird.phenotype;
+    if (colorKey && typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) {
+        return COLOR_MASTER[colorKey].en;
+    }
+    return colorKey || 'Unknown';
+}
     // SSOT: genetics.php から注入
-    const COLOR_LABELS = <?= json_encode(AgapornisLoci::labels($lang === 'ja')) ?>;
+        const COLOR_LABELS = <?= json_encode(AgapornisLoci::labels(false)) ?>;
     const COLOR_MASTER = <?= json_encode(AgapornisLoci::COLOR_DEFINITIONS) ?>;
-    const LABEL_TO_KEY = <?= json_encode(AgapornisLoci::labelToKey($lang === 'ja')) ?>;
+    const LABEL_TO_KEY = <?= json_encode(AgapornisLoci::labelToKey(false)) ?>;
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
-const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
+const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels(false)) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
 const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
 </script>
@@ -455,7 +477,7 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
     <a href="?lang=tl" class="<?= $lang === 'tl' ? 'active' : '' ?>">TL</a>
     <a href="?lang=pt" class="<?= $lang === 'pt' ? 'active' : '' ?>">PT</a>
 </div>
-                        <span class="version-tag"><a href="https://github.com/kanarazu-project/gene-forge" target="_blank" style="text-decoration:none;color:inherit;">Github</a><br><a href="https://kanarazu-project.com/gene-forge/Rosy-faced-Lovebird/readme.php?lang=en" target="_blank" style="color:#666;font-size:.65rem;text-decoration:none;">README</a></span>
+                        <span class="version-tag"><a href="readme.php" style="color:#888;text-decoration:none;">README</a><br><a href="https://github.com/kanarazu-project/gene-forge" target="_blank" style="color:#888;text-decoration:none;">GitHub</a></span>
             <h1 class="logo">🦜 GENE-FORGE</h1>
 <p class="app-subtitle"><?= t('subtitle') ?></p>
 <span class="version-badge"><?= t('coming_soon') ?> | ALBS<?= t('compliant') ?></span>
@@ -463,8 +485,8 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
         <!-- アプリ全体のモード切替（アカウント相当） -->
         <div id="globalModeSwitch" class="global-mode-switch">
             <span class="mode-label"><?= t('mode') ?>:</span>
-            <button id="modeBtnDemo" class="mode-btn" onclick="BirdDB.setMode('demo')">🎮 <?= t('demo_mode') ?></button>
-            <button id="modeBtnUser" class="mode-btn active" onclick="BirdDB.setMode('user')">👤 <?= t('user_mode') ?></button>
+<button id="modeBtnDemo" class="mode-btn" onclick="localStorage.setItem('geneforge_mode','demo'); BirdDB.setMode('demo')">🎮 <?= t('demo_mode') ?></button>
+<button id="modeBtnUser" class="mode-btn" onclick="localStorage.setItem('geneforge_mode','user'); BirdDB.setMode('user')">👤 <?= t('user_mode') ?></button>
         </div>
         
         <div class="card guide-card">
@@ -734,7 +756,7 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
                         <?php foreach (AgapornisLoci::groupedByCategory() as $cat => $colors): ?>
                         <optgroup label="<?= htmlspecialchars(AgapornisLoci::categoryLabel($cat, $lang === 'ja')) ?>">
                             <?php foreach ($colors as $key => $def): ?>
-                            <option value="<?= $key ?>"><?= htmlspecialchars($lang === 'ja' ? $def['ja'] : $def['en']) ?></option>
+                                        <option value="<?= $key ?>"><?= htmlspecialchars($def['en']) ?></option>
                             <?php endforeach; ?>
                         </optgroup>
                         <?php endforeach; ?>
@@ -749,33 +771,97 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
             </section>
 
             <section id="pathfinder" class="tab-content<?= $activeTab === 'pathfinder' ? ' active' : '' ?>">
-                <?php $pathTarget = $_POST['target'] ?? ''; ?>
-                <form method="POST" action="#pathfinder-result" class="card"><input type="hidden" name="action" value="pathfind">
-                    <h3>🧭 <?= t('target_trait') ?></h3>
-                    <select name="target" required style="width:100%;padding:.5rem;margin-bottom:1rem;">
-                        <option value=""><?= t('select_placeholder') ?></option>
-                        <?php foreach (AgapornisLoci::groupedByCategory() as $cat => $colors): ?>
-                        <optgroup label="<?= htmlspecialchars(AgapornisLoci::categoryLabel($cat, $lang === 'ja')) ?>">
-                            <?php foreach ($colors as $key => $def): ?>
-                            <option value="<?= $key ?>"<?= ($pathTarget ?? '') === $key ? ' selected' : '' ?>><?= htmlspecialchars($lang === 'ja' ? $def['ja'] : $def['en']) ?></option>
-                            <?php endforeach; ?>
-                        </optgroup>
-                        <?php endforeach; ?>
-                    </select>
-
-                    <button type="submit" class="btn btn-primary"><?= t('btn_pathfind') ?></button>
-                </form>
-                <div id="pathfinder-result">
-                <?php if ($action === 'pathfind' && $result && !isset($result['error'])): ?>
-                <div class="output-panel" style="margin-top:1rem;">
-                    <h4><?= htmlspecialchars($result['name']) ?></h4>
-                    <?php if(!empty($result['warning'])): ?><div class="warning-box"><?= htmlspecialchars($result['warning']) ?></div><?php endif; ?>
-                    <?php foreach($result['steps'] as $s): ?><div style="margin:.5rem 0;padding:.5rem;background:var(--bg-tertiary);border-radius:4px;"><strong><?= htmlspecialchars($s['title']) ?></strong><br>♂<?= htmlspecialchars($s['male']) ?> × ♀<?= htmlspecialchars($s['female']) ?><br>→ <?= htmlspecialchars($s['result']) ?></div><?php endforeach; ?>
-                </div>
-                <?php endif; ?>
-                </div>
-            </section>
-
+    <?php $pathTarget = $_POST['target'] ?? ''; ?>
+    <form method="POST" action="#pathfinder-result" class="card">
+        <input type="hidden" name="action" value="pathfind">
+        <h3>🧭 <?= t('target_trait') ?></h3>
+        <select name="target" required style="width:100%;padding:.5rem;margin-bottom:1rem;">
+            <option value=""><?= t('select_placeholder') ?></option>
+            <?php foreach (AgapornisLoci::groupedByCategory() as $cat => $colors): ?>
+            <optgroup label="<?= htmlspecialchars(AgapornisLoci::categoryLabel($cat, $lang === 'ja')) ?>">
+                <?php foreach ($colors as $key => $def): ?>
+                    <option value="<?= $key ?>"<?= ($pathTarget ?? '') === $key ? ' selected' : '' ?>><?= htmlspecialchars($lang === 'ja' ? $def['ja'] : $def['en']) ?></option>
+                <?php endforeach; ?>
+            </optgroup>
+            <?php endforeach; ?>
+        </select>
+        <button type="submit" class="btn btn-primary"><?= t('btn_pathfind') ?></button>
+    </form>
+    
+    <div id="pathfinder-result">
+    <?php if ($action === 'pathfind' && $result && !isset($result['error'])): ?>
+    <?php 
+        $targetKey = $result['targetKey'] ?? '';
+        $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$targetKey] ?? null;
+        $targetName = $colorDef ? ($lang === 'ja' ? $colorDef['ja'] : $colorDef['en']) : $targetKey;
+    ?>
+    <div class="output-panel" style="margin-top:1rem;">
+        <div class="output-header">
+            <span class="output-title">🎯 <?= htmlspecialchars($targetName) ?></span>
+        </div>
+        
+        <?php if(!empty($result['warnings'])): ?>
+        <div class="warning-box" style="margin-bottom:1rem;">
+            <?php foreach($result['warnings'] as $w): ?>
+            <div><?= t($w['key'], $w['params'] ?? []) ?></div>
+            <?php endforeach; ?>
+        </div>
+        <?php endif; ?>
+        
+        <div class="steps-container">
+        <?php foreach($result['steps'] as $idx => $s): ?>
+        <?php
+            $titleParams = $s['title_params'] ?? [];
+            if (isset($titleParams['locus'])) {
+                $locusKey = $titleParams['locus'];
+                $locusInfo = AgapornisLoci::LOCI[$locusKey] ?? null;
+                $titleParams['locus_name'] = $locusInfo ? ($lang === 'ja' ? $locusInfo['name']['ja'] : $locusInfo['name']['en']) : $locusKey;
+            }
+            $title = t($s['title_key'] ?? '', $titleParams);
+            
+            $maleColorKey = $s['male_key'] ?? 'green';
+            $femaleColorKey = $s['female_key'] ?? 'green';
+            $maleColorDef = AgapornisLoci::COLOR_DEFINITIONS[$maleColorKey] ?? null;
+            $femaleColorDef = AgapornisLoci::COLOR_DEFINITIONS[$femaleColorKey] ?? null;
+            $maleName = $maleColorDef ? ($lang === 'ja' ? $maleColorDef['ja'] : $maleColorDef['en']) : $maleColorKey;
+            $femaleName = $femaleColorDef ? ($lang === 'ja' ? $femaleColorDef['ja'] : $femaleColorDef['en']) : $femaleColorKey;
+            
+            $maleSuffix = isset($s['male_suffix_key']) ? t($s['male_suffix_key']) : '';
+            $femaleSuffix = isset($s['female_suffix_key']) ? t($s['female_suffix_key']) : '';
+            
+            $resultParams = $s['result_params'] ?? [];
+            if (isset($resultParams['locus'])) {
+                $locusKey = $resultParams['locus'];
+                $locusInfo = AgapornisLoci::LOCI[$locusKey] ?? null;
+                $resultParams['locus_name'] = $locusInfo ? ($lang === 'ja' ? $locusInfo['name']['ja'] : $locusInfo['name']['en']) : $locusKey;
+            }
+            $resultText = t($s['result_key'] ?? '', $resultParams);
+        ?>
+        <div style="margin:.5rem 0;padding:.75rem;background:var(--bg-tertiary);border-radius:8px;border-left:3px solid var(--accent-turquoise);">
+            <strong style="color:#4ecdc4;"><?= htmlspecialchars($title) ?></strong>
+            <div style="margin-top:.5rem;color:#e0e0e0;">
+                ♂ <?= htmlspecialchars($maleName) ?><?= $maleSuffix ? ' (' . htmlspecialchars($maleSuffix) . ')' : '' ?>
+                × 
+                ♀ <?= htmlspecialchars($femaleName) ?><?= $femaleSuffix ? ' (' . htmlspecialchars($femaleSuffix) . ')' : '' ?>
+            </div>
+            <div style="margin-top:.25rem;color:#aaa;font-size:.9rem;">
+                → <?= htmlspecialchars($resultText) ?>
+            </div>
+        </div>
+        <?php endforeach; ?>
+        </div>
+        
+        <div style="margin-top:1rem;padding:.75rem;background:rgba(78,205,196,0.1);border-radius:8px;font-size:.85rem;color:#888;">
+            <?= t('pf_estimated_gen') ?>: <?= $result['minGenerations'] ?? count($result['steps']) ?>
+        </div>
+    </div>
+    <?php elseif ($action === 'pathfind' && isset($result['error'])): ?>
+    <div class="output-panel" style="margin-top:1rem;">
+        <div class="warning-box"><?= t($result['error'], ['target' => $result['errorParam'] ?? '']) ?></div>
+    </div>
+    <?php endif; ?>
+    </div>
+</section>
             <section id="feasibility" class="tab-content<?= $activeTab === 'feasibility' ? ' active' : '' ?>">
                 <?php
                 // フォーム値を保持
@@ -802,7 +888,7 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
                 $mOpaline = $_POST['m_opaline'] ?? '+W';
                 $mCinnamon = $_POST['m_cinnamon'] ?? '+W';
                 $mPied = $_POST['m_pirec'] ?? '++';
-                // v6.8追加: 14座位対応
+                // v7.0追加: 14座位対応
 $fVio = $_POST['f_vio'] ?? 'vv';
 $fPidom = $_POST['f_pidom'] ?? '++';
 $fFlp = $_POST['f_flp'] ?? '++';
@@ -842,9 +928,13 @@ $mPh = $_POST['m_ph'] ?? '++';
                                 </select>
                             </div>
                             <!-- fromdbモード用隠しフィールド -->
-                            <input type="hidden" name="f_db_baseColor" id="f_db_baseColor" value="<?= htmlspecialchars($_POST['f_db_baseColor'] ?? '') ?>">
-                            <input type="hidden" name="f_db_eyeColor" id="f_db_eyeColor" value="<?= htmlspecialchars($_POST['f_db_eyeColor'] ?? '') ?>">
-                            <input type="hidden" name="f_db_darkness" id="f_db_darkness" value="<?= htmlspecialchars($_POST['f_db_darkness'] ?? '') ?>">
+<input type="hidden" name="f_db_baseColor" id="f_db_baseColor" value="<?= htmlspecialchars($_POST['f_db_baseColor'] ?? '') ?>">
+<input type="hidden" name="f_db_eyeColor" id="f_db_eyeColor" value="<?= htmlspecialchars($_POST['f_db_eyeColor'] ?? '') ?>">
+<input type="hidden" name="f_db_darkness" id="f_db_darkness" value="<?= htmlspecialchars($_POST['f_db_darkness'] ?? '') ?>">
+<input type="hidden" name="f_db_genotype" id="f_db_genotype" value="<?= htmlspecialchars($_POST['f_db_genotype'] ?? '') ?>">
+
+                        </div>
+
 
                         </div>
                         
@@ -890,10 +980,10 @@ $mPh = $_POST['m_ph'] ?? '++';
                                 </select>
                             </div>
                             <!-- fromdbモード用隠しフィールド -->
-                            <input type="hidden" name="m_db_baseColor" id="m_db_baseColor" value="<?= htmlspecialchars($_POST['m_db_baseColor'] ?? '') ?>">
-                            <input type="hidden" name="m_db_eyeColor" id="m_db_eyeColor" value="<?= htmlspecialchars($_POST['m_db_eyeColor'] ?? '') ?>">
-                            <input type="hidden" name="m_db_darkness" id="m_db_darkness" value="<?= htmlspecialchars($_POST['m_db_darkness'] ?? '') ?>">
-
+                           <input type="hidden" name="m_db_baseColor" id="m_db_baseColor" value="<?= htmlspecialchars($_POST['m_db_baseColor'] ?? '') ?>">
+<input type="hidden" name="m_db_eyeColor" id="m_db_eyeColor" value="<?= htmlspecialchars($_POST['m_db_eyeColor'] ?? '') ?>">
+<input type="hidden" name="m_db_darkness" id="m_db_darkness" value="<?= htmlspecialchars($_POST['m_db_darkness'] ?? '') ?>">
+<input type="hidden" name="m_db_genotype" id="m_db_genotype" value="<?= htmlspecialchars($_POST['m_db_genotype'] ?? '') ?>">
                         </div>
                         
                         <!-- Phenotype inputs (共通) -->
@@ -921,7 +1011,8 @@ $mPh = $_POST['m_ph'] ?? '++';
 <div class="form-group"><label>Pale Headed</label><select name="m_ph"><?php foreach(['++'=>'+/+','+ph'=>'+/ph','phph'=>'ph/ph'] as $v=>$l){echo '<option value="'.$v.'"'.(($mPh??'')===$v?' selected':'').'>'.$l.'</option>';}?></select></div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-primary" style="margin-top:1rem;" onclick="window._allowSubmit=true; document.getElementById('feasibilityForm').submit();">🧬 <?= t('btn_calculate') ?></button>
+                    <button type="button" class="btn btn-primary" style="margin-top:1rem;" onclick="alert('f_geno: ' + document.getElementById('f_db_genotype').value + '\nm_geno: ' + document.getElementById('m_db_genotype').value); window._allowSubmit=true; document.getElementById('feasibilityForm').submit();">
+🧬 <?= t('btn_calculate') ?></button>
 
                 </form>
                 
@@ -938,37 +1029,31 @@ $mPh = $_POST['m_ph'] ?? '++';
                     }
                 }
                 
-                function populateDbSelect(parent) {
-                    const select = document.getElementById(`${parent}_db_select`);
-                    if (!select || typeof BirdDB === 'undefined') return;
-                    
-                    const sex = parent === 'f' ? 'male' : 'female';
-                    const birds = BirdDB.getAllBirds().filter(b => b.sex === sex);
-                    const isJa = document.documentElement.lang === 'ja';
-                    
-                    select.innerHTML = `<option value="">${T.select_placeholder}</option>`;
-                    birds.forEach(b => {
-                        const geno = b.genotype || {};
-                        const pheno = b.phenotype || {};
-                        let colorLabel;
-                        if (Object.keys(geno).length > 0 && BirdDB.calculatePhenotype) {
-                            colorLabel = BirdDB.calculatePhenotype(geno, b.sex);
-                        } else {
-                            colorLabel = getColorLabel(pheno.baseColor, isJa);
-                        }
-                        const opt = document.createElement('option');
-                        opt.value = b.id;
-                        opt.textContent = `${b.name || b.id} - ${colorLabel}`;
-                    select.appendChild(opt);
-                });
-                
+function populateDbSelect(parent) {
+    const select = document.getElementById(`${parent}_db_select`);
+    if (!select || typeof BirdDB === 'undefined') return;
+    
+    const sex = parent === 'f' ? 'male' : 'female';
+    const birds = BirdDB.getAllBirds().filter(b => b.sex === sex);
+    const isJa = LANG === 'ja';
+    
+    select.innerHTML = `<option value="">${T.select_placeholder}</option>`;
+    birds.forEach(b => {
+const colorLabel = getBirdColorLabel(b);
+        const opt = document.createElement('option');
+        opt.value = b.id;
+        opt.textContent = `${b.name || b.id} - ${colorLabel}`;
+        select.appendChild(opt);
+    });
                 // POST後の選択状態を復元
-                const savedValue = parent === 'f' 
-                    ? '<?= addslashes($fDbId ?? "") ?>' 
-                    : '<?= addslashes($mDbId ?? "") ?>';
-                if (savedValue) {
-                    select.value = savedValue;
-                }
+const savedValue = parent === 'f' 
+    ? '<?= addslashes($fDbId ?? "") ?>' 
+    : '<?= addslashes($mDbId ?? "") ?>';
+if (savedValue) {
+    select.value = savedValue;
+    loadBirdToForm(parent, savedValue);
+}
+
             }
                 /**
                  * v6.7.3: 32色対応ラベル（ALBS準拠）
@@ -977,34 +1062,31 @@ $mPh = $_POST['m_ph'] ?? '++';
                     return COLOR_LABELS[color] || color || '?';
                 }
                 function loadBirdToForm(parent, birdId) {
-                    const prefix = (parent === 'father' || parent === 'f') ? 'f' : 'm';
-
-                    
-                    if (!birdId || typeof BirdDB === 'undefined') return false;
-                    
-                    const bird = BirdDB.getBird(birdId);
-                    if (!bird) return false;
-                    
-                    let baseColor = 'green';
-                    let eyeColor = 'black';
-                    let darkness = 'none';
-                    
-                    if (bird.observed && bird.observed.baseColor) {
-                        baseColor = bird.observed.baseColor;
-                        eyeColor = bird.observed.eyeColor || 'black';
-                        darkness = bird.observed.darkness || 'none';
-                    }
-                    
-                    const bcEl = document.getElementById(prefix + '_db_baseColor');
-                    const ecEl = document.getElementById(prefix + '_db_eyeColor');
-                    const dkEl = document.getElementById(prefix + '_db_darkness');
-                    
-                    if (bcEl) bcEl.value = baseColor;
-                    if (ecEl) ecEl.value = eyeColor;
-                    if (dkEl) dkEl.value = darkness;
-                    
-                    return false;
-                }
+    const prefix = (parent === 'father' || parent === 'f') ? 'f' : 'm';
+    
+    if (!birdId || typeof BirdDB === 'undefined') return false;
+    
+    const bird = BirdDB.getBird(birdId);
+    if (!bird) return false;
+    
+    // 表現型をセット
+    const bcEl = document.getElementById(prefix + '_db_baseColor');
+    const ecEl = document.getElementById(prefix + '_db_eyeColor');
+    const dkEl = document.getElementById(prefix + '_db_darkness');
+    
+    if (bcEl) bcEl.value = bird.observed?.baseColor || 'green';
+    if (ecEl) ecEl.value = bird.observed?.eyeColor || 'black';
+    if (dkEl) dkEl.value = bird.observed?.darkness || 'none';
+    
+    // 遺伝子型をJSONでセット
+    const genoEl = document.getElementById(prefix + '_db_genotype');
+    if (genoEl && bird.genotype) {
+        genoEl.value = JSON.stringify(bird.genotype);
+    }
+    
+    console.log('[GeneForge] ' + prefix + ' loaded:', bird.name, bird.genotype);
+    return true;
+    }
                  /**
                  * 観察情報から遺伝子型を推測
                  * v6.7.3: aqua系対応、creamino=INO系修正
@@ -1162,13 +1244,215 @@ $mPh = $_POST['m_ph'] ?? '++';
                 });
                 </script>
                 
-                <div id="feasibility-result">
-                <?php if ($action === 'calculate' && $result): ?>
-                <div class="output-panel" style="margin-top:1rem;"><div class="offspring-grid">
-                    <?php foreach($result as $o): ?><div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($o['prob']*100,1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype']) ?></div></div><?php endforeach; ?>
-                </div></div>
-                <?php endif; ?>
-                </div>
+                <?php
+/**
+ * index.php の feasibility-result 部分を置き換え
+ * 
+ * 追加機能:
+ * 1. 結果をコピー（クリップボード）
+ * 2. 結果をCSVでダウンロード
+ */
+?>
+
+<div id="feasibility-result">
+<?php if ($action === 'calculate' && $result): ?>
+<?php 
+$phenoResults = $result['phenotype'] ?? [];
+$genoResults = $result['genotype'] ?? [];
+if (empty($phenoResults) && !isset($result['phenotype'])) {
+    $phenoResults = $result;
+    $genoResults = $result;
+}
+?>
+<div class="output-panel" style="margin-top:1rem;">
+    <!-- タブ切り替え + アクションボタン -->
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;margin-bottom:1rem;">
+        <div style="display:flex;gap:0.5rem;">
+            <button type="button" id="tabPhenoBtn" class="btn btn-small btn-primary" onclick="switchResultTab('pheno')"><?= t('tab_phenotype') ?? '表現型' ?></button>
+            <button type="button" id="tabGenoBtn" class="btn btn-small btn-outline" onclick="switchResultTab('geno')"><?= t('tab_genotype') ?? '遺伝子型' ?></button>
+        </div>
+        <div style="display:flex;gap:0.5rem;">
+            <button type="button" class="btn btn-small btn-outline" onclick="copyResults()">📋 <?= t('copy_results') ?? 'コピー' ?></button>
+            <button type="button" class="btn btn-small btn-outline" onclick="downloadResultsCSV()">📥 CSV</button>
+        </div>
+    </div>
+    
+    <!-- 表現型タブ -->
+    <div id="resultPheno" class="offspring-grid">
+        <?php foreach($phenoResults as $o): ?>
+        <?php if (($o['prob'] ?? 0) < 0.01) continue; ?>
+        <div class="result-card" data-sex="<?= $o['sex'] ?? '' ?>" data-pheno="<?= htmlspecialchars($o['phenotype'] ?? '') ?>" data-prob="<?= $o['prob'] ?? 0 ?>">
+            <div style="font-size:1.2rem;font-weight:bold;color:var(--accent-turquoise);"><?= number_format($o['prob'] ?? 0, 1) ?>%</div>
+            <div style="color:#fff;"><?= ($o['sex'] ?? '') === 'male' ? '♂' : '♀' ?> <?= htmlspecialchars($o['phenotype'] ?? '') ?></div>
+            <?php if (!empty($o['possibleSplits'])): ?>
+            <div style="font-size:0.7rem;color:#888;margin-top:0.25rem;">Split可能: <?= implode(', ', $o['possibleSplits']) ?></div>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <!-- 遺伝子型タブ -->
+    <div id="resultGeno" class="offspring-grid" style="display:none;">
+        <?php foreach($genoResults as $o): ?>
+        <?php if (($o['prob'] ?? 0) < 0.01) continue; ?>
+        <div class="result-card" data-sex="<?= $o['sex'] ?? '' ?>" data-pheno="<?= htmlspecialchars($o['displayName'] ?? $o['phenotype'] ?? '') ?>" data-prob="<?= $o['prob'] ?? 0 ?>" data-splits="<?= htmlspecialchars($o['splitStr'] ?? '') ?>">
+            <div style="font-size:1.2rem;font-weight:bold;color:var(--accent-turquoise);"><?= number_format($o['prob'] ?? 0, 1) ?>%</div>
+            <div style="color:#fff;"><?= ($o['sex'] ?? '') === 'male' ? '♂' : '♀' ?> <?= htmlspecialchars($o['phenotype'] ?? '') ?></div>
+            <?php if (!empty($o['splitStr'])): ?>
+            <div style="font-size:0.75rem;color:#f0a500;"><?= htmlspecialchars($o['splitStr']) ?></div>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    
+    <!-- 統計サマリー -->
+    <div style="margin-top:1rem;padding:0.75rem;background:var(--bg-tertiary);border-radius:8px;font-size:0.85rem;color:#888;">
+        <?= t('result_count') ?? '結果数' ?>: 
+        <span id="resultCountPheno"><?= count(array_filter($phenoResults, fn($r) => ($r['prob'] ?? 0) >= 0.01)) ?></span> / 
+        <span id="resultCountGeno" style="display:none;"><?= count(array_filter($genoResults, fn($r) => ($r['prob'] ?? 0) >= 0.01)) ?></span>
+        <?= t('patterns') ?? 'パターン' ?>
+    </div>
+</div>
+
+<script>
+// 現在のタブ
+let currentResultTab = 'pheno';
+
+function switchResultTab(tab) {
+    currentResultTab = tab;
+    document.getElementById('resultPheno').style.display = tab === 'pheno' ? 'grid' : 'none';
+    document.getElementById('resultGeno').style.display = tab === 'geno' ? 'grid' : 'none';
+    document.getElementById('tabPhenoBtn').className = 'btn btn-small ' + (tab === 'pheno' ? 'btn-primary' : 'btn-outline');
+    document.getElementById('tabGenoBtn').className = 'btn btn-small ' + (tab === 'geno' ? 'btn-primary' : 'btn-outline');
+    
+    // 結果数表示切り替え
+    document.getElementById('resultCountPheno').style.display = tab === 'pheno' ? 'inline' : 'none';
+    document.getElementById('resultCountGeno').style.display = tab === 'geno' ? 'inline' : 'none';
+}
+
+/**
+ * 結果をクリップボードにコピー
+ */
+function copyResults() {
+    const container = currentResultTab === 'pheno' 
+        ? document.getElementById('resultPheno') 
+        : document.getElementById('resultGeno');
+    
+    const cards = container.querySelectorAll('.result-card');
+    const lines = [];
+    
+    // ヘッダー
+    lines.push(['Sex', 'Phenotype', 'Probability'].join('\t'));
+    
+    // データ
+    cards.forEach(card => {
+        const sex = card.dataset.sex === 'male' ? '♂' : '♀';
+        const pheno = card.dataset.pheno || '';
+        const prob = card.dataset.prob || '0';
+        const splits = card.dataset.splits || '';
+        
+        const displayName = splits ? pheno + ' ' + splits : pheno;
+        lines.push([sex, displayName, prob + '%'].join('\t'));
+    });
+    
+    const text = lines.join('\n');
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast(T.copied || 'コピーしました');
+    }).catch(err => {
+        console.error('Copy failed:', err);
+        // フォールバック
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        showToast(T.copied || 'コピーしました');
+    });
+}
+
+/**
+ * 結果をCSVでダウンロード
+ */
+function downloadResultsCSV() {
+    const container = currentResultTab === 'pheno' 
+        ? document.getElementById('resultPheno') 
+        : document.getElementById('resultGeno');
+    
+    const cards = container.querySelectorAll('.result-card');
+    const lines = [];
+    
+    // BOM + ヘッダー（Excel対応）
+    lines.push('Sex,Phenotype,Splits,Probability');
+    
+    // データ
+    cards.forEach(card => {
+        const sex = card.dataset.sex === 'male' ? 'Male' : 'Female';
+        const pheno = (card.dataset.pheno || '').replace(/,/g, ';'); // カンマをエスケープ
+        const splits = (card.dataset.splits || '').replace(/,/g, ';');
+        const prob = card.dataset.prob || '0';
+        
+        lines.push([sex, '"' + pheno + '"', '"' + splits + '"', prob].join(','));
+    });
+    
+    const csv = '\uFEFF' + lines.join('\n'); // BOM for Excel
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'breeding_results_' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showToast(T.downloaded || 'ダウンロードしました');
+}
+
+/**
+ * トースト通知
+ */
+function showToast(message) {
+    const existing = document.getElementById('toast');
+    if (existing) existing.remove();
+    
+    const toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = 'position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);background:#00d4aa;color:#000;padding:0.75rem 1.5rem;border-radius:8px;font-weight:bold;z-index:10000;animation:fadeInUp 0.3s ease;';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+    }, 2000);
+}
+</script>
+
+<style>
+.result-card {
+    padding: 0.75rem;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.2s;
+}
+.result-card:hover {
+    background: var(--bg-elevated);
+    transform: translateY(-2px);
+}
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translate(-50%, 10px); }
+    to { opacity: 1; transform: translate(-50%, 0); }
+}
+</style>
+
+<?php endif; ?>
+</div>
+
             </section>
 
             <section id="estimator" class="tab-content<?= $activeTab === 'estimator' ? ' active' : '' ?>">
@@ -1217,7 +1501,7 @@ $mPh = $_POST['m_ph'] ?? '++';
 <?php 
     $bgColor = $l['isConfirmed'] ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
     $borderLeft = $l['isConfirmed'] ? '3px solid #4ecdc4' : '3px solid #555';
-    $confidenceLabel = $l['isConfirmed'] ? '✓ 確定' : '? 推定';
+$confidenceLabel = $l['isConfirmed'] ? '✓ ' . t('confirmed') : '? ' . t('estimated');
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
     <strong style="color:#4ecdc4;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
@@ -1280,7 +1564,6 @@ $mPh = $_POST['m_ph'] ?? '++';
 // refreshBirdList をグローバルに定義（フィルター対応版）
 function refreshBirdList() {
     if (typeof BirdDB === 'undefined') return;
-    
     const birds = BirdDB.getAllBirds();
     const stats = BirdDB.getStats();
     
@@ -1306,7 +1589,16 @@ function refreshBirdList() {
             '<div class="stat-card"><span class="stat-num">' + filtered.length + '</span><span class="stat-label">' + (T.filtered || '表示中') + '</span></div>' +
             '</div>';
     }
-    
+        // 系統フィルターのオプション更新
+    const lineageSelect = document.getElementById('birdFilterLineage');
+    if (lineageSelect) {
+        const currentValue = lineageSelect.value;
+        const lineages = [...new Set(birds.map(b => b.lineage).filter(Boolean))].sort();
+        lineageSelect.innerHTML = '<option value="">' + (T.all_lineage || '全系統') + '</option>';
+        lineages.forEach(function(lin) {
+            lineageSelect.innerHTML += '<option value="' + lin + '"' + (lin === currentValue ? ' selected' : '') + '>' + lin + '</option>';
+        });
+    }
     const listEl = document.getElementById('birdList');
     if (!listEl) return;
     
@@ -1329,7 +1621,7 @@ function refreshBirdList() {
                     '<button type="button" class="btn btn-tiny" onclick="deleteBird(\'' + bird.id + '\')">🗑️</button>' +
                 '</div>' +
             '</div>' +
-            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + (bird.phenotype || '') + '</div>' +
+'<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + (COLOR_LABELS[bird.observed?.baseColor] || bird.phenotype || '?') + '</div>' +
         '</div>';
     }).join('');
 }
@@ -1417,12 +1709,23 @@ function showTab(id){
         setTimeout(()=>{
             target.scrollIntoView({behavior:'smooth', block:'start'});
         }, 50);
+        
+        // タブ別の初期化
+        if (id === 'family' && typeof FamilyMap !== 'undefined') {
+    FamilyMap.renderUI();
+}
+        if (id === 'birddb' && typeof refreshBirdList === 'function') {
+            refreshBirdList();
+        }
+        if (id === 'health' && typeof initHealthSelectors === 'function') {
+            initHealthSelectors();
+        }
     }
 }
 </script>
 <script src="family.js?v=674"></script>
 <script src="app.js?v=<?= time() ?>"></script>
-<!-- initLang removed: SSOT via window.T -->
+<script>if(typeof initLang==='function')initLang(T);</script>
 <script>
     // 健康評価タブ用セレクタ初期化（BirdDB準備完了を待つ）
         function initHealthSelectors() {
@@ -1473,22 +1776,21 @@ if (geno.flp && geno.flp !== '++') parts.push('flp');
 if (geno.flb && geno.flb !== '++') parts.push('flb');
             return parts.length > 0 ? parts.join('/') : 'WT';
         }
-        /**
- * 健康評価実行
- */
+
 function checkPairingHealth() {
     const sireId = document.getElementById('healthSire').value;
     const damId = document.getElementById('healthDam').value;
     const resultEl = document.getElementById('healthCheckResult');
+    const TG = window.T_GUARDIAN || {};
     const T = window.T || {};
     
     if (!sireId || !damId) {
-        resultEl.innerHTML = '<div class="warning-box">' + (T.select_both_parents || '父と母を選択してください') + '</div>';
+        resultEl.innerHTML = '<div class="warning-box">' + (T.select_both_parents || 'Please select both parents') + '</div>';
         return;
     }
     
     if (typeof BirdDB === 'undefined') {
-        resultEl.innerHTML = '<div class="warning-box">' + (T.bird_not_found || 'BirdDBが読み込まれていません') + '</div>';
+        resultEl.innerHTML = '<div class="warning-box">' + (T.bird_not_found || 'BirdDB not loaded') + '</div>';
         return;
     }
     
@@ -1496,7 +1798,7 @@ function checkPairingHealth() {
     const dam = BirdDB.getBird(damId);
     
     if (!sire || !dam) {
-        resultEl.innerHTML = '<div class="warning-box">' + (T.bird_not_found || '個体が見つかりません') + '</div>';
+        resultEl.innerHTML = '<div class="warning-box">' + (T.bird_not_found || 'Bird not found') + '</div>';
         return;
     }
     
@@ -1507,36 +1809,50 @@ function checkPairingHealth() {
         ic = icResult.coefficient || 0;
     }
     
-    // HealthGuardian存在チェック
+    const icPercent = (ic * 100).toFixed(2);
+    
+    // HealthGuardian評価
     if (typeof HealthGuardian === 'undefined' || typeof HealthGuardian.evaluateHealth !== 'function') {
         // フォールバック: 簡易評価
-        let riskLevel = 'safe';
         let riskColor = '#10b981';
         let riskBg = 'rgba(16,185,129,0.1)';
         let riskIcon = '✓';
-        let riskLabel = T.risk_safe || '安全';
-        let summary = T.low_health_risk || '健康リスクは低いです';
+        let riskLabel = TG.risk_safe || 'Safe';
+        let summary = TG.summary_safe || T.low_health_risk || 'Low health risk';
+        let detail = '';
         
         if (ic >= 0.25) {
-            riskLevel = 'critical';
             riskColor = '#ef4444';
             riskBg = 'rgba(239,68,68,0.1)';
             riskIcon = '🚫';
-            riskLabel = T.risk_critical || '危険';
-            summary = T.inbreeding_danger || '近交係数が25%以上です';
+            riskLabel = TG.risk_critical || 'Critical';
+            summary = TG.f_critical_summary || 'Inbreeding coefficient is 25% or higher';
+            detail = TG.f_critical_detail || '';
         } else if (ic >= 0.125) {
-            riskLevel = 'warning';
             riskColor = '#f59e0b';
             riskBg = 'rgba(245,158,11,0.1)';
             riskIcon = '⚠️';
-            riskLabel = T.risk_high || '高リスク';
-            summary = T.inbreeding_warning || '近交係数が12.5%以上です';
+            riskLabel = TG.risk_high || 'High Risk';
+            summary = TG.f_high_summary || 'Inbreeding coefficient is 12.5% or higher';
+            detail = TG.f_high_detail || '';
+        } else if (ic >= 0.0625) {
+            riskColor = '#eab308';
+            riskBg = 'rgba(234,179,8,0.1)';
+            riskIcon = '⚡';
+            riskLabel = TG.risk_moderate || 'Caution';
+            summary = TG.f_moderate_summary || 'Inbreeding coefficient is 6.25% or higher';
+            detail = TG.f_moderate_detail || '';
         }
         
         let html = '<div class="health-result" style="margin-top:1rem;padding:1rem;background:' + riskBg + ';border-radius:8px;border-left:4px solid ' + riskColor + ';">';
         html += '<div style="font-size:1.2rem;font-weight:bold;color:' + riskColor + ';">' + riskIcon + ' ' + riskLabel + '</div>';
         html += '<div style="margin-top:0.5rem;color:#e0e0e0;">' + summary + '</div>';
-        html += '<div style="margin-top:0.5rem;font-size:0.9rem;color:#aaa;">' + (T.inbreeding_coefficient || '近交係数') + ': F = ' + (ic * 100).toFixed(2) + '%</div>';
+        if (detail) {
+            html += '<div style="margin-top:0.5rem;font-size:0.85rem;color:#aaa;">' + detail + '</div>';
+        }
+        html += '<div style="margin-top:0.75rem;font-size:0.9rem;color:#aaa;padding-top:0.5rem;border-top:1px solid rgba(255,255,255,0.1);">';
+        html += (TG.label_inbreeding_coefficient || 'Inbreeding Coefficient') + ': F = ' + icPercent + '%';
+        html += '</div>';
         html += '</div>';
         resultEl.innerHTML = html;
         return;
@@ -1548,10 +1864,10 @@ function checkPairingHealth() {
     let html = '<div class="health-result" style="margin-top:1rem;padding:1rem;background:' + evaluation.riskStyle.bg + ';border-radius:8px;border-left:4px solid ' + evaluation.riskStyle.color + ';">';
     html += '<div style="font-size:1.2rem;font-weight:bold;color:' + evaluation.riskStyle.color + ';">' + evaluation.riskStyle.icon + ' ' + evaluation.riskStyle.label + '</div>';
     html += '<div style="margin-top:0.5rem;color:#e0e0e0;">' + evaluation.summary + '</div>';
-    html += '<div style="margin-top:0.5rem;font-size:0.9rem;color:#aaa;">' + (T.inbreeding_coefficient || '近交係数') + ': F = ' + (ic * 100).toFixed(2) + '%</div>';
+    html += '<div style="margin-top:0.5rem;font-size:0.9rem;color:#aaa;">' + (TG.label_inbreeding_coefficient || 'Inbreeding Coefficient') + ': F = ' + icPercent + '%</div>';
     
     if (evaluation.blocks && evaluation.blocks.length > 0) {
-        html += '<div style="margin-top:1rem;"><strong style="color:#ef4444;">🚫 ' + (T.risk_critical || '繁殖禁止') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
+        html += '<div style="margin-top:1rem;"><strong style="color:#ef4444;">🚫 ' + (TG.label_breeding_prohibited || 'Breeding Prohibited') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
         evaluation.blocks.forEach(function(b) {
             html += '<li style="color:#fca5a5;margin:0.25rem 0;">' + b.message + '<br><span style="font-size:0.85rem;color:#888;">' + b.detail + '</span></li>';
         });
@@ -1559,7 +1875,7 @@ function checkPairingHealth() {
     }
     
     if (evaluation.warnings && evaluation.warnings.length > 0) {
-        html += '<div style="margin-top:1rem;"><strong style="color:#f59e0b;">⚠️ ' + (T.risk_high || '警告') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
+        html += '<div style="margin-top:1rem;"><strong style="color:#f59e0b;">⚠️ ' + (TG.label_warning || 'Warning') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
         evaluation.warnings.forEach(function(w) {
             html += '<li style="color:#fcd34d;margin:0.25rem 0;">' + w.message + '<br><span style="font-size:0.85rem;color:#888;">' + w.detail + '</span></li>';
         });
@@ -1567,7 +1883,7 @@ function checkPairingHealth() {
     }
     
     if (evaluation.risks && evaluation.risks.length > 0) {
-        html += '<div style="margin-top:1rem;"><strong style="color:#eab308;">⚡ ' + (T.risk_moderate || '注意') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
+        html += '<div style="margin-top:1rem;"><strong style="color:#eab308;">⚡ ' + (TG.label_caution || 'Caution') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
         evaluation.risks.forEach(function(r) {
             html += '<li style="color:#fef08a;margin:0.25rem 0;">' + r.message + '<br><span style="font-size:0.85rem;color:#888;">' + r.detail + '</span></li>';
         });
@@ -1575,22 +1891,20 @@ function checkPairingHealth() {
     }
     
     if ((!evaluation.blocks || evaluation.blocks.length === 0) && (!evaluation.warnings || evaluation.warnings.length === 0) && (!evaluation.risks || evaluation.risks.length === 0)) {
-        html += '<div style="margin-top:0.5rem;color:#10b981;">✓ ' + (T.low_health_risk || '健康上の問題は検出されませんでした') + '</div>';
+        html += '<div style="margin-top:0.5rem;color:#10b981;">✓ ' + (TG.summary_safe || T.low_health_risk || 'No health issues detected') + '</div>';
     }
     
     html += '</div>';
     resultEl.innerHTML = html;
 }
-
         setTimeout(initHealthSelectors, 1000);
 
         
         // 個体DB初期表示
-        document.addEventListener('DOMContentLoaded', function() {
+                document.addEventListener('DOMContentLoaded', function() {
             if (typeof refreshBirdList === 'function') {
                 refreshBirdList();
-            }
-            
+            }            
             // URLハッシュがあれば結果位置にスクロール
             if(window.location.hash){
                 const hashTarget = document.querySelector(window.location.hash);
@@ -1645,5 +1959,393 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
+
+<script>
+(function(){
+    // FamilyMap強制初期化
+    function forceInitFamilyMap() {
+        if (typeof FamilyMap === 'undefined') {
+            setTimeout(forceInitFamilyMap, 200);
+            return;
+        }
+        if (typeof BirdDB === 'undefined' || !BirdDB.getAllBirds().length) {
+            setTimeout(forceInitFamilyMap, 200);
+            return;
+        }
+        
+        // 強制的にrender
+        try {
+            if (!document.getElementById('familyMapContainer').children.length) {
+                FamilyMap.renderUI();
+            }
+        } catch(e) {
+            console.error('FamilyMap init error:', e);
+        }
+    }
+    
+    // 複数回チェック
+    setTimeout(forceInitFamilyMap, 500);
+    setTimeout(forceInitFamilyMap, 1000);
+    setTimeout(forceInitFamilyMap, 2000);
+    setTimeout(forceInitFamilyMap, 3000);
+})();
+</script>
+<script>
+// モード状態復元（BirdDB.init()後に確実に実行）
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const savedMode = localStorage.getItem('geneforge_mode') || 'user';
+        
+        // ボタンUI更新
+        const demoBtn = document.getElementById('modeBtnDemo');
+        const userBtn = document.getElementById('modeBtnUser');
+        if (demoBtn) demoBtn.classList.toggle('active', savedMode === 'demo');
+        if (userBtn) userBtn.classList.toggle('active', savedMode === 'user');
+        
+        // 内部状態を直接設定（setModeを経由しない）
+        if (typeof BirdDB !== 'undefined' && typeof DEMO_FAMILY !== 'undefined') {
+            BirdDB._mode = savedMode;
+            if (savedMode === 'demo') {
+                BirdDB._birds = JSON.parse(JSON.stringify(DEMO_FAMILY));
+            }
+            // UI更新
+            if (typeof refreshBirdList === 'function') refreshBirdList();
+            if (typeof refreshDBSelectors === 'function') refreshDBSelectors();
+        }
+    }, 150);
+});
+</script>
+<?php
+// ============================================================================
+// GENE-FORGE v7.0 完全デバッグパネル
+// index.php の </body> 直前に挿入
+// ============================================================================
+
+if ($action === 'calculate' && isset($_POST)):
+?>
+<div id="debugPanel" style="position:fixed;bottom:0;left:0;right:0;max-height:50vh;overflow-y:auto;background:#0a0a0a;border-top:3px solid #ff0066;font-family:'JetBrains Mono',monospace;font-size:11px;z-index:99999;padding:1rem;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <h3 style="color:#ff0066;margin:0;">🔬 GENE-FORGE DEBUG v7.0</h3>
+        <button onclick="document.getElementById('debugPanel').style.display='none'" style="background:#333;color:#fff;border:none;padding:0.5rem 1rem;cursor:pointer;">×</button>
+    </div>
+    
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:1rem;">
+        
+        <!-- 1. RAW POST データ -->
+        <div style="background:#111;padding:0.75rem;border-radius:4px;border-left:3px solid #00ffcc;">
+            <h4 style="color:#00ffcc;margin:0 0 0.5rem;">1️⃣ RAW $_POST</h4>
+            <pre style="color:#888;margin:0;white-space:pre-wrap;max-height:200px;overflow-y:auto;"><?php
+                $postFiltered = array_filter($_POST, function($k) {
+                    return strpos($k, 'f_') === 0 || strpos($k, 'm_') === 0 || $k === 'action';
+                }, ARRAY_FILTER_USE_KEY);
+                echo htmlspecialchars(json_encode($postFiltered, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+            ?></pre>
+        </div>
+        
+        <!-- 2. モード判定 -->
+        <div style="background:#111;padding:0.75rem;border-radius:4px;border-left:3px solid #ffcc00;">
+            <h4 style="color:#ffcc00;margin:0 0 0.5rem;">2️⃣ INPUT MODE</h4>
+            <?php
+            $fMode = $_POST['f_mode'] ?? 'phenotype';
+            $mMode = $_POST['m_mode'] ?? 'phenotype';
+            ?>
+            <div style="color:#fff;">
+                <div>Father Mode: <span style="color:<?= $fMode === 'fromdb' ? '#00ff00' : ($fMode === 'genotype' ? '#00ccff' : '#ffcc00') ?>;"><?= $fMode ?></span></div>
+                <div>Mother Mode: <span style="color:<?= $mMode === 'fromdb' ? '#00ff00' : ($mMode === 'genotype' ? '#00ccff' : '#ffcc00') ?>;"><?= $mMode ?></span></div>
+            </div>
+            <?php if ($fMode === 'fromdb'): ?>
+            <div style="margin-top:0.5rem;padding:0.5rem;background:#1a1a1a;border-radius:4px;">
+                <div style="color:#888;">f_db_id: <?= htmlspecialchars($_POST['f_db_id'] ?? 'NULL') ?></div>
+                <div style="color:#888;">f_db_baseColor: <?= htmlspecialchars($_POST['f_db_baseColor'] ?? 'NULL') ?></div>
+                <div style="color:#888;">f_db_genotype:</div>
+                <pre style="color:#00ff00;margin:0;font-size:10px;"><?= htmlspecialchars($_POST['f_db_genotype'] ?? 'NULL') ?></pre>
+            </div>
+            <?php endif; ?>
+            <?php if ($mMode === 'fromdb'): ?>
+            <div style="margin-top:0.5rem;padding:0.5rem;background:#1a1a1a;border-radius:4px;">
+                <div style="color:#888;">m_db_id: <?= htmlspecialchars($_POST['m_db_id'] ?? 'NULL') ?></div>
+                <div style="color:#888;">m_db_baseColor: <?= htmlspecialchars($_POST['m_db_baseColor'] ?? 'NULL') ?></div>
+                <div style="color:#888;">m_db_genotype:</div>
+                <pre style="color:#00ff00;margin:0;font-size:10px;"><?= htmlspecialchars($_POST['m_db_genotype'] ?? 'NULL') ?></pre>
+            </div>
+            <?php endif; ?>
+        </div>
+        
+        <!-- 3. 14座位入力値 -->
+        <div style="background:#111;padding:0.75rem;border-radius:4px;border-left:3px solid #ff6600;">
+            <h4 style="color:#ff6600;margin:0 0 0.5rem;">3️⃣ 14-LOCI INPUT VALUES</h4>
+            <table style="width:100%;color:#ccc;font-size:10px;border-collapse:collapse;">
+                <tr style="background:#222;"><th style="padding:2px 4px;text-align:left;">Locus</th><th style="padding:2px 4px;">Father</th><th style="padding:2px 4px;">Mother</th><th style="padding:2px 4px;">WT?</th></tr>
+                <?php
+                $lociKeys = [
+                    'parblue' => ['++', '++'],
+                    'dark' => ['dd', 'dd'],
+                    'ino' => ['++', '+W'],
+                    'op' => ['++', '+W'],
+                    'cin' => ['++', '+W'],
+                    'vio' => ['vv', 'vv'],
+                    'flp' => ['++', '++'],
+                    'flb' => ['++', '++'],
+                    'pidom' => ['++', '++'],
+                    'pirec' => ['++', '++'],
+                    'dil' => ['++', '++'],
+                    'ed' => ['++', '++'],
+                    'of' => ['++', '++'],
+                    'ph' => ['++', '++'],
+                ];
+                foreach ($lociKeys as $key => $defaults):
+                    $fVal = $_POST['f_' . $key] ?? $defaults[0];
+                    $mVal = $_POST['m_' . $key] ?? $defaults[1];
+                    $fIsWT = in_array($fVal, ['++', '+W', 'dd', 'vv']);
+                    $mIsWT = in_array($mVal, ['++', '+W', 'dd', 'vv']);
+                    $bothWT = $fIsWT && $mIsWT;
+                    $rowColor = $bothWT ? '' : 'background:#330000;';
+                ?>
+                <tr style="<?= $rowColor ?>">
+                    <td style="padding:2px 4px;color:#4ecdc4;"><?= $key ?></td>
+                    <td style="padding:2px 4px;text-align:center;color:<?= $fIsWT ? '#666' : '#ff6600' ?>;"><?= htmlspecialchars($fVal) ?></td>
+                    <td style="padding:2px 4px;text-align:center;color:<?= $mIsWT ? '#666' : '#ff6600' ?>;"><?= htmlspecialchars($mVal) ?></td>
+                    <td style="padding:2px 4px;text-align:center;"><?= $bothWT ? '✓' : '<span style="color:#ff0000;">✗</span>' ?></td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        </div>
+        
+        <!-- 4. 計算エンジン内部状態 -->
+        <div style="background:#111;padding:0.75rem;border-radius:4px;border-left:3px solid #cc00ff;">
+            <h4 style="color:#cc00ff;margin:0 0 0.5rem;">4️⃣ CALCULATOR INTERNAL STATE</h4>
+            <?php
+            // 計算エンジンを再実行して内部状態を取得
+            class DebugGeneticsCalculator extends GeneticsCalculator {
+                public array $debugLog = [];
+                
+                public function debugCalculate(array $input): array {
+                    $this->debugLog = [];
+                    
+                    $fMode = $input['f_mode'] ?? 'genotype';
+                    $mMode = $input['m_mode'] ?? 'genotype';
+                    
+                    $this->debugLog['modes'] = ['f' => $fMode, 'm' => $mMode];
+                    
+                    // fromdb処理後の入力値を記録
+                    if ($fMode === 'fromdb' && !empty($input['f_db_genotype'])) {
+                        $j = json_decode($input['f_db_genotype'], true);
+                        $this->debugLog['f_db_parsed'] = $j;
+                        if ($j) {
+                            foreach ($j as $k => $v) { $input['f_' . $k] = $v; }
+                            $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                            foreach ($keyMap as $long => $short) { 
+                                if (isset($j[$long])) {
+                                    $input['f_'.$short] = $j[$long];
+                                    $this->debugLog['f_keymap'][$long] = $j[$long];
+                                }
+                            }
+                        }
+                    }
+                    
+                    if ($mMode === 'fromdb' && !empty($input['m_db_genotype'])) {
+                        $j = json_decode($input['m_db_genotype'], true);
+                        $this->debugLog['m_db_parsed'] = $j;
+                        if ($j) {
+                            foreach ($j as $k => $v) { $input['m_' . $k] = $v; }
+                            $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                            foreach ($keyMap as $long => $short) { 
+                                if (isset($j[$long])) {
+                                    $input['m_'.$short] = $j[$long];
+                                    $this->debugLog['m_keymap'][$long] = $j[$long];
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 最終的な14座位入力値
+                    $this->debugLog['final_inputs'] = [];
+                    $loci = ['parblue','dark','ino','op','cin','vio','flp','flb','pidom','pirec','dil','ed','of','ph'];
+                    foreach ($loci as $l) {
+                        $this->debugLog['final_inputs'][$l] = [
+                            'f' => $input['f_' . $l] ?? '(not set)',
+                            'm' => $input['m_' . $l] ?? '(not set)',
+                        ];
+                    }
+                    
+                    return $this->debugLog;
+                }
+            }
+            
+            $debugCalc = new DebugGeneticsCalculator();
+            $debugState = $debugCalc->debugCalculate($_POST);
+            ?>
+            
+            <?php if (!empty($debugState['f_db_parsed'])): ?>
+            <div style="margin-bottom:0.5rem;">
+                <div style="color:#888;">Father DB Genotype Parsed:</div>
+                <pre style="color:#00ff00;margin:0;font-size:9px;max-height:100px;overflow-y:auto;"><?= htmlspecialchars(json_encode($debugState['f_db_parsed'], JSON_PRETTY_PRINT)) ?></pre>
+            </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($debugState['f_keymap'])): ?>
+            <div style="margin-bottom:0.5rem;">
+                <div style="color:#888;">Father KeyMap Applied:</div>
+                <pre style="color:#ffcc00;margin:0;font-size:9px;"><?= htmlspecialchars(json_encode($debugState['f_keymap'], JSON_PRETTY_PRINT)) ?></pre>
+            </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($debugState['m_db_parsed'])): ?>
+            <div style="margin-bottom:0.5rem;">
+                <div style="color:#888;">Mother DB Genotype Parsed:</div>
+                <pre style="color:#00ff00;margin:0;font-size:9px;max-height:100px;overflow-y:auto;"><?= htmlspecialchars(json_encode($debugState['m_db_parsed'], JSON_PRETTY_PRINT)) ?></pre>
+            </div>
+            <?php endif; ?>
+            
+            <?php if (!empty($debugState['m_keymap'])): ?>
+            <div style="margin-bottom:0.5rem;">
+                <div style="color:#888;">Mother KeyMap Applied:</div>
+                <pre style="color:#ffcc00;margin:0;font-size:9px;"><?= htmlspecialchars(json_encode($debugState['m_keymap'], JSON_PRETTY_PRINT)) ?></pre>
+            </div>
+            <?php endif; ?>
+            
+            <div style="margin-top:0.5rem;">
+                <div style="color:#888;">Final 14-Loci Inputs to Calculator:</div>
+                <table style="width:100%;color:#ccc;font-size:9px;border-collapse:collapse;">
+                    <tr style="background:#222;"><th style="padding:2px;">Locus</th><th style="padding:2px;">Father</th><th style="padding:2px;">Mother</th></tr>
+                    <?php foreach ($debugState['final_inputs'] ?? [] as $locus => $vals): ?>
+                    <?php 
+                        $fIsWT = in_array($vals['f'], ['++', '+W', 'dd', 'vv', '(not set)']);
+                        $mIsWT = in_array($vals['m'], ['++', '+W', 'dd', 'vv', '(not set)']);
+                    ?>
+                    <tr style="<?= (!$fIsWT || !$mIsWT) ? 'background:#330000;' : '' ?>">
+                        <td style="padding:2px;color:#4ecdc4;"><?= $locus ?></td>
+                        <td style="padding:2px;color:<?= $fIsWT ? '#666' : '#ff6600' ?>;"><?= htmlspecialchars($vals['f']) ?></td>
+                        <td style="padding:2px;color:<?= $mIsWT ? '#666' : '#ff6600' ?>;"><?= htmlspecialchars($vals['m']) ?></td>
+                    </tr>
+                    <?php endforeach; ?>
+                </table>
+            </div>
+        </div>
+        
+        <!-- 5. 結果サンプル（スプリット検出） -->
+        <div style="background:#111;padding:0.75rem;border-radius:4px;border-left:3px solid #00ff00;">
+            <h4 style="color:#00ff00;margin:0 0 0.5rem;">5️⃣ RESULT SAMPLE (First 5)</h4>
+            <?php if ($result && !empty($result['genotype'])): ?>
+            <table style="width:100%;color:#ccc;font-size:9px;border-collapse:collapse;">
+                <tr style="background:#222;"><th style="padding:2px;">Sex</th><th style="padding:2px;">Phenotype</th><th style="padding:2px;">Splits</th><th style="padding:2px;">Prob</th></tr>
+                <?php foreach (array_slice($result['genotype'], 0, 5) as $r): ?>
+                <tr>
+                    <td style="padding:2px;"><?= $r['sex'] === 'male' ? '♂' : '♀' ?></td>
+                    <td style="padding:2px;"><?= htmlspecialchars($r['phenotype'] ?? '') ?></td>
+                    <td style="padding:2px;color:<?= !empty($r['splits']) ? '#ff6600' : '#666' ?>;"><?= htmlspecialchars($r['splitStr'] ?? '-') ?></td>
+                    <td style="padding:2px;"><?= number_format($r['prob'] ?? 0, 2) ?>%</td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+            
+            <?php 
+            // スプリットが検出された結果を抽出
+            $withSplits = array_filter($result['genotype'], fn($r) => !empty($r['splits']));
+            if (!empty($withSplits)):
+            ?>
+            <div style="margin-top:0.5rem;padding:0.5rem;background:#330000;border-radius:4px;">
+                <div style="color:#ff0000;font-weight:bold;">⚠️ SPLITS DETECTED (<?= count($withSplits) ?> results)</div>
+                <div style="color:#888;font-size:9px;margin-top:0.25rem;">
+                    Splits: <?= htmlspecialchars(implode(', ', array_unique(array_merge(...array_map(fn($r) => $r['splits'] ?? [], $withSplits))))) ?>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <?php else: ?>
+            <div style="color:#888;">No results</div>
+            <?php endif; ?>
+        </div>
+        
+        <!-- 6. 問題診断 -->
+        <div style="background:#111;padding:0.75rem;border-radius:4px;border-left:3px solid #ff0000;">
+            <h4 style="color:#ff0000;margin:0 0 0.5rem;">6️⃣ DIAGNOSIS</h4>
+            <?php
+            $issues = [];
+            
+            // Issue 1: fromdb mode but no genotype data
+            if (($fMode === 'fromdb' && empty($_POST['f_db_genotype'])) || 
+                ($mMode === 'fromdb' && empty($_POST['m_db_genotype']))) {
+                $issues[] = ['severity' => 'critical', 'msg' => 'fromdb mode selected but db_genotype is empty'];
+            }
+            
+            // Issue 2: Unexpected splits from WT parents
+            $unexpectedSplitLoci = [];
+            foreach (['flp', 'flb', 'pidom', 'pirec', 'dil', 'ed', 'of', 'ph'] as $l) {
+                $fVal = $debugState['final_inputs'][$l]['f'] ?? '++';
+                $mVal = $debugState['final_inputs'][$l]['m'] ?? '++';
+                $fIsWT = in_array($fVal, ['++', '+W', '(not set)']);
+                $mIsWT = in_array($mVal, ['++', '+W', '(not set)']);
+                
+                if ($fIsWT && $mIsWT) {
+                    // Both WT - check if splits appear in results
+                    $splitKey = ucfirst(str_replace(['pidom', 'pirec'], ['Pi', 'Pi'], $l));
+                    if ($splitKey === 'Flp') $splitKey = 'Flp';
+                    if ($splitKey === 'Flb') $splitKey = 'Flb';
+                    
+                    if ($result && !empty($result['genotype'])) {
+                        foreach ($result['genotype'] as $r) {
+                            if (!empty($r['splits']) && in_array($splitKey, $r['splits'])) {
+                                $unexpectedSplitLoci[$l] = ['f' => $fVal, 'm' => $mVal, 'split' => $splitKey];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            if (!empty($unexpectedSplitLoci)) {
+                $issues[] = ['severity' => 'critical', 'msg' => 'Splits detected from WT×WT parents: ' . implode(', ', array_keys($unexpectedSplitLoci))];
+            }
+            
+            // Issue 3: KeyMap missing
+            $dbParsedKeys = array_keys($debugState['f_db_parsed'] ?? []);
+            $expectedLongKeys = ['opaline', 'cinnamon', 'violet', 'pied_rec', 'pied_dom', 'fallow_pale', 'fallow_bronze', 'dilute', 'edged', 'orangeface', 'pale_headed'];
+            $missingMaps = [];
+            foreach ($expectedLongKeys as $longKey) {
+                if (in_array($longKey, $dbParsedKeys) && !isset($debugState['f_keymap'][$longKey])) {
+                    $missingMaps[] = $longKey;
+                }
+            }
+            if (!empty($missingMaps)) {
+                $issues[] = ['severity' => 'warning', 'msg' => 'KeyMap not applied for: ' . implode(', ', $missingMaps)];
+            }
+            
+            // Issue 4: Input value format mismatch
+            foreach ($debugState['final_inputs'] ?? [] as $locus => $vals) {
+                if (strpos($vals['f'], '/') !== false || strpos($vals['m'], '/') !== false) {
+                    $issues[] = ['severity' => 'warning', 'msg' => "Locus '$locus' has '/' in input (should be raw allele format)"];
+                }
+            }
+            
+            if (empty($issues)) {
+                echo '<div style="color:#00ff00;">✓ No obvious issues detected</div>';
+            } else {
+                foreach ($issues as $issue) {
+                    $color = $issue['severity'] === 'critical' ? '#ff0000' : '#ffcc00';
+                    $icon = $issue['severity'] === 'critical' ? '🚨' : '⚠️';
+                    echo '<div style="color:' . $color . ';margin:0.25rem 0;">' . $icon . ' ' . htmlspecialchars($issue['msg']) . '</div>';
+                }
+            }
+            
+            if (!empty($unexpectedSplitLoci)):
+            ?>
+            <div style="margin-top:0.5rem;padding:0.5rem;background:#1a0000;border-radius:4px;">
+                <div style="color:#ff6600;font-size:10px;font-weight:bold;">Unexpected Split Details:</div>
+                <pre style="color:#ffcc00;margin:0;font-size:9px;"><?= htmlspecialchars(json_encode($unexpectedSplitLoci, JSON_PRETTY_PRINT)) ?></pre>
+            </div>
+            <?php endif; ?>
+        </div>
+        
+    </div>
+    
+    <!-- 7. Full Result Dump -->
+    <details style="margin-top:1rem;">
+        <summary style="color:#888;cursor:pointer;">📋 Full Result Dump (click to expand)</summary>
+        <pre style="color:#666;font-size:9px;max-height:300px;overflow-y:auto;background:#0a0a0a;padding:0.5rem;margin-top:0.5rem;"><?= htmlspecialchars(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)) ?></pre>
+    </details>
+</div>
+<?php endif; ?>
+
 </body>
 </html>
