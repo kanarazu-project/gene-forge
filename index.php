@@ -17,6 +17,7 @@
  */
 require_once 'genetics.php';
 require_once 'lang.php';
+require_once 'lang_guardian.php';
 
 $lang = getLang();
 if (isset($_GET['lang'])) setcookie('lang', $_GET['lang'], time() + 86400 * 365, '/');
@@ -423,7 +424,7 @@ if ($action === 'calculate') {
     <script>
     // v6.8修正: T辞書を先に定義（customConfirm等で使用）
     const LANG = '<?= $lang ?>';
-    const T = <?= json_encode(getLangDict()) ?>;
+    window.T = <?= json_encode(getLangDict()) ?>;
     
     // SSOT: genetics.php から注入
     const COLOR_LABELS = <?= json_encode(AgapornisLoci::labels($lang === 'ja')) ?>;
@@ -1421,7 +1422,7 @@ function showTab(id){
 </script>
 <script src="family.js?v=674"></script>
 <script src="app.js?v=<?= time() ?>"></script>
-<script>if(typeof initLang==='function')initLang(T);</script>
+<!-- initLang removed: SSOT via window.T -->
 <script>
     // 健康評価タブ用セレクタ初期化（BirdDB準備完了を待つ）
         function initHealthSelectors() {
