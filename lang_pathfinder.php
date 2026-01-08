@@ -174,23 +174,116 @@ $pf_es = [
     'pf_introduce_slr' => 'Introducir factor {locus_name}',
     'pf_introduce_ar' => 'Introducir factor {locus_name} (Gen {gen})',
     'pf_introduce_dominant' => 'Introducir factor {locus_name}',
-    
+
     // Descripciones de padres
     'pf_expressed_female' => 'Hembra expresada',
-    
+
     // Descripciones de resultados
     'pf_slr_result' => 'Machos: 100% portadores, Hembras: 50% expresadas',
     'pf_ar_result' => '100% portadores → cruce hermanos para 25% expresión',
     'pf_dominant_result' => '50% de descendientes portan {locus_name}',
-    
+
     // Advertencias
     'pf_warning_ino' => '⚠️ INO/Pallid: Límite consanguinidad 2 generaciones',
     'pf_warning_fallow' => '⚠️ Fallow: Riesgos de salud a vigilar',
     'pf_warning_complex' => '⚠️ Rasgo complejo (Tier {tier}): Requiere múltiples generaciones',
-    
+
     // Errores
     'pf_unsupported_target' => 'Rasgo objetivo no soportado: {target}',
-    
+
     // Otro
     'pf_estimated_gen' => 'Generaciones estimadas',
+];
+
+// ============================================================
+// インドネシア語 (Indonesian)
+// ============================================================
+$pf_id = [
+    // Judul langkah
+    'pf_wild_type' => 'Tipe Liar',
+    'pf_wild_type_result' => 'Warna dasar tidak memerlukan faktor tambahan',
+    'pf_introduce_slr' => 'Perkenalkan faktor {locus_name}',
+    'pf_introduce_ar' => 'Perkenalkan faktor {locus_name} (Gen {gen})',
+    'pf_introduce_dominant' => 'Perkenalkan faktor {locus_name}',
+
+    // Deskripsi induk
+    'pf_expressed_female' => 'Betina Terekspresi',
+
+    // Deskripsi hasil
+    'pf_slr_result' => 'Jantan: 100% split, Betina: 50% terekspresi',
+    'pf_ar_result' => '100% split → silang saudara untuk 25% ekspresi',
+    'pf_dominant_result' => '50% keturunan membawa {locus_name}',
+
+    // Peringatan
+    'pf_warning_ino' => '⚠️ INO/Pallid: Batas inbreeding 2 generasi',
+    'pf_warning_fallow' => '⚠️ Fallow: Perhatikan risiko kesehatan',
+    'pf_warning_complex' => '⚠️ Sifat kompleks (Tier {tier}): Memerlukan beberapa generasi',
+
+    // Error
+    'pf_unsupported_target' => 'Sifat target tidak didukung: {target}',
+
+    // Lainnya
+    'pf_estimated_gen' => 'Estimasi generasi',
+];
+
+// ============================================================
+// タガログ語 (Tagalog/Filipino)
+// ============================================================
+$pf_tl = [
+    // Mga pamagat ng hakbang
+    'pf_wild_type' => 'Wild Type',
+    'pf_wild_type_result' => 'Ang batayang kulay ay hindi nangangailangan ng karagdagang salik',
+    'pf_introduce_slr' => 'Ipakilala ang salik na {locus_name}',
+    'pf_introduce_ar' => 'Ipakilala ang salik na {locus_name} (Gen {gen})',
+    'pf_introduce_dominant' => 'Ipakilala ang salik na {locus_name}',
+
+    // Mga paglalarawan ng magulang
+    'pf_expressed_female' => 'Naipahayag na Babae',
+
+    // Mga paglalarawan ng resulta
+    'pf_slr_result' => 'Lalaki: 100% split, Babae: 50% naipahayag',
+    'pf_ar_result' => '100% split → krus ng magkapatid para sa 25% pagpapahayag',
+    'pf_dominant_result' => '50% ng mga anak ay may dala ng {locus_name}',
+
+    // Mga babala
+    'pf_warning_ino' => '⚠️ INO/Pallid: Limitasyon ng inbreeding 2 henerasyon',
+    'pf_warning_fallow' => '⚠️ Fallow: Bantayan ang mga panganib sa kalusugan',
+    'pf_warning_complex' => '⚠️ Kumplikadong katangian (Tier {tier}): Nangangailangan ng maraming henerasyon',
+
+    // Mga error
+    'pf_unsupported_target' => 'Hindi suportadong target na katangian: {target}',
+
+    // Iba pa
+    'pf_estimated_gen' => 'Tinatayang henerasyon',
+];
+
+// ============================================================
+// ポルトガル語 (Portuguese)
+// ============================================================
+$pf_pt = [
+    // Títulos dos passos
+    'pf_wild_type' => 'Tipo Selvagem',
+    'pf_wild_type_result' => 'A cor base não requer fatores adicionais',
+    'pf_introduce_slr' => 'Introduzir fator {locus_name}',
+    'pf_introduce_ar' => 'Introduzir fator {locus_name} (Ger {gen})',
+    'pf_introduce_dominant' => 'Introduzir fator {locus_name}',
+
+    // Descrições dos pais
+    'pf_expressed_female' => 'Fêmea Expressa',
+
+    // Descrições dos resultados
+    'pf_slr_result' => 'Machos: 100% split, Fêmeas: 50% expressas',
+    'pf_ar_result' => '100% split → cruzamento de irmãos para 25% expressão',
+    'pf_dominant_result' => '50% dos descendentes carregam {locus_name}',
+
+    // Avisos
+    'pf_warning_ino' => '⚠️ INO/Pallid: Limite de consanguinidade 2 gerações',
+    'pf_warning_fallow' => '⚠️ Fallow: Atenção aos riscos de saúde',
+    'pf_warning_complex' => '⚠️ Característica complexa (Tier {tier}): Requer múltiplas gerações',
+
+    // Erros
+    'pf_unsupported_target' => 'Característica alvo não suportada: {target}',
+
+    // Outros
+    'pf_estimated_gen' => 'Gerações estimadas',
 ];
