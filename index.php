@@ -7,7 +7,7 @@
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * FamilyEstimator V3 搭載
  * ALBS Peachfaced部門準拠版
  * 
@@ -104,7 +104,7 @@ if ($action === 'calculate') {
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>🦜 Gene-Forge v6.8</title>
+    <title>🦜 Gene-Forge v7.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=674">
     <style>
@@ -432,6 +432,7 @@ if ($action === 'calculate') {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
+const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
 </script>
 </head>
 
@@ -453,7 +454,7 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
     <a href="?lang=tl" class="<?= $lang === 'tl' ? 'active' : '' ?>">TL</a>
     <a href="?lang=pt" class="<?= $lang === 'pt' ? 'active' : '' ?>">PT</a>
 </div>
-                        <span class="version-tag"><?= t('version') ?><br><a href="README.md" style="color:#666;font-size:.65rem;text-decoration:none;">README</a></span>
+                        <span class="version-tag"><a href="https://github.com/kanarazu-project/gene-forge" target="_blank" style="text-decoration:none;color:inherit;">Github</a><br><a href="https://kanarazu-project.com/gene-forge/Rosy-faced-Lovebird/readme.php?lang=en" target="_blank" style="color:#666;font-size:.65rem;text-decoration:none;">README</a></span>
             <h1 class="logo">🦜 GENE-FORGE</h1>
 <p class="app-subtitle"><?= t('subtitle') ?></p>
 <span class="version-badge"><?= t('coming_soon') ?> | ALBS<?= t('compliant') ?></span>

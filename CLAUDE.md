@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**Gene-Forge v6.8** is a sophisticated genetic calculation engine for Agapornis roseicollis (Rosy-faced Lovebirds). It supports 14 genetic loci with over 310 phenotype colors, fully compliant with ALBS (African Lovebird Society) naming standards.
+**Gene-Forge v7.0** is a sophisticated genetic calculation engine for Agapornis roseicollis (Rosy-faced Lovebirds). It supports 14 genetic loci with over 310 phenotype colors, fully compliant with ALBS (African Lovebird Society) naming standards.
 
 **Core Purpose**: Provide scientific breeding tools with ethical guidelines to prevent inbreeding depression through Wright's coefficient calculations.
 

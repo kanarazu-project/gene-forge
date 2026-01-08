@@ -1,6 +1,6 @@
 <?php
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * 遺伝計算エンジン（ALBS準拠 310色対応版）
  * @author Shohei Taniguchi / Sirius
  * @license CC BY-NC-SA 4.0
@@ -25,6 +25,37 @@ final class AgapornisLoci
         'opaline' => ['name'=>['ja'=>'オパーリン','en'=>'Opaline'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'op'=>1]],
         'cinnamon' => ['name'=>['ja'=>'シナモン','en'=>'Cinnamon'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'cin'=>1]],
     ];
+
+    /**
+     * Linkage Groups (v7.0)
+     * 連鎖遺伝グループ定義
+     *
+     * Z染色体上の3座位（cinnamon, ino, opaline）は連鎖しており、
+     * 独立分離ではなく組換え率に基づいた配偶子頻度で計算する。
+     *
+     * 組換え率:
+     * - cinnamon-ino: 3% (ほぼ完全連鎖)
+     * - ino-opaline: 30%
+     * - cinnamon-opaline: 33%
+     * - dark-parblue: 7% (常染色体連鎖)
+     */
+    public const LINKAGE_GROUPS = [
+        'Z_chromosome' => [
+            'loci' => ['cinnamon', 'ino', 'opaline'],
+            'recombination' => [
+                'cinnamon_ino' => 0.03,
+                'cinnamon_opaline' => 0.33,
+                'ino_opaline' => 0.30,
+            ],
+        ],
+        'autosomal_1' => [
+            'loci' => ['dark', 'parblue'],
+            'recombination' => [
+                'dark_parblue' => 0.07,
+            ],
+        ],
+    ];
+
     public const COLOR_DEFINITIONS = [
         // 基底色（12色）
         'green'=>['ja'=>'グリーン','en'=>'Green','albs'=>'Green','genotype'=>['parblue'=>'++','dark'=>'dd'],'eye'=>'black','category'=>'green'],
@@ -794,7 +825,7 @@ final class AgapornisLoci
 
 /**
  * FamilyEstimatorV3 - 一族マップからの遺伝子型推論エンジン
- * @version 6.8
+ * @version 7.0
  */
 class FamilyEstimatorV3
 {
