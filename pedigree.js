@@ -1,5 +1,5 @@
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * 血統書生成（Pedigree Certificate Generator）
  * 
  * 整合性原理：
@@ -267,7 +267,7 @@ const PedigreeGenerator = {
         <header class="cert-header">
             <div class="logo">🦜</div>
             <h1>${labels.title}</h1>
-            <div class="subtitle">Agapornis Gene-Forge v6.8</div>
+            <div class="subtitle">Agapornis Gene-Forge v7.0</div>
         </header>
 
         <section class="bird-info">
@@ -340,7 +340,7 @@ const PedigreeGenerator = {
         <footer class="cert-footer">
             <div class="footer-grid">
                 <div>${labels.issueDate}: ${issueDate}</div>
-                <div>${labels.generator}: Agapornis Gene-Forge v6.8</div>
+                <div>${labels.generator}: Agapornis Gene-Forge v7.0</div>
             </div>
             <div class="disclaimer">${labels.disclaimer}</div>
         </footer>

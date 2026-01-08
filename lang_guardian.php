@@ -7,7 +7,7 @@
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * guardian.js専用 多言語辞書
  * 
  * @author Shohei Taniguchi

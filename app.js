@@ -1,5 +1,5 @@
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * メインアプリケーション JavaScript
  * 6言語対応版 (ja/en/de/fr/it/es)
  */

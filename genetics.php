@@ -1,6 +1,6 @@
 <?php
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * 遺伝計算エンジン（ALBS準拠 310色対応版）
  * @author Shohei Taniguchi / Sirius
  * @license CC BY-NC-SA 4.0
@@ -825,7 +825,7 @@ final class AgapornisLoci
 
 /**
  * FamilyEstimatorV3 - 一族マップからの遺伝子型推論エンジン
- * @version 6.8
+ * @version 7.0
  */
 class FamilyEstimatorV3
 {
