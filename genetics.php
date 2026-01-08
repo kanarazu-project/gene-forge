@@ -1757,3 +1757,862 @@ private function genotypeEquivalent(string $g1, string $g2): bool
 
 
 
+class GeneticsCalculator
+{
+    /**
+     * 常染色体遺伝計算
+     */
+    private function calcAutosomal(string $fVal, string $mVal, array $labels): array
+    {
+        $fAlleles = $this->parseAlleles($fVal);
+        $mAlleles = $this->parseAlleles($mVal);
+        $results = [];
+        
+        foreach ($fAlleles as $fa) {
+            foreach ($mAlleles as $ma) {
+                $pair = [$labels[$fa] ?? $fa, $labels[$ma] ?? $ma];
+                sort($pair);
+                $geno = implode('/', $pair);
+                $prob = (1.0 / count($fAlleles)) * (1.0 / count($mAlleles));
+                $results[$geno] = ($results[$geno] ?? 0) + $prob;
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * 伴性遺伝計算（オス）
+     */
+    private function calcSLR_Male(string $fVal, string $mVal, array $labels): array
+    {
+        $fAlleles = $this->parseAlleles($fVal);
+        $mAlleles = array_filter($this->parseAlleles($mVal), fn($a) => $a !== 'W');
+        if (empty($mAlleles)) $mAlleles = ['+'];
+        $results = [];
+        
+        foreach ($fAlleles as $fa) {
+            foreach ($mAlleles as $ma) {
+                $pair = [$labels[$fa] ?? $fa, $labels[$ma] ?? $ma];
+                sort($pair);
+                $geno = implode('/', $pair);
+                $prob = (1.0 / count($fAlleles)) * (1.0 / count($mAlleles));
+                $results[$geno] = ($results[$geno] ?? 0) + $prob;
+            }
+        }
+        return $results;
+    }
+
+    /**
+     * 伴性遺伝計算（メス）
+     */
+    private function calcSLR_Female(string $fVal, array $labels): array
+    {
+        $fAlleles = $this->parseAlleles($fVal);
+        $results = [];
+        
+        foreach ($fAlleles as $fa) {
+            $geno = ($labels[$fa] ?? $fa) . '/W';
+            $prob = 1.0 / count($fAlleles);
+            $results[$geno] = ($results[$geno] ?? 0) + $prob;
+        }
+        return $results;
+    }
+
+    /**
+     * アレル解析（v6.8: 14座位対応）
+     */
+    private function parseAlleles(string $val): array
+    {
+        $knownAlleles = [
+            'ino', 'pld', 'cin', 'tq', 'aq', 'op',
+            'flp', 'flb', 'dil', 'pi', 'Pi', 'ed', 'of', 'ph',
+            'D', 'd', 'V', 'v', 'W', '+'
+        ];
+        $result = [];
+        $remaining = $val;
+        
+        while (strlen($remaining) > 0) {
+            $matched = false;
+            foreach ($knownAlleles as $allele) {
+                if (strpos($remaining, $allele) === 0) {
+                    $result[] = $allele;
+                    $remaining = substr($remaining, strlen($allele));
+                    $matched = true;
+                    break;
+                }
+            }
+            if (!$matched) $remaining = substr($remaining, 1);
+        }
+        
+        if (count($result) === 0) return ['+', '+'];
+        if (count($result) === 1) return [$result[0], $result[0]];
+        return $result;
+    }
+
+    /**
+     * 表現型の決定（v6.8: resolveColor使用）
+     */
+    private function getPhenotype(array $g, string $sex): string
+    {
+        // 内部形式を遺伝子型配列に変換
+        $genotype = $this->convertToGenotypeArray($g, $sex);
+        
+        // AgapornisLoci::resolveColorで色名取得
+        $colorInfo = AgapornisLoci::resolveColor($genotype);
+        $phenotype = $colorInfo['ja'] ?? 'Unknown';
+        
+        // スプリット情報を追加
+        $splits = $this->extractSplits($g, $sex);
+        if (!empty($splits)) {
+            $phenotype .= ' /' . implode(',', $splits);
+        }
+        
+        return $phenotype;
+    }
+
+    /**
+     * 計算結果を遺伝子型配列に変換
+     */
+    private function convertToGenotypeArray(array $g, string $sex): array
+    {
+        $genotype = [];
+        
+        // Parblue
+        $pb = $g['parblue'] ?? 'B⁺/B⁺';
+        if (strpos($pb, 'b^aq/b^aq') !== false || $pb === 'aqaq') {
+            $genotype['parblue'] = 'aqaq';
+        } elseif (strpos($pb, 'b^tq/b^tq') !== false || $pb === 'tqtq') {
+            $genotype['parblue'] = 'tqtq';
+        } elseif (strpos($pb, 'b^tq/b^aq') !== false || strpos($pb, 'b^aq/b^tq') !== false || $pb === 'tqaq') {
+            $genotype['parblue'] = 'tqaq';
+        } else {
+            $genotype['parblue'] = '++';
+        }
+        
+        // Dark
+        $dk = $g['dark'] ?? 'd/d';
+        if ($dk === 'D/D' || $dk === 'DD') {
+            $genotype['dark'] = 'DD';
+        } elseif (strpos($dk, 'D/d') !== false || strpos($dk, 'd/D') !== false || $dk === 'Dd') {
+            $genotype['dark'] = 'Dd';
+        } else {
+            $genotype['dark'] = 'dd';
+        }
+        
+        // INO
+        $ino = $g['ino'] ?? ($sex === 'male' ? 'Z⁺/Z⁺' : 'Z⁺/W');
+        if (strpos($ino, 'Z^ino/Z^ino') !== false || strpos($ino, 'Z^ino/W') !== false || $ino === 'inoino' || $ino === 'inoW') {
+            $genotype['ino'] = ($sex === 'male') ? 'inoino' : 'inoW';
+        } elseif (strpos($ino, 'Z^pld/Z^pld') !== false || strpos($ino, 'Z^pld/W') !== false || $ino === 'pldpld' || $ino === 'pldW') {
+            $genotype['ino'] = ($sex === 'male') ? 'pldpld' : 'pldW';
+        }
+        
+        // Opaline
+        $op = $g['op'] ?? ($sex === 'male' ? 'Z⁺/Z⁺' : 'Z⁺/W');
+        if (strpos($op, 'Z^op/Z^op') !== false || strpos($op, 'Z^op/W') !== false || $op === 'opop' || $op === 'opW') {
+            $genotype['opaline'] = ($sex === 'male') ? 'opop' : 'opW';
+        }
+        
+        // Cinnamon
+        $cin = $g['cin'] ?? ($sex === 'male' ? 'Z⁺/Z⁺' : 'Z⁺/W');
+        if (strpos($cin, 'Z^cin/Z^cin') !== false || strpos($cin, 'Z^cin/W') !== false || $cin === 'cincin' || $cin === 'cinW') {
+            $genotype['cinnamon'] = ($sex === 'male') ? 'cincin' : 'cinW';
+        }
+        
+        // Violet
+        $vio = $g['vio'] ?? 'v/v';
+        if ($vio === 'V/V' || $vio === 'VV') {
+            $genotype['violet'] = 'VV';
+        } elseif (strpos($vio, 'V/v') !== false || strpos($vio, 'v/V') !== false || $vio === 'Vv') {
+            $genotype['violet'] = 'Vv';
+        }
+        
+        // Pale Fallow
+        $flp = $g['flp'] ?? '++';
+        if (strpos($flp, 'flp/flp') !== false || $flp === 'flpflp') {
+            $genotype['fallow_pale'] = 'flpflp';
+        }
+        
+        // Bronze Fallow
+        $flb = $g['flb'] ?? '++';
+        if (strpos($flb, 'flb/flb') !== false || $flb === 'flbflb') {
+            $genotype['fallow_bronze'] = 'flbflb';
+        }
+        
+        // Dominant Pied
+        $pidom = $g['pidom'] ?? '++';
+        if (strpos($pidom, 'Pi') !== false) {
+            $genotype['pied_dom'] = 'Pi+';
+        }
+        
+        // Recessive Pied
+        $pirec = $g['pirec'] ?? '++';
+        if (strpos($pirec, 'pi/pi') !== false || $pirec === 'pipi') {
+            $genotype['pied_rec'] = 'pipi';
+        }
+        
+        // Dilute
+        $dil = $g['dil'] ?? '++';
+        if (strpos($dil, 'dil/dil') !== false || $dil === 'dildil') {
+            $genotype['dilute'] = 'dildil';
+        }
+        
+        // Edged
+        $ed = $g['ed'] ?? '++';
+        if (strpos($ed, 'ed/ed') !== false || $ed === 'eded') {
+            $genotype['edged'] = 'eded';
+        }
+        
+        // Orangeface
+        $of = $g['of'] ?? '++';
+        if (strpos($of, 'of/of') !== false || $of === 'ofof') {
+            $genotype['orangeface'] = 'ofof';
+        }
+        
+        // Pale Headed
+        $ph = $g['ph'] ?? '++';
+        if (strpos($ph, 'ph/ph') !== false || $ph === 'phph') {
+            $genotype['pale_headed'] = 'phph';
+        }
+        
+        return $genotype;
+    }
+
+    /**
+     * スプリット情報を抽出
+     */
+    private function extractSplits(array $g, string $sex): array
+    {
+        $splits = [];
+        
+        // Parblue スプリット
+        $pb = $g['parblue'] ?? '';
+        if (strpos($pb, 'B⁺/b^aq') !== false) $splits[] = 'Aq';
+        if (strpos($pb, 'B⁺/b^tq') !== false) $splits[] = 'Tq';
+        
+        // 伴性スプリット（オスのみ）
+        if ($sex === 'male') {
+            $ino = $g['ino'] ?? '';
+if (strpos($ino, 'Z⁺/Z^ino') !== false || strpos($ino, 'Z^ino/Z⁺') !== false) $splits[] = 'Ino';
+if (strpos($ino, 'Z⁺/Z^pld') !== false || strpos($ino, 'Z^pld/Z⁺') !== false) $splits[] = 'Pld';
+                        $op = $g['op'] ?? '';
+            if (strpos($op, 'Z⁺/Z^op') !== false || strpos($op, 'Z^op/Z⁺') !== false) $splits[] = 'Op';
+            
+            $cin = $g['cin'] ?? '';
+            if (strpos($cin, 'Z⁺/Z^cin') !== false || strpos($cin, 'Z^cin/Z⁺') !== false) $splits[] = 'Cin';
+}                    
+        
+        // 常染色体スプリット
+        $flp = $g['flp'] ?? '';
+        if (strpos($flp, '+/flp') !== false || strpos($flp, 'flp/+') !== false) $splits[] = 'Flp';
+        
+        $flb = $g['flb'] ?? '';
+        if (strpos($flb, '+/flb') !== false || strpos($flb, 'flb/+') !== false) $splits[] = 'Flb';
+        
+        $pirec = $g['pirec'] ?? '';
+        if (strpos($pirec, '+/pi') !== false || strpos($pirec, 'pi/+') !== false) $splits[] = 'Pi';
+        
+        $dil = $g['dil'] ?? '';
+        if (strpos($dil, '+/dil') !== false || strpos($dil, 'dil/+') !== false) $splits[] = 'Dil';
+        
+        $ed = $g['ed'] ?? '';
+        if (strpos($ed, '+/ed') !== false || strpos($ed, 'ed/+') !== false) $splits[] = 'Ed';
+        
+        $of = $g['of'] ?? '';
+        if (strpos($of, '+/of') !== false || strpos($of, 'of/+') !== false) $splits[] = 'Of';
+        
+        $ph = $g['ph'] ?? '';
+        if (strpos($ph, '+/ph') !== false || strpos($ph, 'ph/+') !== false) $splits[] = 'Ph';
+
+        
+        return $splits;
+    }  //
+
+    /**
+     * 表現型から遺伝子型を推定
+     */
+private function phenotypeToGenotype(array $input, string $prefix, string $sex): array
+{
+    // fromdbモード対応
+    $baseColor = $input[$prefix . '_db_baseColor'] 
+              ?? $input[$prefix . '_baseColor'] 
+              ?? 'green';
+    $eyeColor = $input[$prefix . '_db_eyeColor'] 
+             ?? $input[$prefix . '_eyeColor'] 
+             ?? 'black';
+    $darkness = $input[$prefix . '_db_darkness'] 
+             ?? $input[$prefix . '_darkness'] 
+             ?? 'none';
+        // COLOR_DEFINITIONSから遺伝子型を取得
+        $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$baseColor] ?? null;
+        $geno = [];
+        
+        if ($colorDef && isset($colorDef['genotype'])) {
+            $defGeno = $colorDef['genotype'];
+            
+            // Parblue
+            $geno['parblue'] = $defGeno['parblue'] ?? '++';
+            
+            // Dark（darknessパラメータで上書き可能）
+            if ($darkness === 'df') {
+                $geno['dark'] = 'DD';
+            } elseif ($darkness === 'sf') {
+                $geno['dark'] = 'Dd';
+            } else {
+                $geno['dark'] = $defGeno['dark'] ?? 'dd';
+            }
+            
+            // INO
+            if (isset($defGeno['ino'])) {
+                $val = $defGeno['ino'];
+                if ($val === 'inoino') {
+                    $geno['ino'] = ($sex === 'male') ? 'inoino' : 'inoW';
+                } elseif ($val === 'pldpld') {
+                    $geno['ino'] = ($sex === 'male') ? 'pldpld' : 'pldW';
+                }
+            } else {
+                $geno['ino'] = ($sex === 'male') ? '++' : '+W';
+            }
+            
+            // Opaline
+            if (isset($defGeno['opaline']) && $defGeno['opaline'] === 'opop') {
+                $geno['op'] = ($sex === 'male') ? 'opop' : 'opW';
+            } else {
+                $geno['op'] = ($sex === 'male') ? '++' : '+W';
+            }
+            
+            // Cinnamon
+            if (isset($defGeno['cinnamon']) && $defGeno['cinnamon'] === 'cincin') {
+                $geno['cin'] = ($sex === 'male') ? 'cincin' : 'cinW';
+            } else {
+                $geno['cin'] = ($sex === 'male') ? '++' : '+W';
+            }
+            
+            // Violet
+            $geno['vio'] = $defGeno['violet'] ?? 'vv';
+            
+            // Pale Fallow
+            $geno['flp'] = $defGeno['fallow_pale'] ?? '++';
+            
+            // Bronze Fallow
+            $geno['flb'] = $defGeno['fallow_bronze'] ?? '++';
+            
+            // Dominant Pied
+            $geno['pidom'] = $defGeno['pied_dom'] ?? '++';
+            
+            // Recessive Pied
+            $geno['pirec'] = $defGeno['pied_rec'] ?? '++';
+            
+            // Dilute
+            $geno['dil'] = $defGeno['dilute'] ?? '++';
+            
+            // Edged
+            $geno['ed'] = $defGeno['edged'] ?? '++';
+            
+            // Orangeface
+            $geno['of'] = $defGeno['orangeface'] ?? '++';
+            
+            // Pale Headed
+            $geno['ph'] = $defGeno['pale_headed'] ?? '++';
+            
+        } else {
+            // フォールバック: 野生型
+            $geno = [
+                'parblue' => '++',
+                'dark' => 'dd',
+                'ino' => ($sex === 'male') ? '++' : '+W',
+                'op' => ($sex === 'male') ? '++' : '+W',
+                'cin' => ($sex === 'male') ? '++' : '+W',
+                'vio' => 'vv',
+                'flp' => '++',
+                'flb' => '++',
+                'pidom' => '++',
+                'pirec' => '++',
+                'dil' => '++',
+                'ed' => '++',
+                'of' => '++',
+                'ph' => '++',
+            ];
+        }
+        
+        return $geno;
+    }
+
+    /**
+     * 子孫計算（v6.8.1: 最適化版）
+     */
+    public function calculateOffspring(array $input): array
+    {
+        $fMode = $input['f_mode'] ?? 'genotype';
+        $mMode = $input['m_mode'] ?? 'genotype';
+        
+        if ($fMode === 'phenotype') {
+            $fGeno = $this->phenotypeToGenotype($input, 'f', 'male');
+            foreach ($fGeno as $k => $v) { $input['f_' . $k] = $v; }
+        }
+        if ($mMode === 'phenotype') {
+            $mGeno = $this->phenotypeToGenotype($input, 'm', 'female');
+            foreach ($mGeno as $k => $v) { $input['m_' . $k] = $v; }
+        }
+        
+        if ($fMode === 'fromdb' && !empty($input['f_db_genotype'])) {
+            $j = json_decode($input['f_db_genotype'], true);
+            if ($j) {
+                foreach ($j as $k => $v) { $input['f_' . $k] = $v; }
+                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['f_'.$short] = $j[$long]; }
+            }
+        }
+        if ($mMode === 'fromdb' && !empty($input['m_db_genotype'])) {
+            $j = json_decode($input['m_db_genotype'], true);
+            if ($j) {
+                foreach ($j as $k => $v) { $input['m_' . $k] = $v; }
+                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['m_'.$short] = $j[$long]; }
+            }
+        }
+        
+        $f_op = $input['f_op'] ?? $input['f_opaline'] ?? '++';
+        $m_op = $input['m_op'] ?? $input['m_opaline'] ?? '+W';
+        $f_cin = $input['f_cin'] ?? $input['f_cinnamon'] ?? '++';
+        $m_cin = $input['m_cin'] ?? $input['m_cinnamon'] ?? '+W';
+        
+        $labels = [
+            'parblue' => ['+' => 'B⁺', 'aq' => 'b^aq', 'tq' => 'b^tq'],
+            'ino' => ['+' => 'Z⁺', 'pld' => 'Z^pld', 'ino' => 'Z^ino'],
+            'op' => ['+' => 'Z⁺', 'op' => 'Z^op'],
+            'cin' => ['+' => 'Z⁺', 'cin' => 'Z^cin'],
+            'dark' => ['D' => 'D', 'd' => 'd'],
+            'vio' => ['V' => 'V', 'v' => 'v'],
+            'flp' => ['+' => '+', 'flp' => 'flp'],
+            'flb' => ['+' => '+', 'flb' => 'flb'],
+            'pidom' => ['+' => '+', 'Pi' => 'Pi'],
+            'pirec' => ['+' => '+', 'pi' => 'pi'],
+            'dil' => ['+' => '+', 'dil' => 'dil'],
+            'ed' => ['+' => '+', 'ed' => 'ed'],
+            'of' => ['+' => '+', 'of' => 'of'],
+            'ph' => ['+' => '+', 'ph' => 'ph'],
+        ];
+        
+        $autosomalLoci = [
+            'parblue' => $this->calcAutosomal($input['f_parblue'] ?? '++', $input['m_parblue'] ?? '++', $labels['parblue']),
+            'dark' => $this->calcAutosomal($input['f_dark'] ?? 'dd', $input['m_dark'] ?? 'dd', $labels['dark']),
+            'vio' => $this->calcAutosomal($input['f_vio'] ?? 'vv', $input['m_vio'] ?? 'vv', $labels['vio']),
+            'flp' => $this->calcAutosomal($input['f_flp'] ?? '++', $input['m_flp'] ?? '++', $labels['flp']),
+            'flb' => $this->calcAutosomal($input['f_flb'] ?? '++', $input['m_flb'] ?? '++', $labels['flb']),
+            'pidom' => $this->calcAutosomal($input['f_pidom'] ?? '++', $input['m_pidom'] ?? '++', $labels['pidom']),
+            'pirec' => $this->calcAutosomal($input['f_pirec'] ?? '++', $input['m_pirec'] ?? '++', $labels['pirec']),
+            'dil' => $this->calcAutosomal($input['f_dil'] ?? '++', $input['m_dil'] ?? '++', $labels['dil']),
+            'ed' => $this->calcAutosomal($input['f_ed'] ?? '++', $input['m_ed'] ?? '++', $labels['ed']),
+            'of' => $this->calcAutosomal($input['f_of'] ?? '++', $input['m_of'] ?? '++', $labels['of']),
+            'ph' => $this->calcAutosomal($input['f_ph'] ?? '++', $input['m_ph'] ?? '++', $labels['ph']),
+        ];
+        
+        $sexLinkedMale = [
+            'ino' => $this->calcSLR_Male($input['f_ino'] ?? '++', $input['m_ino'] ?? '+W', $labels['ino']),
+            'op' => $this->calcSLR_Male($f_op, $m_op, $labels['op']),
+            'cin' => $this->calcSLR_Male($f_cin, $m_cin, $labels['cin']),
+        ];
+        
+        $sexLinkedFemale = [
+            'ino' => $this->calcSLR_Female($input['f_ino'] ?? '++', $labels['ino']),
+            'op' => $this->calcSLR_Female($f_op, $labels['op']),
+            'cin' => $this->calcSLR_Female($f_cin, $labels['cin']),
+        ];
+        
+        $PROB_THRESHOLD = 0.0001;
+        
+        $maleResults = $this->enumerateCombinations($autosomalLoci, $sexLinkedMale, 'male', $PROB_THRESHOLD);
+        $femaleResults = $this->enumerateCombinations($autosomalLoci, $sexLinkedFemale, 'female', $PROB_THRESHOLD);
+        $allResults = array_merge($maleResults, $femaleResults);
+        
+        $phenotypeAggregated = [];
+        $genotypeAggregated = [];
+        
+        foreach ($allResults as $r) {
+            $prob = $r['prob'];
+            $sex = $r['sex'];
+            $geno = $r['geno'];
+            
+            $genotype = $this->convertToGenotypeArray($geno, $sex);
+            $colorInfo = AgapornisLoci::resolveColor($genotype);
+            $colorName = $colorInfo['ja'] ?? 'Unknown';
+            
+            $splits = $this->extractSplits($geno, $sex);
+            $splitStr = !empty($splits) ? ' /' . implode(',', $splits) : '';
+            
+            $phenoKey = $colorName . '|' . $sex;
+            if (!isset($phenotypeAggregated[$phenoKey])) {
+                $phenotypeAggregated[$phenoKey] = ['sex' => $sex, 'phenotype' => $colorName, 'prob' => 0, 'eye' => $colorInfo['eye'] ?? 'black'];
+            }
+            $phenotypeAggregated[$phenoKey]['prob'] += $prob;
+            
+            $genoKey = $colorName . $splitStr . '|' . $sex;
+            if (!isset($genotypeAggregated[$genoKey])) {
+                $genotypeAggregated[$genoKey] = ['sex' => $sex, 'phenotype' => $colorName, 'splits' => $splits, 'splitStr' => $splitStr, 'displayName' => $colorName . $splitStr, 'prob' => 0, 'eye' => $colorInfo['eye'] ?? 'black', 'geno' => $geno];
+            }
+            $genotypeAggregated[$genoKey]['prob'] += $prob;
+        }
+        
+        $phenotypeResults = array_values($phenotypeAggregated);
+        $genotypeResults = array_values($genotypeAggregated);
+        usort($phenotypeResults, fn($a, $b) => $b['prob'] <=> $a['prob']);
+        usort($genotypeResults, fn($a, $b) => $b['prob'] <=> $a['prob']);
+        
+        // ========== 正規化（性別ごとに50%ずつ） ==========
+        $malePhenoProb = 0;
+        $femalePhenoProb = 0;
+        foreach ($phenotypeResults as $r) {
+            if ($r['sex'] === 'male') $malePhenoProb += $r['prob'];
+            else $femalePhenoProb += $r['prob'];
+        }
+        foreach ($phenotypeResults as &$r) {
+            if ($r['sex'] === 'male' && $malePhenoProb > 0) {
+                $r['prob'] = round(($r['prob'] / $malePhenoProb) * 50, 2);
+            } elseif ($r['sex'] === 'female' && $femalePhenoProb > 0) {
+                $r['prob'] = round(($r['prob'] / $femalePhenoProb) * 50, 2);
+            }
+        }
+        unset($r);
+
+        $maleGenoProb = 0;
+        $femaleGenoProb = 0;
+        foreach ($genotypeResults as $r) {
+            if ($r['sex'] === 'male') $maleGenoProb += $r['prob'];
+            else $femaleGenoProb += $r['prob'];
+        }
+        foreach ($genotypeResults as &$r) {
+            if ($r['sex'] === 'male' && $maleGenoProb > 0) {
+                $r['prob'] = round(($r['prob'] / $maleGenoProb) * 50, 2);
+            } elseif ($r['sex'] === 'female' && $femaleGenoProb > 0) {
+                $r['prob'] = round(($r['prob'] / $femaleGenoProb) * 50, 2);
+            }
+        }
+        unset($r);
+        // ========== 正規化ここまで ==========
+
+        
+        return ['phenotype' => $phenotypeResults, 'genotype' => $genotypeResults, 'results' => $genotypeResults];
+    }
+
+
+    private function enumerateCombinations(array $autosomalLoci, array $sexLinkedLoci, string $sex, float $threshold): array
+    {
+        $results = [];
+        $allLoci = [];
+        foreach ($autosomalLoci as $key => $data) { $allLoci[] = ['key' => $key, 'data' => $data]; }
+        foreach ($sexLinkedLoci as $key => $data) { $allLoci[] = ['key' => $key, 'data' => $data]; }
+        $this->enumerateRecursive($allLoci, 0, [], 1.0, $threshold, $sex, $results);
+        return $results;
+    }
+
+    private function enumerateRecursive(array $loci, int $index, array $currentGeno, float $currentProb, float $threshold, string $sex, array &$results): void
+    {
+        if ($index >= count($loci)) {
+            if ($currentProb >= $threshold) {
+                $results[] = ['sex' => $sex, 'prob' => $currentProb, 'geno' => $currentGeno];
+            }
+            return;
+        }
+        $locus = $loci[$index];
+        $key = $locus['key'];
+        $data = $locus['data'];
+        foreach ($data as $geno => $prob) {
+            $newProb = $currentProb * $prob;
+            if ($newProb < $threshold * 0.01) continue;
+            $newGeno = $currentGeno;
+            $newGeno[$key] = $geno;
+            $this->enumerateRecursive($loci, $index + 1, $newGeno, $newProb, $threshold, $sex, $results);
+        }
+    }
+}
+
+/**
+ * FamilyEstimatorV3 - 一族マップからの遺伝子型推論エンジン
+ * @version 6.8
+ */
+class PathFinder
+{
+    public function findPath(string $targetKey): array
+    {
+        $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$targetKey] ?? null;
+        
+        if (!$colorDef) {
+            return ['error' => 'pf_unsupported_target', 'errorParam' => $targetKey];
+        }
+        
+        $genotype = $colorDef['genotype'] ?? [];
+        $steps = $this->generateSteps($genotype);
+        $warnings = $this->generateWarnings($genotype, $colorDef);
+        
+        return [
+            'targetKey' => $targetKey,
+            'genotype' => $genotype,
+            'steps' => $steps,
+            'warnings' => $warnings,
+            'minGenerations' => count($steps),
+        ];
+    }
+    
+    private function generateSteps(array $genotype): array
+    {
+        $steps = [];
+        $priority = ['parblue', 'dark', 'violet', 'pied_dom', 'pied_rec', 'dilute', 'edged', 'orangeface', 'pale_headed', 'fallow_pale', 'fallow_bronze', 'opaline', 'cinnamon', 'ino'];
+        
+        foreach ($priority as $locus) {
+            if (!isset($genotype[$locus])) continue;
+            $targetAllele = $genotype[$locus];
+            if ($targetAllele === '++' || $targetAllele === 'dd' || $targetAllele === '+W' || $targetAllele === 'vv') continue;
+            
+            $step = $this->generateStepForLocus($locus, $targetAllele);
+            if ($step) {
+                $steps[] = $step;
+            }
+        }
+        
+        if (empty($steps)) {
+            $steps[] = [
+                'title_key' => 'pf_wild_type',
+                'male_key' => 'green',
+                'female_key' => 'green',
+                'result_key' => 'pf_wild_type_result',
+            ];
+        }
+        
+        return $steps;
+    }
+    
+    private function generateStepForLocus(string $locus, string $targetAllele): ?array
+    {
+        $locusInfo = AgapornisLoci::LOCI[$locus] ?? null;
+        if (!$locusInfo) return null;
+        
+        $isSexLinked = $locusInfo['sex_linked'] ?? false;
+        
+        if ($isSexLinked) {
+            return $this->generateSexLinkedStep($locus, $targetAllele);
+        } else {
+            return $this->generateAutosomalStep($locus, $targetAllele);
+        }
+    }
+    
+    private function generateSexLinkedStep(string $locus, string $targetAllele): array
+    {
+        $expressedColorKey = $this->getAlleleColorKey($locus, $targetAllele);
+        
+        return [
+            'title_key' => 'pf_introduce_slr',
+            'title_params' => ['locus' => $locus],
+            'male_key' => 'green',
+            'male_suffix_key' => 'pf_wild_type',
+            'female_key' => $expressedColorKey,
+            'female_suffix_key' => 'pf_expressed_female',
+            'result_key' => 'pf_slr_result',
+        ];
+    }
+    
+    private function generateAutosomalStep(string $locus, string $targetAllele): array
+    {
+        $expressedColorKey = $this->getAlleleColorKey($locus, $targetAllele);
+        $type = AgapornisLoci::LOCI[$locus]['type'] ?? 'AR';
+        
+        if ($type === 'AD' || $type === 'AID') {
+            return [
+                'title_key' => 'pf_introduce_dominant',
+                'title_params' => ['locus' => $locus],
+                'male_key' => $expressedColorKey,
+                'female_key' => 'green',
+                'female_suffix_key' => 'pf_wild_type',
+                'result_key' => 'pf_dominant_result',
+                'result_params' => ['locus' => $locus],
+            ];
+        } else {
+            return [
+                'title_key' => 'pf_introduce_ar',
+                'title_params' => ['locus' => $locus, 'gen' => 1],
+                'male_key' => $expressedColorKey,
+                'female_key' => 'green',
+                'female_suffix_key' => 'pf_wild_type',
+                'result_key' => 'pf_ar_result',
+            ];
+        }
+    }
+    
+    private function getAlleleColorKey(string $locus, string $allele): string
+    {
+        $colorKeys = [
+            'parblue' => ['aqaq' => 'aqua', 'tqtq' => 'turquoise', 'tqaq' => 'seagreen'],
+            'ino' => ['inoino' => 'lutino', 'inoW' => 'lutino', 'pldpld' => 'pallid_green', 'pldW' => 'pallid_green'],
+            'opaline' => ['opop' => 'opaline_green', 'opW' => 'opaline_green'],
+            'cinnamon' => ['cincin' => 'cinnamon_green', 'cinW' => 'cinnamon_green'],
+            'dark' => ['Dd' => 'darkgreen', 'DD' => 'olive'],
+            'violet' => ['Vv' => 'violet_aqua', 'VV' => 'violet_aqua'],
+            'pied_dom' => ['Pi+' => 'pied_dom_green', 'PiPi' => 'pied_dom_green'],
+            'pied_rec' => ['pipi' => 'pied_rec_green'],
+            'dilute' => ['dildil' => 'dilute_green'],
+            'edged' => ['eded' => 'edged_green'],
+            'orangeface' => ['ofof' => 'orangefaced_green'],
+            'pale_headed' => ['phph' => 'paleheaded_green'],
+            'fallow_pale' => ['flpflp' => 'fallow_pale_green'],
+            'fallow_bronze' => ['flbflb' => 'fallow_bronze_green'],
+        ];
+        
+        return $colorKeys[$locus][$allele] ?? 'green';
+    }
+    
+    private function generateWarnings(array $genotype, array $colorDef): array
+    {
+        $warnings = [];
+        
+        if (isset($genotype['ino']) && in_array($genotype['ino'], ['inoino', 'inoW', 'pldpld', 'pldW'])) {
+            $warnings[] = ['key' => 'pf_warning_ino'];
+        }
+        
+        if (isset($genotype['fallow_pale']) || isset($genotype['fallow_bronze'])) {
+            $warnings[] = ['key' => 'pf_warning_fallow'];
+        }
+        
+        $tier = $colorDef['tier'] ?? 1;
+        if ($tier >= 2) {
+            $warnings[] = ['key' => 'pf_warning_complex', 'params' => ['tier' => $tier]];
+        }
+        
+        return $warnings;
+    }
+}
+
+
+/**
+ * GenotypeEstimator - 表現型から遺伝子型を推定
+ * v6.8: SSOT準拠
+ */
+class GenotypeEstimator
+{
+    /**
+     * 表現型から遺伝子型を推定
+     */
+public function estimate(string $sex, string $baseColor, string $eyeColor, string $darkFactor, bool $isJa = true): array
+    {
+        // COLOR_DEFINITIONSから色定義を取得
+        $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$baseColor] ?? null;
+        
+        if (!$colorDef) {
+            return ['error' => '未対応の色です: ' . $baseColor];
+        }
+        
+        $genotype = $colorDef['genotype'] ?? [];
+        $isFemale = ($sex === 'female');
+        
+        // ダークファクター適用
+        if ($darkFactor === 'SF') {
+            $genotype['dark'] = 'Dd';
+        } elseif ($darkFactor === 'DF') {
+            $genotype['dark'] = 'DD';
+        } elseif (!isset($genotype['dark'])) {
+            $genotype['dark'] = 'dd';
+        }
+        
+        // 伴性遺伝子のヘミ接合変換（メスの場合）
+        if ($isFemale) {
+            $sexLinkedLoci = ['ino', 'opaline', 'cinnamon'];
+            foreach ($sexLinkedLoci as $locus) {
+                if (isset($genotype[$locus])) {
+                    $val = $genotype[$locus];
+                    // ホモ → ヘミ変換
+                    if ($val === 'inoino') $genotype[$locus] = 'inoW';
+                    elseif ($val === 'pldpld') $genotype[$locus] = 'pldW';
+                    elseif ($val === 'opop') $genotype[$locus] = 'opW';
+                    elseif ($val === 'cincin') $genotype[$locus] = 'cinW';
+                }
+            }
+        }
+        
+        // 結果をフォーマット
+        $results = [];
+        foreach (AgapornisLoci::LOCI as $locusKey => $config) {
+            $locusName = $isJa ? ($config['name']['ja'] ?? $locusKey) : ($config['name']['en'] ?? $locusKey);
+            $isSexLinked = $config['sex_linked'] ?? false;
+            
+            $genoValue = $genotype[$locusKey] ?? null;
+            
+            if ($genoValue === null) {
+                // 野生型
+                if ($isSexLinked && $isFemale) {
+                    $genoValue = '+W';
+                } else {
+                    $genoValue = '++';
+                }
+            }
+            // 表現型に現れているか（野生型以外か）で確定度を判定
+            $isExpressed = isset($genotype[$locusKey]);
+            $confidence = $isExpressed ? 100 : 0;
+
+            $results[] = [
+                'locusKey' => $locusKey,
+                'locusName' => $locusName,
+                'genotype' => $genoValue,
+                'isConfirmed' => $isExpressed,
+                'confidence' => $confidence,
+                'isSexLinked' => $isSexLinked,
+            ];
+        }        
+        return [
+            'success' => true,
+            'sex' => $sex,
+            'baseColor' => $baseColor,
+            'colorName' => $colorDef['ja'] ?? $baseColor,
+            'eyeColor' => $colorDef['eye'] ?? $eyeColor,
+            'loci' => $results,
+            'splitPossibilities' => $this->calculateSplitPossibilities($genotype, $isFemale),
+        ];
+    }
+    
+    /**
+     * スプリットの可能性を計算
+     */
+    private function calculateSplitPossibilities(array $genotype, bool $isFemale): array
+    {
+        $possibilities = [];
+        
+        // 表現型に現れない劣性因子の可能性
+        $recessiveLoci = [
+            'parblue' => ['aq', 'tq'],
+            'pied_rec' => ['pi'],
+            'dilute' => ['dil'],
+            'edged' => ['ed'],
+            'orangeface' => ['of'],
+            'pale_headed' => ['ph'],
+            'fallow_pale' => ['flp'],
+            'fallow_bronze' => ['flb'],
+        ];
+        
+        // 伴性（オスのみスプリット可能）
+        if (!$isFemale) {
+            $sexLinkedLoci = [
+                'ino' => ['ino', 'pld'],
+                'opaline' => ['op'],
+                'cinnamon' => ['cin'],
+            ];
+            $recessiveLoci = array_merge($recessiveLoci, $sexLinkedLoci);
+        }
+        
+        foreach ($recessiveLoci as $locus => $alleles) {
+            $current = $genotype[$locus] ?? '++';
+            // 既にホモ発現していなければスプリットの可能性あり
+            foreach ($alleles as $allele) {
+                if (strpos($current, $allele) === false) {
+                    $locusName = AgapornisLoci::LOCI[$locus]['name']['ja'] ?? $locus;
+                    $possibilities[] = [
+                        'locus' => $locusName,
+                        'allele' => $allele,
+                        'note' => '親の情報があれば確定可能',
+                    ];
+                }
+            }
+        }
+        
+        return $possibilities;
+    }
+}
+
+
