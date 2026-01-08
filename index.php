@@ -425,15 +425,15 @@ $result = $estimator->estimate(
     <script>
     // v7.0修正: T辞書を先に定義（customConfirm等で使用）
     const LANG = '<?= $lang ?>';
-    const T = <?= json_encode(getLangDict()) ?>;
-    const T_GUARDIAN = <?= json_encode(getGuardianLangDict()) ?>;
+    window.T = <?= json_encode(getLangDict()) ?>;
+    window.T_GUARDIAN = <?= json_encode(getGuardianLangDict()) ?>;
     // 安全な翻訳関数（辞書未初期化時のフォールバック）
 function t(key, params = {}) {
-    if (!T || Object.keys(T).length === 0) {
+    if (!window.T || Object.keys(window.T).length === 0) {
         console.warn('[GeneForge] Translation dict empty, key:', key);
         return key;
     }
-    let text = T[key] || key;
+    let text = window.T[key] || key;
     for (const [k, v] of Object.entries(params)) {
         text = text.replace(new RegExp(':' + k, 'g'), v);
     }
