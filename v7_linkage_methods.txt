@@ -1,0 +1,160 @@
+# v7.0 連鎖遺伝メソッド バックアップ
+# genetics.php の AgapornisLoci クラスに追加
+
+## 1. LINKAGE_GROUPS 定数 (AgapornisLoci クラス内)
+
+    public const LINKAGE_GROUPS = [
+        'Z_chromosome' => [
+            'loci' => ['cinnamon', 'ino', 'opaline'],
+            'recombination' => [
+                'cinnamon_ino' => 0.03,
+                'cinnamon_opaline' => 0.33,
+                'ino_opaline' => 0.30,
+            ],
+        ],
+        'autosomal_1' => [
+            'loci' => ['dark', 'parblue'],
+            'recombination' => [
+                'dark_parblue' => 0.07,
+            ],
+        ],
+    ];
+
+## 2. FamilyEstimatorV3 に追加するメソッド群
+
+    /**
+     * v7.0: 連鎖遺伝補正
+     * LINKAGE_GROUPSに基づいて確率を補正
+     */
+    private function applyLinkageCorrection(array $results, array &$notes): array
+    {
+        $linkageGroups = AgapornisLoci::LINKAGE_GROUPS;
+
+        foreach ($linkageGroups as $groupName => $groupData) {
+            $loci = $groupData['loci'];
+            $recombRates = $groupData['recombination'];
+
+            // このグループの座位の推論結果を収集
+            $groupResults = [];
+            foreach ($results as $idx => $result) {
+                if (in_array($result['locusKey'], $loci)) {
+                    $groupResults[$result['locusKey']] = [
+                        'index' => $idx,
+                        'result' => $result,
+                        'hasMutant' => $this->hasMutantAllele($result),
+                    ];
+                }
+            }
+
+            if (count($groupResults) < 2) continue;
+
+            // 連鎖補正を適用
+            $results = $this->adjustLinkedProbabilities(
+                $results, $groupResults, $recombRates, $groupName, $notes
+            );
+        }
+
+        return $results;
+    }
+
+    /**
+     * 変異アレルを持つかどうか判定
+     */
+    private function hasMutantAllele(array $result): bool
+    {
+        $topGeno = $result['topGenotype'] ?? '';
+        // 野生型(++, +W)以外は変異あり
+        return $topGeno !== '++' && $topGeno !== '+W' && $topGeno !== 'dd' && $topGeno !== 'vv';
+    }
+
+    /**
+     * 連鎖座位の確率調整
+     */
+    private function adjustLinkedProbabilities(
+        array $results,
+        array $groupResults,
+        array $recombRates,
+        string $groupName,
+        array &$notes
+    ): array {
+        $mutantLoci = [];
+        $wildLoci = [];
+
+        foreach ($groupResults as $locusKey => $data) {
+            if ($data['hasMutant']) {
+                $mutantLoci[] = $locusKey;
+            } else {
+                $wildLoci[] = $locusKey;
+            }
+        }
+
+        // 複数の変異座位がある場合 → 連鎖ハプロタイプの可能性
+        if (count($mutantLoci) >= 2) {
+            // 連鎖しているペアを特定
+            foreach ($mutantLoci as $i => $locus1) {
+                for ($j = $i + 1; $j < count($mutantLoci); $j++) {
+                    $locus2 = $mutantLoci[$j];
+                    $key1 = $locus1 . '_' . $locus2;
+                    $key2 = $locus2 . '_' . $locus1;
+
+                    $recombRate = $recombRates[$key1] ?? $recombRates[$key2] ?? null;
+                    if ($recombRate !== null) {
+                        $linkageProb = 1.0 - $recombRate;
+                        $notes[] = sprintf(
+                            '連鎖遺伝: %s-%s (%.0f%%の確率で同一染色体由来)',
+                            $locus1, $locus2, $linkageProb * 100
+                        );
+
+                        // ハプロタイプ推定情報を追加
+                        if ($linkageProb >= 0.9) {
+                            $notes[] = sprintf(
+                                '推定ハプロタイプ: %s-%s (組換え率%.1f%%)',
+                                $locus1, $locus2, $recombRate * 100
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        // 1つだけ変異がある場合 → 組換え or 独立起源の注記
+        if (count($mutantLoci) === 1 && count($wildLoci) >= 1) {
+            $mutantLocus = $mutantLoci[0];
+            foreach ($wildLoci as $wildLocus) {
+                $key1 = $mutantLocus . '_' . $wildLocus;
+                $key2 = $wildLocus . '_' . $mutantLocus;
+                $recombRate = $recombRates[$key1] ?? $recombRates[$key2] ?? null;
+
+                if ($recombRate !== null && $recombRate < 0.1) {
+                    // 組換え率が低い(cin-ino: 3%)場合は注記
+                    $notes[] = sprintf(
+                        '注意: %sと%sは連鎖(組換え率%.1f%%)。親が両方持っていた場合、組換えで分離した可能性あり',
+                        $mutantLocus, $wildLocus, $recombRate * 100
+                    );
+                }
+            }
+        }
+
+        return $results;
+    }
+
+## 3. estimate() メソッド内の呼び出し追加箇所
+
+        // v7.0: 連鎖遺伝補正を適用
+        $results = $this->applyLinkageCorrection($results, $notes);
+
+        // テスト交配提案を生成 (この行の直前に追加)
+
+## 4. 戻り値に追加するフラグ
+
+            'linkageAware' => true,  // v7.0フラグ
+
+## 5. index.php に追加 (JSへ渡す)
+
+const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
+
+## 6. window.T 修正 (index.php)
+
+    window.T = <?= json_encode(getLangDict()) ?>;
+    window.T_GUARDIAN = <?= json_encode(getGuardianLangDict()) ?>;
+
