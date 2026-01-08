@@ -7,7 +7,7 @@
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * FamilyEstimator V3 搭載
  * ALBS Peachfaced部門準拠版
  * 
@@ -104,7 +104,7 @@ if ($action === 'calculate') {
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>🦜 Gene-Forge v6.8</title>
+    <title>🦜 Gene-Forge v7.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=674">
     <style>

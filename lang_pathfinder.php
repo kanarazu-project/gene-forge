@@ -1,7 +1,7 @@
 <?php
 /**
  * PathFinder 翻訳キー
- * Gene-Forge v6.8.2
+ * Gene-Forge v7.0
  * 
  * 対応言語: ja, en, de, fr, it, es
  * 
