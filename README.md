@@ -1,11 +1,11 @@
-# 🦜 Gene-Forge v7.0
+# 🦜 Gene-Forge v6.8
 
 **Agapornis Genetics Calculator — ALBS Compliant Edition**
 
 The ultimate genetic calculation engine for Lovebirds (Agapornis roseicollis).
 Supporting 14 loci and over 310 phenotypes (capable of generating tens of thousands of dynamic plumage combinations), fully compliant with the ALBS (African Lovebird Society) Peachfaced naming standards.
 
-**🆕 v7.0: Linkage Genetics** — Now supports linked inheritance for Z-chromosome loci (cinnamon-ino-opaline) and autosomal loci (dark-parblue) with accurate recombination rate calculations.
+**🆕 coming soon v7.0: Linkage Genetics** — Now supports linked inheritance for Z-chromosome loci (cinnamon-ino-opaline) and autosomal loci (dark-parblue) with accurate recombination rate calculations.
 
 **🌐 9 Languages**: Japanese / English / German / French / Italian / Spanish / Indonesian / Tagalog / Portuguese
 
