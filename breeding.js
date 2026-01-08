@@ -257,8 +257,10 @@ const BreedingEngine = {
      * 両親が両座位でヘテロ接合の場合、連鎖を考慮した配偶子頻度で計算。
      */
     _crossAutosomal(sireGeno, damGeno, loci) {
-        // 連鎖座位（dark, parblue）を分離
-        const linkedLoci = ['dark', 'parblue'].filter(l => loci.includes(l));
+        // 連鎖座位をSSOTから取得
+        const groups = this.getLinkageGroups();
+        const autosomalLinkedLoci = groups.autosomal_1?.loci || [];
+        const linkedLoci = autosomalLinkedLoci.filter(l => loci.includes(l));
         const unlinkedLoci = loci.filter(l => !linkedLoci.includes(l));
 
         // 連鎖座位の処理
@@ -471,8 +473,10 @@ const BreedingEngine = {
             return [{ alleles: chromosomes.chr1, probability: 1 }];
         }
 
-        // 連鎖グループの座位順序: cinnamon, ino, opaline
-        const orderedLoci = ['cinnamon', 'ino', 'opaline'].filter(l => loci.includes(l));
+        // 連鎖グループの座位順序をSSOTから取得
+        const groups = this.getLinkageGroups();
+        const zChromLoci = groups.Z_chromosome?.loci || ['cinnamon', 'ino', 'opaline'];
+        const orderedLoci = zChromLoci.filter(l => loci.includes(l));
 
         // 組換えイベントを考慮した配偶子生成
         return this._generateRecombinantGametes(chromosomes, orderedLoci);
