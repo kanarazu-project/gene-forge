@@ -103,8 +103,8 @@ public const LINKAGE_GROUPS = [
 ## ステータス
 
 - [x] 設計完了
-- [ ] Phase 1: cinnamon-ino 3%
-- [ ] Phase 2: dark-parblue 7%
-- [ ] Phase 3: ino-opaline 30%, cinnamon-opaline 33%
+- [x] Phase 1: cinnamon-ino 3%
+- [x] Phase 2: dark-parblue 7%
+- [x] Phase 3: ino-opaline 30%, cinnamon-opaline 33%
 - [ ] テスト
 - [ ] リリース

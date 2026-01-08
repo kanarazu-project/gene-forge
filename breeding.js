@@ -1,20 +1,25 @@
 /**
- * Agapornis Gene-Forge v6.8
- * breeding.js - 交配実行・結果生成モジュール
- * 
+ * Agapornis Gene-Forge v7.0
+ * breeding.js - 交配実行・結果生成モジュール（連鎖遺伝対応版）
+ *
+ * v7.0 連鎖遺伝実装:
+ * - Z染色体連鎖: cinnamon-ino (3%), ino-opaline (30%), cinnamon-opaline (33%)
+ * - 常染色体連鎖: dark-parblue (7%)
+ * - オス（ZZ）のみ組換え発生、メス（ZW）はヘミ接合で組換えなし
+ *
  * 整合性原理：
- * - genetics.php → LOCI_MASTER / COLOR_MASTER が唯一の真実
+ * - genetics.php → LOCI_MASTER / COLOR_MASTER / LINKAGE_GROUPS が唯一の真実
  * - 座位定義・色定義のハードコードは一切持たない
  * - GeneticsEngine（PHP側）への委譲を優先
- * 
+ *
  * 依存:
  * - guardian.js (BreedingValidator)
  * - birds.js (BirdDB)
- * - index.php (LOCI_MASTER, COLOR_MASTER, COLOR_LABELS)
+ * - index.php (LOCI_MASTER, COLOR_MASTER, COLOR_LABELS, LINKAGE_GROUPS)
  */
 
 const BreedingEngine = {
-    VERSION: '6.8',
+    VERSION: '7.0',
     
     // ========================================
     // SSOT参照
@@ -48,8 +53,67 @@ const BreedingEngine = {
         if (typeof LOCI_MASTER !== 'undefined') {
             return Object.keys(LOCI_MASTER).filter(k => LOCI_MASTER[k].sex_linked !== true);
         }
-        return ['parblue', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 
+        return ['parblue', 'dark', 'violet', 'fallow_pale', 'fallow_bronze',
                 'pied_dom', 'pied_rec', 'dilute', 'edged', 'orangeface', 'pale_headed'];
+    },
+
+    // ========================================
+    // 連鎖遺伝 (v7.0)
+    // ========================================
+
+    /**
+     * 連鎖グループを取得（SSOT）
+     */
+    getLinkageGroups() {
+        if (typeof LINKAGE_GROUPS !== 'undefined') {
+            return LINKAGE_GROUPS;
+        }
+        // フォールバック
+        return {
+            Z_chromosome: {
+                loci: ['cinnamon', 'ino', 'opaline'],
+                recombination: {
+                    cinnamon_ino: 0.03,
+                    cinnamon_opaline: 0.33,
+                    ino_opaline: 0.30,
+                }
+            },
+            autosomal_1: {
+                loci: ['dark', 'parblue'],
+                recombination: {
+                    dark_parblue: 0.07,
+                }
+            }
+        };
+    },
+
+    /**
+     * 2座位間の組換え率を取得
+     */
+    getRecombinationRate(locus1, locus2) {
+        const groups = this.getLinkageGroups();
+        for (const group of Object.values(groups)) {
+            const key1 = `${locus1}_${locus2}`;
+            const key2 = `${locus2}_${locus1}`;
+            if (group.recombination[key1] !== undefined) {
+                return group.recombination[key1];
+            }
+            if (group.recombination[key2] !== undefined) {
+                return group.recombination[key2];
+            }
+        }
+        return 0.5; // 独立分離（非連鎖）
+    },
+
+    /**
+     * 座位が連鎖グループに属するか確認
+     */
+    isLinkedLocus(locus, groupName) {
+        const groups = this.getLinkageGroups();
+        if (groups[groupName]) {
+            return groups[groupName].loci.includes(locus);
+        }
+        return false;
     },
     
     /**
@@ -187,16 +251,48 @@ const BreedingEngine = {
     },
     
     /**
-     * 常染色体交配
+     * 常染色体交配（連鎖対応 v7.0）
+     *
+     * dark-parblue間は7%の組換え率で連鎖している。
+     * 両親が両座位でヘテロ接合の場合、連鎖を考慮した配偶子頻度で計算。
      */
     _crossAutosomal(sireGeno, damGeno, loci) {
-        let combos = [{ genotype: {}, probability: 1 }];
-        
-        for (const locus of loci) {
+        // 連鎖座位（dark, parblue）を分離
+        const linkedLoci = ['dark', 'parblue'].filter(l => loci.includes(l));
+        const unlinkedLoci = loci.filter(l => !linkedLoci.includes(l));
+
+        // 連鎖座位の処理
+        let linkedCombos = [{ genotype: {}, probability: 1 }];
+        if (linkedLoci.length === 2) {
+            // dark-parblue両方が存在する場合、連鎖計算
+            linkedCombos = this._crossLinkedAutosomal(sireGeno, damGeno, linkedLoci);
+        } else {
+            // 連鎖座位が1つ以下なら独立分離
+            for (const locus of linkedLoci) {
+                const sVal = sireGeno[locus] || (locus === 'dark' ? 'dd' : '++');
+                const dVal = damGeno[locus] || (locus === 'dark' ? 'dd' : '++');
+                const crosses = this._punnetSquare(sVal, dVal);
+
+                const newCombos = [];
+                for (const c of linkedCombos) {
+                    for (const x of crosses) {
+                        newCombos.push({
+                            genotype: { ...c.genotype, [locus]: x.alleles },
+                            probability: c.probability * x.probability
+                        });
+                    }
+                }
+                linkedCombos = newCombos;
+            }
+        }
+
+        // 非連鎖座位の処理（独立分離）
+        let combos = linkedCombos;
+        for (const locus of unlinkedLoci) {
             const sVal = sireGeno[locus] || '++';
             const dVal = damGeno[locus] || '++';
             const crosses = this._punnetSquare(sVal, dVal);
-            
+
             const newCombos = [];
             for (const c of combos) {
                 for (const x of crosses) {
@@ -208,35 +304,276 @@ const BreedingEngine = {
             }
             combos = newCombos;
         }
-        
+
         return combos;
     },
-    
+
     /**
-     * 伴性遺伝交配
+     * 連鎖した常染色体座位（dark-parblue）の交配
+     *
+     * 組換え率 7%: 親型配偶子 93%, 組換え型配偶子 7%
      */
-    _crossSexLinked(sireGeno, damGeno, loci) {
-        let combos = [{ male: {}, female: {}, probability: 1 }];
-        
+    _crossLinkedAutosomal(sireGeno, damGeno, loci) {
+        // 父と母の配偶子を生成
+        const sireGametes = this._generateLinkedAutosomalGametes(sireGeno, loci);
+        const damGametes = this._generateLinkedAutosomalGametes(damGeno, loci);
+
+        const results = [];
+        const seen = {};
+
+        for (const sG of sireGametes) {
+            for (const dG of damGametes) {
+                const genotype = {};
+                for (const locus of loci) {
+                    genotype[locus] = this._normalizeAutosomal(sG.alleles[locus], dG.alleles[locus]);
+                }
+
+                const key = loci.map(l => genotype[l]).join('|');
+                if (!seen[key]) {
+                    seen[key] = { genotype, probability: 0 };
+                }
+                seen[key].probability += sG.probability * dG.probability;
+            }
+        }
+
+        return Object.values(seen);
+    },
+
+    /**
+     * 連鎖した常染色体の配偶子を生成
+     */
+    _generateLinkedAutosomalGametes(geno, loci) {
+        // 各座位の対立遺伝子を抽出
+        const alleles = {};
         for (const locus of loci) {
-            const sVal = sireGeno[locus] || '++';
-            const dVal = damGeno[locus] || '+W';
-            const crosses = this._crossSexLinkedLocus(sVal, dVal, locus);
-            
-            const newCombos = [];
-            for (const c of combos) {
-                for (const x of crosses) {
-                    newCombos.push({
-                        male: { ...c.male, [locus]: x.male },
-                        female: { ...c.female, [locus]: x.female },
-                        probability: c.probability * x.probability
+            const val = geno[locus] || (locus === 'dark' ? 'dd' : '++');
+            alleles[locus] = this._parseAutosomalAlleles(val);
+        }
+
+        // 両座位がホモ接合なら組換えは無意味
+        const hetLoci = loci.filter(l => alleles[l][0] !== alleles[l][1]);
+        if (hetLoci.length < 2) {
+            // 少なくとも1座位はホモ接合 → 独立分離と同じ
+            const gametes = [];
+            for (const a1 of alleles[loci[0]]) {
+                for (const a2 of alleles[loci[1]]) {
+                    gametes.push({
+                        alleles: { [loci[0]]: a1, [loci[1]]: a2 },
+                        probability: 0.25
                     });
                 }
             }
-            combos = newCombos;
+            // 同じ配偶子を統合
+            const seen = {};
+            for (const g of gametes) {
+                const key = loci.map(l => g.alleles[l]).join('|');
+                if (!seen[key]) {
+                    seen[key] = { alleles: g.alleles, probability: 0 };
+                }
+                seen[key].probability += g.probability;
+            }
+            return Object.values(seen);
         }
-        
-        return combos;
+
+        // 両座位がヘテロ接合 → 連鎖計算
+        const r = this.getRecombinationRate('dark', 'parblue');
+        const parentalProb = (1 - r) / 2;  // 各親型配偶子
+        const recombinantProb = r / 2;     // 各組換え型配偶子
+
+        // 親型配偶子: chr1からdark+chr1からparblue, chr2からdark+chr2からparblue
+        // 組換え型: chr1からdark+chr2からparblue, chr2からdark+chr1からparblue
+        const gametes = [
+            { alleles: { [loci[0]]: alleles[loci[0]][0], [loci[1]]: alleles[loci[1]][0] }, probability: parentalProb },
+            { alleles: { [loci[0]]: alleles[loci[0]][1], [loci[1]]: alleles[loci[1]][1] }, probability: parentalProb },
+            { alleles: { [loci[0]]: alleles[loci[0]][0], [loci[1]]: alleles[loci[1]][1] }, probability: recombinantProb },
+            { alleles: { [loci[0]]: alleles[loci[0]][1], [loci[1]]: alleles[loci[1]][0] }, probability: recombinantProb }
+        ];
+
+        // 同じ配偶子を統合
+        const seen = {};
+        for (const g of gametes) {
+            const key = loci.map(l => g.alleles[l]).join('|');
+            if (!seen[key]) {
+                seen[key] = { alleles: g.alleles, probability: 0 };
+            }
+            seen[key].probability += g.probability;
+        }
+
+        return Object.values(seen);
+    },
+    
+    /**
+     * 伴性遺伝交配（連鎖対応 v7.0）
+     *
+     * Z染色体上の3座位（cinnamon, ino, opaline）は連鎖している。
+     * オス（ZZ）のみ組換えが起きる。メス（ZW）はヘミ接合なので組換えなし。
+     */
+    _crossSexLinked(sireGeno, damGeno, loci) {
+        // 父の配偶子（連鎖考慮）
+        const sireGametes = this._generateLinkedSexLinkedGametes(sireGeno, loci);
+        // 母の配偶子（ヘミ接合なので単一）
+        const damGamete = this._getDamSexLinkedGamete(damGeno, loci);
+
+        const results = [];
+        for (const sGamete of sireGametes) {
+            // オス子: 父の配偶子 + 母の配偶子
+            const maleGeno = {};
+            // メス子: 父の配偶子 + W
+            const femaleGeno = {};
+
+            for (const locus of loci) {
+                maleGeno[locus] = this._normalizeSexLinked(sGamete.alleles[locus], damGamete[locus]);
+                femaleGeno[locus] = sGamete.alleles[locus] + 'W';
+            }
+
+            results.push({
+                male: maleGeno,
+                female: femaleGeno,
+                probability: sGamete.probability
+            });
+        }
+
+        return results;
+    },
+
+    /**
+     * 母の伴性遺伝配偶子を取得（ヘミ接合）
+     */
+    _getDamSexLinkedGamete(damGeno, loci) {
+        const gamete = {};
+        for (const locus of loci) {
+            const val = damGeno[locus] || '+W';
+            // Wを除いた対立遺伝子
+            const allele = val.replace('W', '') || '+';
+            gamete[locus] = allele;
+        }
+        return gamete;
+    },
+
+    /**
+     * 父の伴性遺伝配偶子を生成（連鎖考慮）
+     *
+     * オス（ZZ）は2本のZ染色体を持ち、減数分裂時に組換えが起きる。
+     * 連鎖した座位間では組換え率に応じた配偶子頻度となる。
+     */
+    _generateLinkedSexLinkedGametes(sireGeno, loci) {
+        // 各座位の対立遺伝子を抽出（染色体1, 染色体2）
+        const chromosomes = { chr1: {}, chr2: {} };
+        for (const locus of loci) {
+            const alleles = this._parseSexLinkedAlleles(sireGeno[locus] || '++', 'male');
+            chromosomes.chr1[locus] = alleles[0];
+            chromosomes.chr2[locus] = alleles[1];
+        }
+
+        // 全座位がホモ接合なら組換えは無意味
+        const heterozygousLoci = loci.filter(l => chromosomes.chr1[l] !== chromosomes.chr2[l]);
+        if (heterozygousLoci.length === 0) {
+            return [{ alleles: chromosomes.chr1, probability: 1 }];
+        }
+
+        // 連鎖グループの座位順序: cinnamon, ino, opaline
+        const orderedLoci = ['cinnamon', 'ino', 'opaline'].filter(l => loci.includes(l));
+
+        // 組換えイベントを考慮した配偶子生成
+        return this._generateRecombinantGametes(chromosomes, orderedLoci);
+    },
+
+    /**
+     * 組換えを考慮した配偶子生成
+     *
+     * cinnamon-ino間: 3%組換え
+     * ino-opaline間: 30%組換え
+     *
+     * 二重交差（両区間で組換え）は稀だが考慮する
+     */
+    _generateRecombinantGametes(chromosomes, orderedLoci) {
+        const r_cin_ino = this.getRecombinationRate('cinnamon', 'ino');
+        const r_ino_op = this.getRecombinationRate('ino', 'opaline');
+
+        // 4つの配偶子タイプ:
+        // 1. 非組換え型（両区間とも非組換え）
+        // 2. cinnamon-ino間のみ組換え
+        // 3. ino-opaline間のみ組換え
+        // 4. 両区間で組換え（二重交差）
+
+        const p_no_rec = (1 - r_cin_ino) * (1 - r_ino_op);
+        const p_cin_ino_only = r_cin_ino * (1 - r_ino_op);
+        const p_ino_op_only = (1 - r_cin_ino) * r_ino_op;
+        const p_double = r_cin_ino * r_ino_op;
+
+        const gametes = [];
+        const seen = {};
+
+        // 配偶子タイプを生成
+        const gameteConfigs = [
+            { crossovers: [], probability: p_no_rec },
+            { crossovers: ['cin_ino'], probability: p_cin_ino_only },
+            { crossovers: ['ino_op'], probability: p_ino_op_only },
+            { crossovers: ['cin_ino', 'ino_op'], probability: p_double }
+        ];
+
+        for (const config of gameteConfigs) {
+            // chr1ベースで配偶子を構築
+            const gamete = { ...chromosomes.chr1 };
+
+            // 交差点より後ろは染色体を切り替え
+            let useChr2 = false;
+            for (let i = 0; i < orderedLoci.length; i++) {
+                const locus = orderedLoci[i];
+
+                // 交差点をチェック
+                if (i > 0) {
+                    const prevLocus = orderedLoci[i - 1];
+                    const crossoverKey = `${prevLocus.replace('cinnamon', 'cin').replace('opaline', 'op')}_${locus.replace('cinnamon', 'cin').replace('opaline', 'op')}`;
+                    if (config.crossovers.includes(crossoverKey)) {
+                        useChr2 = !useChr2;
+                    }
+                }
+
+                gamete[locus] = useChr2 ? chromosomes.chr2[locus] : chromosomes.chr1[locus];
+            }
+
+            // 配偶子の統合（同じ配偶子は確率を合算）
+            const key = orderedLoci.map(l => gamete[l]).join('|');
+            if (!seen[key]) {
+                seen[key] = { alleles: gamete, probability: 0 };
+            }
+            seen[key].probability += config.probability;
+        }
+
+        // 相補的配偶子（chr2ベース）も生成
+        for (const config of gameteConfigs) {
+            const gamete = { ...chromosomes.chr2 };
+
+            let useChr1 = false;
+            for (let i = 0; i < orderedLoci.length; i++) {
+                const locus = orderedLoci[i];
+
+                if (i > 0) {
+                    const prevLocus = orderedLoci[i - 1];
+                    const crossoverKey = `${prevLocus.replace('cinnamon', 'cin').replace('opaline', 'op')}_${locus.replace('cinnamon', 'cin').replace('opaline', 'op')}`;
+                    if (config.crossovers.includes(crossoverKey)) {
+                        useChr1 = !useChr1;
+                    }
+                }
+
+                gamete[locus] = useChr1 ? chromosomes.chr1[locus] : chromosomes.chr2[locus];
+            }
+
+            const key = orderedLoci.map(l => gamete[l]).join('|');
+            if (!seen[key]) {
+                seen[key] = { alleles: gamete, probability: 0 };
+            }
+            seen[key].probability += config.probability;
+        }
+
+        // 確率を正規化（合計が1になるように）
+        const total = Object.values(seen).reduce((sum, g) => sum + g.probability, 0);
+        for (const g of Object.values(seen)) {
+            g.probability = g.probability / total;
+        }
+
+        return Object.values(seen).filter(g => g.probability > 0.0001);
     },
     
     /**
@@ -468,4 +805,4 @@ if (typeof window !== 'undefined') {
     window.BreedingEngine = BreedingEngine;
 }
 
-console.log('[BreedingEngine] v' + BreedingEngine.VERSION + ' loaded (SSOT)');
+console.log('[BreedingEngine] v' + BreedingEngine.VERSION + ' loaded (SSOT + Linkage Genetics)');
