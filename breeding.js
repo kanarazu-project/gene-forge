@@ -613,9 +613,11 @@ const BreedingEngine = {
             const allele = val.replace('W', '') || '+';
             return [allele];
         }
-        // オスの場合（例: +ino, inoino, opop）
-        if (val.length <= 2) return [val[0] || '+', val[1] || '+'];
-        // 長い形式（例: inoino → ino, ino）
+        // ヘテロ形式: +ino, +op, +cin
+        if (val.startsWith('+')) {
+            return ['+', val.substring(1)];
+        }
+        // ホモ形式: inoino, opop, cincin
         const half = val.length / 2;
         return [val.substring(0, half), val.substring(half)];
     },
