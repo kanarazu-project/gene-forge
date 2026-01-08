@@ -7,7 +7,7 @@ Supporting 14 loci and over 310 phenotypes (capable of generating tens of thousa
 
 **🆕 coming soon v7.0: Linkage Genetics** — Now supports linked inheritance for Z-chromosome loci (cinnamon-ino-opaline) and autosomal loci (dark-parblue) with accurate recombination rate calculations.
 
-**🌐 9 Languages**: Japanese / English / German / French / Italian / Spanish / Indonesian / Tagalog / Portuguese
+**🌐 6 Languages**: Japanese / English / German / French / Italian / Spanish 
 
 ---
 
