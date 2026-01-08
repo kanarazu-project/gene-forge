@@ -451,7 +451,7 @@ const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
     <a href="?lang=it" class="<?= $lang === 'it' ? 'active' : '' ?>">IT</a>
     <a href="?lang=es" class="<?= $lang === 'es' ? 'active' : '' ?>">ES</a>
 </div>
-                        <span class="version-tag"><a href="https://github.com/kanarazu-project/gene-forge" target="_blank" style="text-decoration:none;color:inherit;"><?= t('version') ?></a><br><span style="color:#666;font-size:.65rem;">README</span></span>
+                        <span class="version-tag"><a href="https://github.com/kanarazu-project/gene-forge" target="_blank" style="text-decoration:none;color:inherit;">Github</a><br><span style="color:#666;font-size:.65rem;">README</span></span>
             <h1 class="logo">🦜 GENE-FORGE</h1>
 <p class="app-subtitle"><?= t('subtitle') ?></p>
 <span class="version-badge"><?= t('coming_soon') ?> | ALBS<?= t('compliant') ?></span>
