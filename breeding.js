@@ -1,20 +1,29 @@
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * breeding.js - 交配実行・結果生成モジュール
- * 
+ *
  * 整合性原理：
  * - genetics.php → LOCI_MASTER / COLOR_MASTER が唯一の真実
  * - 座位定義・色定義のハードコードは一切持たない
- * - GeneticsEngine（PHP側）への委譲を優先
- * 
+ * - GeneticsEngine（JS側）の連鎖計算を利用
+ *
+ * v7.0 連鎖遺伝対応:
+ * - Z染色体連鎖: cinnamon-ino (3%), ino-opaline (30%), cinnamon-opaline (33%)
+ * - 常染色体連鎖: dark-parblue (7%)
+ * - Cis/Trans 相を考慮した配偶子頻度計算
+ *
  * 依存:
  * - guardian.js (BreedingValidator)
  * - birds.js (BirdDB)
- * - index.php (LOCI_MASTER, COLOR_MASTER, COLOR_LABELS)
+ * - genetics-engine.js (GeneticsEngine) - v7.0連鎖計算
+ * - index.php (LOCI_MASTER, COLOR_MASTER, COLOR_LABELS, LINKAGE_GROUPS)
  */
 
 const BreedingEngine = {
-    VERSION: '6.8',
+    VERSION: '7.0',
+
+    // v7.0: 連鎖計算を有効化するフラグ
+    useLinkage: true,
     
     // ========================================
     // SSOT参照
@@ -148,28 +157,36 @@ const BreedingEngine = {
     
     /**
      * 簡易交配計算（SSOT準拠）
+     * v7.0: 連鎖計算対応
      */
     _simpleCross(sireGeno, damGeno) {
         const results = [];
         const autosomalLoci = this.getAutosomalLoci();
         const sexLinkedLoci = this.getSexLinkedLoci();
-        
+
+        // v7.0: 連鎖計算が有効な場合
+        if (this.useLinkage && typeof GeneticsEngine !== 'undefined' &&
+            typeof GeneticsEngine.genotypeToHaplotypes === 'function') {
+            return this._linkageCross(sireGeno, damGeno, autosomalLoci, sexLinkedLoci);
+        }
+
+        // フォールバック: 独立分離仮定
         // 常染色体の組み合わせ
         const autoCombos = this._crossAutosomal(sireGeno, damGeno, autosomalLoci);
-        
+
         // 伴性遺伝の組み合わせ
         const slCombos = this._crossSexLinked(sireGeno, damGeno, sexLinkedLoci);
-        
+
         // 全組み合わせ生成
         for (const auto of autoCombos) {
             for (const sl of slCombos) {
                 ['male', 'female'].forEach(sex => {
                     const geno = { ...auto.genotype };
-                    
+
                     sexLinkedLoci.forEach(locus => {
                         geno[locus] = sex === 'male' ? sl.male[locus] : sl.female[locus];
                     });
-                    
+
                     const prob = auto.probability * sl.probability * 0.5;
                     if (prob > 0.001) {
                         results.push({
@@ -182,8 +199,192 @@ const BreedingEngine = {
                 });
             }
         }
-        
+
         return this._mergeResults(results);
+    },
+
+    // ========================================
+    // v7.0 連鎖遺伝計算
+    // ========================================
+
+    /**
+     * 連鎖計算を使用した交配（v7.0）
+     */
+    _linkageCross(sireGeno, damGeno, autosomalLoci, sexLinkedLoci) {
+        const results = [];
+
+        // 父のハプロタイプセット生成
+        const sireHaps = GeneticsEngine.genotypeToHaplotypes(sireGeno, 'male', sireGeno._phase || 'unknown');
+        // 母のハプロタイプセット生成
+        const damHaps = GeneticsEngine.genotypeToHaplotypes(damGeno, 'female', damGeno._phase || 'unknown');
+
+        // Z染色体（伴性遺伝）の配偶子頻度計算
+        const sireZGametes = GeneticsEngine.calculateGameteFrequencies(sireHaps.Z_chromosome, 'Z_chromosome');
+        const damZGametes = GeneticsEngine.calculateGameteFrequencies(damHaps.Z_chromosome, 'Z_chromosome');
+
+        // 常染色体連鎖群1の配偶子頻度計算
+        const sireA1Gametes = GeneticsEngine.calculateGameteFrequencies(sireHaps.autosomal_1, 'autosomal_1');
+        const damA1Gametes = GeneticsEngine.calculateGameteFrequencies(damHaps.autosomal_1, 'autosomal_1');
+
+        // 独立座位（連鎖グループに属さない常染色体）
+        const linkedAutosomal = ['dark', 'parblue'];
+        const independentLoci = autosomalLoci.filter(l => !linkedAutosomal.includes(l));
+        const independentCombos = this._crossAutosomal(sireGeno, damGeno, independentLoci);
+
+        // 全組み合わせ生成
+        for (const sireZ of sireZGametes) {
+            for (const damZ of damZGametes) {
+                for (const sireA1 of sireA1Gametes) {
+                    for (const damA1 of damA1Gametes) {
+                        for (const indep of independentCombos) {
+
+                            // オス子孫
+                            const maleGeno = this._buildOffspringGenotype(
+                                sireZ.haplotype, damZ.haplotype,
+                                sireA1.haplotype, damA1.haplotype,
+                                indep.genotype, 'male'
+                            );
+                            const maleProb = sireZ.frequency * damZ.frequency *
+                                            sireA1.frequency * damA1.frequency *
+                                            indep.probability * 0.5;
+
+                            if (maleProb > 0.0001) {
+                                results.push({
+                                    sex: 'male',
+                                    genotype: maleGeno,
+                                    probability: maleProb,
+                                    phenotype: this._inferPhenotype(maleGeno, 'male')
+                                });
+                            }
+
+                            // メス子孫（Zは父由来のみ、W染色体を持つ）
+                            const femaleGeno = this._buildOffspringGenotype(
+                                sireZ.haplotype, null,  // 母からはW
+                                sireA1.haplotype, damA1.haplotype,
+                                indep.genotype, 'female'
+                            );
+                            const femaleProb = sireZ.frequency * 1.0 *  // 母のZ配偶子は無関係
+                                              sireA1.frequency * damA1.frequency *
+                                              indep.probability * 0.5;
+
+                            if (femaleProb > 0.0001) {
+                                results.push({
+                                    sex: 'female',
+                                    genotype: femaleGeno,
+                                    probability: femaleProb,
+                                    phenotype: this._inferPhenotype(femaleGeno, 'female')
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return this._mergeResults(results);
+    },
+
+    /**
+     * 子孫の遺伝子型を構築
+     */
+    _buildOffspringGenotype(sireZHap, damZHap, sireA1Hap, damA1Hap, independentGeno, sex) {
+        const geno = { ...independentGeno };
+
+        // Z染色体座位
+        const zLoci = ['cinnamon', 'ino', 'opaline'];
+        for (const locus of zLoci) {
+            if (sex === 'male') {
+                // オス: 父Z + 母Z
+                const a1 = sireZHap[locus] || '+';
+                const a2 = damZHap ? (damZHap[locus] || '+') : '+';
+                geno[locus] = this._formatSexLinkedAlleles(a1, a2, locus);
+            } else {
+                // メス: 父Z + W（ヘミ接合）
+                const a1 = sireZHap[locus] || '+';
+                geno[locus] = a1 === '+' ? '+W' : `${a1}W`;
+            }
+        }
+
+        // 常染色体連鎖群1座位
+        const a1Loci = ['dark', 'parblue'];
+        for (const locus of a1Loci) {
+            const a1 = sireA1Hap[locus] || GeneticsEngine.HAPLOTYPE_MODEL.WILDTYPE[locus];
+            const a2 = damA1Hap[locus] || GeneticsEngine.HAPLOTYPE_MODEL.WILDTYPE[locus];
+            geno[locus] = this._formatAutosomalAlleles(a1, a2, locus);
+        }
+
+        return geno;
+    },
+
+    /**
+     * 伴性遺伝子型文字列を生成
+     */
+    _formatSexLinkedAlleles(a1, a2, locus) {
+        if (a1 === '+' && a2 === '+') return '++';
+        if (a1 === a2) return `${a1}${a1}`;
+        if (a1 === '+') return `+${a2}`;
+        if (a2 === '+') return `+${a1}`;
+        return `${a1}${a2}`;
+    },
+
+    /**
+     * 常染色体遺伝子型文字列を生成
+     */
+    _formatAutosomalAlleles(a1, a2, locus) {
+        if (locus === 'dark') {
+            // D > d の優先度
+            if (a1 === 'D' && a2 === 'D') return 'DD';
+            if (a1 === 'd' && a2 === 'd') return 'dd';
+            return 'Dd';
+        }
+        if (locus === 'parblue') {
+            if (a1 === '+' && a2 === '+') return '++';
+            if (a1 === a2) return `${a1}${a2}`;
+            if (a1 === '+') return `+${a2}`;
+            if (a2 === '+') return `+${a1}`;
+            // tq > aq
+            return a1 === 'tq' ? `${a1}${a2}` : `${a2}${a1}`;
+        }
+        return `${a1}${a2}`;
+    },
+
+    /**
+     * 連鎖遺伝に関する注記を生成
+     */
+    getLinkageNotes(sireGeno, damGeno) {
+        const notes = [];
+
+        if (!this.useLinkage || typeof GeneticsEngine === 'undefined') {
+            return notes;
+        }
+
+        const sireHaps = GeneticsEngine.genotypeToHaplotypes(sireGeno, 'male');
+        const damHaps = GeneticsEngine.genotypeToHaplotypes(damGeno, 'female');
+
+        // Z染色体の相を推定
+        const sireZPhase = GeneticsEngine.inferPhase(sireHaps.Z_chromosome);
+        const sireA1Phase = GeneticsEngine.inferPhase(sireHaps.autosomal_1);
+
+        if (sireZPhase === 'cis') {
+            const hapStr = GeneticsEngine.formatHaplotypeSet(sireHaps.Z_chromosome, 'Z_chromosome');
+            notes.push(`父のZ染色体: ${hapStr} - 連鎖遺伝型（cis相）`);
+        } else if (sireZPhase === 'trans') {
+            const hapStr = GeneticsEngine.formatHaplotypeSet(sireHaps.Z_chromosome, 'Z_chromosome');
+            notes.push(`父のZ染色体: ${hapStr} - 組換え必要型（trans相）`);
+        }
+
+        if (sireA1Phase === 'cis' || sireA1Phase === 'trans') {
+            const hapStr = GeneticsEngine.formatHaplotypeSet(sireHaps.autosomal_1, 'autosomal_1');
+            notes.push(`父の常染色体連鎖: ${hapStr} (${sireA1Phase}相)`);
+        }
+
+        // 母のZ染色体（ヘミ接合なので相はない）
+        const damZStr = GeneticsEngine.formatHaplotypeSet(damHaps.Z_chromosome, 'Z_chromosome');
+        if (damZStr && !damZStr.includes('+-+-+')) {
+            notes.push(`母のZ染色体: ${damZStr}`);
+        }
+
+        return notes;
     },
     
     /**
@@ -468,4 +669,4 @@ if (typeof window !== 'undefined') {
     window.BreedingEngine = BreedingEngine;
 }
 
-console.log('[BreedingEngine] v' + BreedingEngine.VERSION + ' loaded (SSOT)');
+console.log('[BreedingEngine] v' + BreedingEngine.VERSION + ' loaded (SSOT + Linkage)');

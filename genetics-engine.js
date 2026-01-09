@@ -356,6 +356,547 @@ const GeneticsEngine = {
     // ========================================
 
     /**
+     * ハプロタイプデータモデル v7.0
+     *
+     * 連鎖座位のアレルを染色体単位で管理
+     *
+     * ## Z染色体（伴性遺伝子座）
+     * - 座位順序: [cinnamon, ino, opaline]
+     * - オス(ZZ): 2本のハプロタイプ
+     * - メス(ZW): 1本のハプロタイプ（W染色体は遺伝子なし）
+     *
+     * ## 常染色体連鎖群1
+     * - 座位順序: [dark, parblue]
+     * - 両性とも: 2本のハプロタイプ
+     *
+     * ## 相（Phase）
+     * - cis（シス）: 変異が同一染色体上 → 連鎖遺伝
+     * - trans（トランス）: 変異が異なる染色体上 → 組換えで連鎖型出現
+     *
+     * @example オス cinnamon/ino ダブルスプリット（cis相）
+     * {
+     *   Z_haplotypes: [
+     *     { cinnamon: 'cin', ino: 'ino', opaline: '+' },  // Z¹: cin-ino 連鎖
+     *     { cinnamon: '+', ino: '+', opaline: '+' }       // Z²: 野生型
+     *   ],
+     *   phase: 'cis'
+     * }
+     *
+     * @example オス cinnamon/ino ダブルスプリット（trans相）
+     * {
+     *   Z_haplotypes: [
+     *     { cinnamon: 'cin', ino: '+', opaline: '+' },    // Z¹: cin のみ
+     *     { cinnamon: '+', ino: 'ino', opaline: '+' }     // Z²: ino のみ
+     *   ],
+     *   phase: 'trans'
+     * }
+     *
+     * @example メス cinnamon ino（ヘミ接合）
+     * {
+     *   Z_haplotypes: [
+     *     { cinnamon: 'cin', ino: 'ino', opaline: '+' }   // Z: 唯一のZ染色体
+     *   ],
+     *   phase: null  // メスは相の概念なし
+     * }
+     */
+    HAPLOTYPE_MODEL: {
+        // Z染色体連鎖群の座位順序
+        Z_LOCI_ORDER: ['cinnamon', 'ino', 'opaline'],
+
+        // 常染色体連鎖群1の座位順序
+        AUTOSOMAL_1_LOCI_ORDER: ['dark', 'parblue'],
+
+        // 野生型アレル定義
+        WILDTYPE: {
+            cinnamon: '+',
+            ino: '+',
+            opaline: '+',
+            dark: 'd',
+            parblue: '+',
+        },
+
+        // 変異型アレル（座位ごとの可能なアレル）
+        MUTANT_ALLELES: {
+            cinnamon: ['cin'],
+            ino: ['ino', 'pld'],      // 複対立: ino > pld > +
+            opaline: ['op'],
+            dark: ['D'],              // 不完全優性
+            parblue: ['aq', 'tq'],    // 複対立: aq, tq
+        },
+    },
+
+    /**
+     * 空のハプロタイプを生成
+     * @param {string} group - 連鎖グループ ('Z_chromosome' | 'autosomal_1')
+     * @returns {Object} 野生型ハプロタイプ
+     */
+    createEmptyHaplotype(group) {
+        const lociOrder = group === 'Z_chromosome'
+            ? this.HAPLOTYPE_MODEL.Z_LOCI_ORDER
+            : this.HAPLOTYPE_MODEL.AUTOSOMAL_1_LOCI_ORDER;
+
+        const haplotype = {};
+        for (const locus of lociOrder) {
+            haplotype[locus] = this.HAPLOTYPE_MODEL.WILDTYPE[locus];
+        }
+        return haplotype;
+    },
+
+    /**
+     * ハプロタイプセットを生成
+     * @param {string} sex - 性別 ('male' | 'female')
+     * @param {string} group - 連鎖グループ
+     * @returns {Object} { haplotypes: [], phase: null }
+     */
+    createHaplotypeSet(sex, group = 'Z_chromosome') {
+        const count = (group === 'Z_chromosome' && sex === 'female') ? 1 : 2;
+        const haplotypes = [];
+
+        for (let i = 0; i < count; i++) {
+            haplotypes.push(this.createEmptyHaplotype(group));
+        }
+
+        return {
+            haplotypes,
+            phase: count === 2 ? 'unknown' : null,  // メスは相なし
+        };
+    },
+
+    /**
+     * 従来の遺伝子型からハプロタイプセットに変換
+     * @param {Object} genotype - 従来形式の遺伝子型
+     * @param {string} sex - 性別
+     * @param {string} phase - 相 ('cis' | 'trans' | 'unknown')
+     * @returns {Object} ハプロタイプセット
+     */
+    genotypeToHaplotypes(genotype, sex, phase = 'unknown') {
+        const result = {
+            Z_chromosome: this.createHaplotypeSet(sex, 'Z_chromosome'),
+            autosomal_1: this.createHaplotypeSet(sex, 'autosomal_1'),
+        };
+
+        // Z染色体連鎖群の変換
+        this._convertToHaplotype(
+            genotype,
+            result.Z_chromosome,
+            this.HAPLOTYPE_MODEL.Z_LOCI_ORDER,
+            sex,
+            phase
+        );
+
+        // 常染色体連鎖群1の変換
+        this._convertToHaplotype(
+            genotype,
+            result.autosomal_1,
+            this.HAPLOTYPE_MODEL.AUTOSOMAL_1_LOCI_ORDER,
+            sex,
+            phase
+        );
+
+        return result;
+    },
+
+    /**
+     * ハプロタイプ変換の内部処理
+     * @private
+     */
+    _convertToHaplotype(genotype, haplotypeSet, lociOrder, sex, phase) {
+        for (const locus of lociOrder) {
+            const alleleStr = genotype[locus];
+            if (!alleleStr) continue;
+
+            const alleles = this._parseAlleleString(alleleStr, locus, sex);
+            if (!alleles) continue;
+
+            if (haplotypeSet.haplotypes.length === 1) {
+                // メス（ヘミ接合）: 1本のハプロタイプ
+                haplotypeSet.haplotypes[0][locus] = alleles[0];
+            } else {
+                // オスまたは常染色体: 2本のハプロタイプ
+                haplotypeSet.haplotypes[0][locus] = alleles[0];
+                haplotypeSet.haplotypes[1][locus] = alleles[1] || this.HAPLOTYPE_MODEL.WILDTYPE[locus];
+            }
+        }
+
+        haplotypeSet.phase = haplotypeSet.haplotypes.length === 2 ? phase : null;
+    },
+
+    /**
+     * アレル文字列をパース
+     * @private
+     * @param {string} alleleStr - 例: 'cincin', '+cin', 'cinW', 'DD', 'Dd'
+     * @param {string} locus - 座位名
+     * @param {string} sex - 性別
+     * @returns {Array} [allele1, allele2] または [allele1] (ヘミ接合)
+     */
+    _parseAlleleString(alleleStr, locus, sex) {
+        if (!alleleStr) return null;
+
+        const wildtype = this.HAPLOTYPE_MODEL.WILDTYPE[locus];
+
+        // 伴性遺伝子座（cinnamon, ino, opaline）
+        if (['cinnamon', 'ino', 'opaline'].includes(locus)) {
+            // ヘミ接合（メス）
+            if (alleleStr.endsWith('W')) {
+                const mutant = alleleStr.replace('W', '');
+                return [mutant || wildtype];
+            }
+            // ホモ接合（例: cincin, opop, inoino）
+            if (/^(\w+)\1$/.test(alleleStr)) {
+                const mutant = alleleStr.slice(0, alleleStr.length / 2);
+                return [mutant, mutant];
+            }
+            // ヘテロ接合（例: +cin, +op, +ino）
+            if (alleleStr.startsWith('+')) {
+                const mutant = alleleStr.slice(1);
+                return [wildtype, mutant];
+            }
+            // 複合ヘテロ（ino座位: inopld）
+            if (locus === 'ino' && alleleStr === 'inopld') {
+                return ['ino', 'pld'];
+            }
+            // 野生型
+            if (alleleStr === '++' || alleleStr === '+W') {
+                return sex === 'female' ? [wildtype] : [wildtype, wildtype];
+            }
+        }
+
+        // dark座位（不完全優性）
+        if (locus === 'dark') {
+            if (alleleStr === 'DD') return ['D', 'D'];
+            if (alleleStr === 'Dd') return ['D', 'd'];
+            if (alleleStr === 'dd') return ['d', 'd'];
+        }
+
+        // parblue座位（複対立）
+        if (locus === 'parblue') {
+            if (alleleStr === 'aqaq') return ['aq', 'aq'];
+            if (alleleStr === 'tqtq') return ['tq', 'tq'];
+            if (alleleStr === 'tqaq' || alleleStr === 'aqtq') return ['tq', 'aq'];
+            if (alleleStr === '+aq') return ['+', 'aq'];
+            if (alleleStr === '+tq') return ['+', 'tq'];
+            if (alleleStr === '++') return ['+', '+'];
+        }
+
+        return null;
+    },
+
+    /**
+     * ハプロタイプセットから従来の遺伝子型に変換
+     * @param {Object} haplotypeData - ハプロタイプセット
+     * @param {string} sex - 性別
+     * @returns {Object} 従来形式の遺伝子型
+     */
+    haplotypesToGenotype(haplotypeData, sex) {
+        const genotype = {};
+
+        // Z染色体連鎖群
+        if (haplotypeData.Z_chromosome) {
+            const haps = haplotypeData.Z_chromosome.haplotypes;
+            for (const locus of this.HAPLOTYPE_MODEL.Z_LOCI_ORDER) {
+                genotype[locus] = this._formatAlleleFromHaplotypes(
+                    haps, locus, sex, 'Z_chromosome'
+                );
+            }
+        }
+
+        // 常染色体連鎖群1
+        if (haplotypeData.autosomal_1) {
+            const haps = haplotypeData.autosomal_1.haplotypes;
+            for (const locus of this.HAPLOTYPE_MODEL.AUTOSOMAL_1_LOCI_ORDER) {
+                genotype[locus] = this._formatAlleleFromHaplotypes(
+                    haps, locus, sex, 'autosomal_1'
+                );
+            }
+        }
+
+        return genotype;
+    },
+
+    /**
+     * ハプロタイプからアレル文字列を生成
+     * @private
+     */
+    _formatAlleleFromHaplotypes(haplotypes, locus, sex, group) {
+        const wildtype = this.HAPLOTYPE_MODEL.WILDTYPE[locus];
+
+        if (haplotypes.length === 1) {
+            // ヘミ接合（メス Z染色体）
+            const allele = haplotypes[0][locus] || wildtype;
+            return allele === wildtype ? '+W' : `${allele}W`;
+        }
+
+        const a1 = haplotypes[0][locus] || wildtype;
+        const a2 = haplotypes[1][locus] || wildtype;
+
+        // 伴性・常染色体共通の整形
+        if (['cinnamon', 'ino', 'opaline'].includes(locus)) {
+            if (a1 === wildtype && a2 === wildtype) return '++';
+            if (a1 === a2) return `${a1}${a1}`;  // ホモ
+            if (a1 === wildtype) return `+${a2}`;
+            if (a2 === wildtype) return `+${a1}`;
+            return `${a1}${a2}`;  // 複合ヘテロ
+        }
+
+        if (locus === 'dark') {
+            return `${a1}${a2}`;  // DD, Dd, dd
+        }
+
+        if (locus === 'parblue') {
+            if (a1 === '+' && a2 === '+') return '++';
+            if (a1 === a2) return `${a1}${a1}`;
+            if (a1 === '+') return `+${a2}`;
+            if (a2 === '+') return `+${a1}`;
+            // tq > aq の優先度で表記
+            return a1 === 'tq' ? `${a1}${a2}` : `${a2}${a1}`;
+        }
+
+        return '++';
+    },
+
+    /**
+     * 相（phase）を推定
+     * 2つ以上の変異が同一連鎖群にある場合、cis/trans を判定
+     * @param {Object} haplotypeSet - ハプロタイプセット
+     * @returns {string} 'cis' | 'trans' | 'homozygous' | 'single' | null
+     */
+    inferPhase(haplotypeSet) {
+        if (!haplotypeSet || haplotypeSet.haplotypes.length < 2) {
+            return null;  // ヘミ接合（メス）は相なし
+        }
+
+        const [hap1, hap2] = haplotypeSet.haplotypes;
+        const loci = Object.keys(hap1);
+
+        // 各座位の変異状態をカウント
+        let mutantLoci1 = [];  // hap1の変異座位
+        let mutantLoci2 = [];  // hap2の変異座位
+
+        for (const locus of loci) {
+            const wildtype = this.HAPLOTYPE_MODEL.WILDTYPE[locus];
+            if (hap1[locus] !== wildtype) mutantLoci1.push(locus);
+            if (hap2[locus] !== wildtype) mutantLoci2.push(locus);
+        }
+
+        // 変異が1つ以下なら相の概念なし
+        const totalMutants = new Set([...mutantLoci1, ...mutantLoci2]).size;
+        if (totalMutants <= 1) return 'single';
+
+        // 両ハプロタイプが同一なら homozygous
+        if (mutantLoci1.length === mutantLoci2.length &&
+            mutantLoci1.every(l => mutantLoci2.includes(l))) {
+            return 'homozygous';
+        }
+
+        // 複数変異が同一ハプロタイプに集中 → cis
+        if (mutantLoci1.length >= 2 && mutantLoci2.length === 0) return 'cis';
+        if (mutantLoci2.length >= 2 && mutantLoci1.length === 0) return 'cis';
+
+        // 変異が両ハプロタイプに分散 → trans
+        if (mutantLoci1.length >= 1 && mutantLoci2.length >= 1) {
+            // 重複がなければ明確に trans
+            const overlap = mutantLoci1.filter(l => mutantLoci2.includes(l));
+            if (overlap.length === 0) return 'trans';
+        }
+
+        return 'unknown';
+    },
+
+    /**
+     * 配偶子（gamete）頻度を計算
+     * 連鎖と組換えを考慮した配偶子生成
+     * @param {Object} haplotypeSet - ハプロタイプセット
+     * @param {string} group - 連鎖グループ名
+     * @returns {Array} [{ haplotype: {...}, frequency: 0.485 }, ...]
+     */
+    calculateGameteFrequencies(haplotypeSet, group = 'Z_chromosome') {
+        if (!haplotypeSet || haplotypeSet.haplotypes.length < 2) {
+            // ヘミ接合: 1種類の配偶子のみ（組換えなし）
+            return [{
+                haplotype: haplotypeSet.haplotypes[0],
+                frequency: 1.0,
+            }];
+        }
+
+        const [hap1, hap2] = haplotypeSet.haplotypes;
+        const lociOrder = group === 'Z_chromosome'
+            ? this.HAPLOTYPE_MODEL.Z_LOCI_ORDER
+            : this.HAPLOTYPE_MODEL.AUTOSOMAL_1_LOCI_ORDER;
+
+        // 単純ケース: 連鎖座位が2つの場合
+        if (lociOrder.length === 2) {
+            return this._calculateTwoLocusGametes(hap1, hap2, lociOrder, group);
+        }
+
+        // Z染色体: 3座位（cinnamon, ino, opaline）
+        return this._calculateThreeLocusGametes(hap1, hap2, lociOrder, group);
+    },
+
+    /**
+     * 2座位の配偶子頻度計算
+     * @private
+     */
+    _calculateTwoLocusGametes(hap1, hap2, lociOrder, group) {
+        const [locus1, locus2] = lociOrder;
+        const recombRate = this.getRecombinationRate(locus1, locus2) || 0.5;
+
+        // 親型配偶子: 1 - r
+        const parentalFreq = (1 - recombRate) / 2;
+        // 組換え型配偶子: r
+        const recombFreq = recombRate / 2;
+
+        const gametes = [
+            // 親型1: hap1そのまま
+            { haplotype: { ...hap1 }, frequency: parentalFreq },
+            // 親型2: hap2そのまま
+            { haplotype: { ...hap2 }, frequency: parentalFreq },
+            // 組換え型1: hap1[locus1] + hap2[locus2]
+            {
+                haplotype: { [locus1]: hap1[locus1], [locus2]: hap2[locus2] },
+                frequency: recombFreq
+            },
+            // 組換え型2: hap2[locus1] + hap1[locus2]
+            {
+                haplotype: { [locus1]: hap2[locus1], [locus2]: hap1[locus2] },
+                frequency: recombFreq
+            },
+        ];
+
+        // 重複ハプロタイプをマージ
+        return this._mergeIdenticalGametes(gametes);
+    },
+
+    /**
+     * 3座位の配偶子頻度計算（Z染色体用）
+     * cin-ino: 3%, ino-op: 30%, cin-op: 33%
+     * @private
+     */
+    _calculateThreeLocusGametes(hap1, hap2, lociOrder, group) {
+        // 各区間の組換え率
+        const r_cin_ino = this.getRecombinationRate('cinnamon', 'ino') || 0.03;
+        const r_ino_op = this.getRecombinationRate('ino', 'opaline') || 0.30;
+
+        // 干渉なし（独立）の仮定で二重組換え率を計算
+        const r_double = r_cin_ino * r_ino_op;
+
+        // 配偶子クラスの頻度
+        // 親型: (1 - r₁)(1 - r₂)
+        // 単一組換え（cin-ino間）: r₁(1 - r₂)
+        // 単一組換え（ino-op間）: (1 - r₁)r₂
+        // 二重組換え: r₁r₂
+
+        const freqParental = (1 - r_cin_ino) * (1 - r_ino_op) / 2;
+        const freqRecomb1 = r_cin_ino * (1 - r_ino_op) / 2;
+        const freqRecomb2 = (1 - r_cin_ino) * r_ino_op / 2;
+        const freqDouble = r_double / 2;
+
+        const gametes = [];
+
+        // 親型配偶子
+        gametes.push({ haplotype: { ...hap1 }, frequency: freqParental });
+        gametes.push({ haplotype: { ...hap2 }, frequency: freqParental });
+
+        // 単一組換え（cin-ino間）: cinのみ入れ替え
+        gametes.push({
+            haplotype: { cinnamon: hap2.cinnamon, ino: hap1.ino, opaline: hap1.opaline },
+            frequency: freqRecomb1
+        });
+        gametes.push({
+            haplotype: { cinnamon: hap1.cinnamon, ino: hap2.ino, opaline: hap2.opaline },
+            frequency: freqRecomb1
+        });
+
+        // 単一組換え（ino-op間）: opのみ入れ替え
+        gametes.push({
+            haplotype: { cinnamon: hap1.cinnamon, ino: hap1.ino, opaline: hap2.opaline },
+            frequency: freqRecomb2
+        });
+        gametes.push({
+            haplotype: { cinnamon: hap2.cinnamon, ino: hap2.ino, opaline: hap1.opaline },
+            frequency: freqRecomb2
+        });
+
+        // 二重組換え: cin, op入れ替え（inoはそのまま）
+        gametes.push({
+            haplotype: { cinnamon: hap2.cinnamon, ino: hap1.ino, opaline: hap2.opaline },
+            frequency: freqDouble
+        });
+        gametes.push({
+            haplotype: { cinnamon: hap1.cinnamon, ino: hap2.ino, opaline: hap1.opaline },
+            frequency: freqDouble
+        });
+
+        return this._mergeIdenticalGametes(gametes);
+    },
+
+    /**
+     * 同一ハプロタイプの配偶子をマージ
+     * @private
+     */
+    _mergeIdenticalGametes(gametes) {
+        const merged = new Map();
+
+        for (const gamete of gametes) {
+            const key = JSON.stringify(gamete.haplotype);
+            if (merged.has(key)) {
+                merged.get(key).frequency += gamete.frequency;
+            } else {
+                merged.set(key, { ...gamete });
+            }
+        }
+
+        return Array.from(merged.values())
+            .filter(g => g.frequency > 0.0001)  // 極小頻度は除外
+            .sort((a, b) => b.frequency - a.frequency);
+    },
+
+    /**
+     * ハプロタイプを人間可読形式で表示
+     * @param {Object} haplotype - ハプロタイプオブジェクト
+     * @param {string} group - 連鎖グループ
+     * @returns {string} 例: "cin-ino-+" または "D-aq"
+     */
+    formatHaplotype(haplotype, group = 'Z_chromosome') {
+        const lociOrder = group === 'Z_chromosome'
+            ? this.HAPLOTYPE_MODEL.Z_LOCI_ORDER
+            : this.HAPLOTYPE_MODEL.AUTOSOMAL_1_LOCI_ORDER;
+
+        const parts = lociOrder.map(locus => {
+            const allele = haplotype[locus];
+            const wildtype = this.HAPLOTYPE_MODEL.WILDTYPE[locus];
+            return allele === wildtype ? '+' : allele;
+        });
+
+        return parts.join('-');
+    },
+
+    /**
+     * ハプロタイプセットを人間可読形式で表示
+     * @param {Object} haplotypeSet - ハプロタイプセット
+     * @param {string} group - 連鎖グループ
+     * @returns {string} 例: "[cin-ino-+]/[+-+-+]" または "[cin-ino-+]W"
+     */
+    formatHaplotypeSet(haplotypeSet, group = 'Z_chromosome') {
+        if (!haplotypeSet || !haplotypeSet.haplotypes) return '';
+
+        const haps = haplotypeSet.haplotypes;
+
+        if (haps.length === 1) {
+            // ヘミ接合（メス）
+            return `[${this.formatHaplotype(haps[0], group)}]W`;
+        }
+
+        const h1 = this.formatHaplotype(haps[0], group);
+        const h2 = this.formatHaplotype(haps[1], group);
+
+        const phase = haplotypeSet.phase;
+        const phaseIndicator = phase === 'cis' ? '(cis)' :
+                               phase === 'trans' ? '(trans)' : '';
+
+        return `[${h1}]/[${h2}]${phaseIndicator}`;
+    },
+
+    /**
      * 連鎖グループ情報を取得
      * @returns {Object} LINKAGE_GROUPS
      */
