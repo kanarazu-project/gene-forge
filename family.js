@@ -20,42 +20,90 @@ const FamilyMap = {
     },
     targetPosition: null,
 
+    /**
+     * UIに表示する色のキーリスト（よく使う色を厳選）
+     * ラベルはCOLOR_MASTERから動的に取得（SSOT）
+     */
+    UI_COLOR_KEYS: [
+        // グリーン系
+        'green', 'darkgreen', 'olive',
+        // アクア系
+        'aqua', 'aqua_dark', 'aqua_olive',
+        // ターコイズ系
+        'turquoise', 'turquoise_dark',
+        // シーグリーン系
+        'seagreen', 'seagreen_dark',
+        // INO系
+        'lutino', 'creamino', 'pure_white', 'creamino_seagreen',
+        // パリッド系
+        'pallid_green', 'pallid_aqua', 'pallid_turquoise', 'pallid_seagreen',
+        // シナモン系
+        'cinnamon_green', 'cinnamon_aqua', 'cinnamon_turquoise', 'cinnamon_seagreen',
+        // オパーリン系
+        'opaline_green', 'opaline_aqua', 'opaline_turquoise', 'opaline_seagreen',
+        // ファロー系
+        'fallow_pale_green', 'fallow_pale_aqua',
+        // パイド系
+        'pied_rec_green', 'pied_rec_aqua', 'pied_rec_turquoise', 'pied_rec_seagreen',
+    ],
+
+    /**
+     * カテゴリ名のラベル（UI表示用）
+     * TODO: 将来的にgenetics.phpに移動してSSOT化
+     */
+    CATEGORY_LABELS: {
+        'green': { ja: 'グリーン系（野生型）', en: 'Green (Wild)' },
+        'aqua': { ja: 'アクア系', en: 'Aqua' },
+        'turquoise': { ja: 'ターコイズ系（Whitefaced）', en: 'Turquoise (Whitefaced)' },
+        'seagreen': { ja: 'シーグリーン系', en: 'Seagreen' },
+        'ino': { ja: 'INO系（メラニン欠落・赤目）', en: 'INO (Melanin Absent)' },
+        'pallid': { ja: 'パリッド系（メラニン減少・黒目）', en: 'Pallid (Melanin Reduced)' },
+        'cinnamon': { ja: 'シナモン系（茶色メラニン）', en: 'Cinnamon' },
+        'opaline': { ja: 'オパーリン系（模様変化）', en: 'Opaline' },
+        'fallow_pale': { ja: 'ペールファロー系（赤目）', en: 'Pale Fallow' },
+        'fallow_bronze': { ja: 'ブロンズファロー系（赤目）', en: 'Bronze Fallow' },
+        'pied_dom': { ja: 'ドミナントパイド系', en: 'Dominant Pied' },
+        'pied_rec': { ja: 'レセッシブパイド系', en: 'Recessive Pied' },
+        'dilute': { ja: 'ダイリュート系', en: 'Dilute' },
+        'edged': { ja: 'エッジド系', en: 'Edged' },
+        'orangeface': { ja: 'オレンジフェイス系', en: 'Orangeface' },
+        'pale_headed': { ja: 'ペールヘッド系', en: 'Pale Headed' },
+        'violet': { ja: 'バイオレット系', en: 'Violet' },
+    },
+
     get baseColorOptions() {
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-        return [
-            { value: 'green', label: isJa ? 'グリーン（ノーマル）' : 'Green (Normal)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'darkgreen', label: isJa ? 'ダークグリーン（D/+）' : 'Dark Green (D/+)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'olive', label: isJa ? 'オリーブ（D/D）' : 'Olive (D/D)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'aqua', label: isJa ? 'アクア' : 'Aqua', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'aqua_dark', label: isJa ? 'アクアダーク（D/+）' : 'Aqua Dark (D/+)', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'aqua_dd', label: isJa ? 'アクアDD（D/D）' : 'Aqua DD (D/D)', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'turquoise', label: isJa ? 'ターコイズ' : 'Turquoise', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'turquoise_dark', label: isJa ? 'ターコイズダーク' : 'Turquoise Dark', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'seagreen', label: isJa ? 'シーグリーン' : 'Sea Green', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'seagreen_dark', label: isJa ? 'シーグリーンダーク' : 'Sea Green Dark', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'lutino', label: isJa ? 'ルチノー（黄色・赤目）' : 'Lutino (Yellow/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'creamino', label: isJa ? 'クリーミノ（クリーム・赤目）' : 'Creamino (Cream/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'pure_white', label: isJa ? 'ピュアホワイト（白・赤目）' : 'Pure White (White/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'creamino_seagreen', label: isJa ? 'クリーミノシーグリーン' : 'Creamino Sea Green', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'pallid_green', label: isJa ? 'パリッドグリーン' : 'Pallid Green', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_aqua', label: isJa ? 'パリッドアクア' : 'Pallid Aqua', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_turquoise', label: isJa ? 'パリッドターコイズ' : 'Pallid Turquoise', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_seagreen', label: isJa ? 'パリッドシーグリーン' : 'Pallid Sea Green', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'cinnamon_green', label: isJa ? 'シナモングリーン' : 'Cinnamon Green', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_aqua', label: isJa ? 'シナモンアクア' : 'Cinnamon Aqua', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_turquoise', label: isJa ? 'シナモンターコイズ' : 'Cinnamon Turquoise', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_seagreen', label: isJa ? 'シナモンシーグリーン' : 'Cinnamon Sea Green', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'opaline_green', label: isJa ? 'オパーリングリーン' : 'Opaline Green', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_aqua', label: isJa ? 'オパーリンアクア' : 'Opaline Aqua', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_turquoise', label: isJa ? 'オパーリンターコイズ' : 'Opaline Turquoise', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_seagreen', label: isJa ? 'オパーリンシーグリーン' : 'Opaline Sea Green', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'fallow_green', label: isJa ? 'フォローグリーン' : 'Fallow Green', group: isJa ? 'フォロー系（赤目）' : 'Fallow' },
-            { value: 'fallow_aqua', label: isJa ? 'フォローアクア' : 'Fallow Aqua', group: isJa ? 'フォロー系（赤目）' : 'Fallow' },
-            { value: 'pied_green', label: isJa ? 'パイドグリーン' : 'Pied Green', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_aqua', label: isJa ? 'パイドアクア' : 'Pied Aqua', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_turquoise', label: isJa ? 'パイドターコイズ' : 'Pied Turquoise', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_seagreen', label: isJa ? 'パイドシーグリーン' : 'Pied Sea Green', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-        ];
+
+        // COLOR_MASTERが定義されていない場合のフォールバック
+        if (typeof COLOR_MASTER === 'undefined') {
+            console.warn('[FamilyMap] COLOR_MASTER not defined, using empty options');
+            return [];
+        }
+
+        const options = [];
+        for (const key of this.UI_COLOR_KEYS) {
+            const def = COLOR_MASTER[key];
+            if (!def) {
+                console.warn(`[FamilyMap] Color key "${key}" not found in COLOR_MASTER`);
+                continue;
+            }
+
+            const category = def.category || 'other';
+            const categoryLabel = this.CATEGORY_LABELS[category];
+            const groupLabel = categoryLabel
+                ? (isJa ? categoryLabel.ja : categoryLabel.en)
+                : category;
+
+            options.push({
+                value: key,
+                label: isJa ? def.ja : def.en,
+                group: groupLabel,
+                eye: def.eye,
+                category: category,
+            });
+        }
+
+        return options;
     },
 
     get darknessOptions() {
