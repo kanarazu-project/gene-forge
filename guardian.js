@@ -259,30 +259,65 @@ const BreedingValidator = {
     // 内部メソッド - 祖先マップ生成
     // ========================================
     
-    _getAncestorMap(bird) {
+    /**
+     * 再帰的祖先マップ生成（6世代追跡）
+     * 各個体のpedigreeを再帰的に辿り、Wright係数計算に必要な深度まで追跡
+     * @param {Object} bird - 対象個体
+     * @param {number} maxGen - 最大追跡世代数（デフォルト6）
+     * @returns {Object} { id: generation } の祖先マップ
+     */
+    _getAncestorMap(bird, maxGen = 6) {
         const map = {};
-        if (!bird.pedigree) return map;
-        
-        // 世代1（親）
-        if (bird.pedigree.sire) map[bird.pedigree.sire] = 1;
-        if (bird.pedigree.dam) map[bird.pedigree.dam] = 1;
-        
-        // 世代2（祖父母）
-        if (bird.pedigree.sire_sire) map[bird.pedigree.sire_sire] = 2;
-        if (bird.pedigree.sire_dam) map[bird.pedigree.sire_dam] = 2;
-        if (bird.pedigree.dam_sire) map[bird.pedigree.dam_sire] = 2;
-        if (bird.pedigree.dam_dam) map[bird.pedigree.dam_dam] = 2;
-        
-        // 世代3（曽祖父母）
-        if (bird.pedigree.sire_sire_sire) map[bird.pedigree.sire_sire_sire] = 3;
-        if (bird.pedigree.sire_sire_dam) map[bird.pedigree.sire_sire_dam] = 3;
-        if (bird.pedigree.sire_dam_sire) map[bird.pedigree.sire_dam_sire] = 3;
-        if (bird.pedigree.sire_dam_dam) map[bird.pedigree.sire_dam_dam] = 3;
-        if (bird.pedigree.dam_sire_sire) map[bird.pedigree.dam_sire_sire] = 3;
-        if (bird.pedigree.dam_sire_dam) map[bird.pedigree.dam_sire_dam] = 3;
-        if (bird.pedigree.dam_dam_sire) map[bird.pedigree.dam_dam_sire] = 3;
-        if (bird.pedigree.dam_dam_dam) map[bird.pedigree.dam_dam_dam] = 3;
-        
+        const visited = new Set();
+
+        // 再帰的に祖先を辿る
+        const traverse = (id, gen) => {
+            if (!id || gen > maxGen || visited.has(id + ':' + gen)) return;
+            visited.add(id + ':' + gen);
+
+            // 同一個体が異なる経路で出現した場合、最小世代数を記録
+            map[id] = Math.min(map[id] ?? Infinity, gen);
+
+            // BirdDBから祖先個体のpedigreeを取得
+            const ancestor = typeof BirdDB !== 'undefined' ? BirdDB.getBird(id) : null;
+            if (ancestor?.pedigree) {
+                // 直接の親（pedigree.sire, pedigree.dam）を再帰追跡
+                traverse(ancestor.pedigree.sire, gen + 1);
+                traverse(ancestor.pedigree.dam, gen + 1);
+            }
+        };
+
+        // 対象個体のpedigreeから開始
+        if (bird.pedigree) {
+            // 世代1: 直接の親
+            traverse(bird.pedigree.sire, 1);
+            traverse(bird.pedigree.dam, 1);
+
+            // pedigreeに直接格納されている祖父母以降も追跡開始点として追加
+            // （DBに登録されていない個体への対応）
+            const pedigreeFields = [
+                { field: 'sire_sire', gen: 2 }, { field: 'sire_dam', gen: 2 },
+                { field: 'dam_sire', gen: 2 }, { field: 'dam_dam', gen: 2 },
+                { field: 'sire_sire_sire', gen: 3 }, { field: 'sire_sire_dam', gen: 3 },
+                { field: 'sire_dam_sire', gen: 3 }, { field: 'sire_dam_dam', gen: 3 },
+                { field: 'dam_sire_sire', gen: 3 }, { field: 'dam_sire_dam', gen: 3 },
+                { field: 'dam_dam_sire', gen: 3 }, { field: 'dam_dam_dam', gen: 3 }
+            ];
+
+            pedigreeFields.forEach(({ field, gen }) => {
+                const id = bird.pedigree[field];
+                if (id && !map[id]) {
+                    map[id] = gen;
+                    // この個体からも再帰追跡
+                    const ancestor = typeof BirdDB !== 'undefined' ? BirdDB.getBird(id) : null;
+                    if (ancestor?.pedigree) {
+                        traverse(ancestor.pedigree.sire, gen + 1);
+                        traverse(ancestor.pedigree.dam, gen + 1);
+                    }
+                }
+            });
+        }
+
         return map;
     }
 };

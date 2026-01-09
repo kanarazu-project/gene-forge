@@ -1610,10 +1610,11 @@ private function genotypeEquivalent(string $g1, string $g2): bool
         $topCandidate = reset($candidateList);
         $isConfirmed = $topCandidate && $topCandidate['probability'] >= 99;
 
-        // 座位名を取得（v6.8対応: nameは配列）
+        // 座位名を取得（v6.8対応: nameは配列, v7.0: 言語設定に従う）
         $locusName = $config['name'] ?? $locusKey;
         if (is_array($locusName)) {
-            $locusName = $locusName['ja'] ?? $locusName['en'] ?? $locusKey;
+            $currentLang = function_exists('getLang') ? getLang() : 'en';
+            $locusName = $locusName[$currentLang] ?? $locusName['en'] ?? $locusKey;
         }
 
         return [
@@ -1830,7 +1831,8 @@ class GeneticsCalculator
         
         // AgapornisLoci::resolveColorで色名取得
         $colorInfo = AgapornisLoci::resolveColor($genotype);
-        $phenotype = $colorInfo['ja'] ?? 'Unknown';
+        // v7.0: ALBSを全言語共通で使用
+        $phenotype = $colorInfo['albs'] ?? $colorInfo['en'] ?? 'Unknown';
         
         // スプリット情報を追加
         $splits = $this->extractSplits($g, $sex);
@@ -2207,7 +2209,8 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
             
             $genotype = $this->convertToGenotypeArray($geno, $sex);
             $colorInfo = AgapornisLoci::resolveColor($genotype);
-            $colorName = $colorInfo['ja'] ?? 'Unknown';
+            // v7.0: ALBSを全言語共通で使用
+            $colorName = $colorInfo['albs'] ?? $colorInfo['en'] ?? 'Unknown';
             
             $splits = $this->extractSplits($geno, $sex);
             $splitStr = !empty($splits) ? ' /' . implode(',', $splits) : '';
@@ -2531,7 +2534,8 @@ public function estimate(string $sex, string $baseColor, string $eyeColor, strin
             'success' => true,
             'sex' => $sex,
             'baseColor' => $baseColor,
-            'colorName' => $colorDef['ja'] ?? $baseColor,
+            // v7.0: ALBSを全言語共通で使用
+            'colorName' => $colorDef['albs'] ?? $colorDef['en'] ?? $baseColor,
             'eyeColor' => $colorDef['eye'] ?? $eyeColor,
             'loci' => $results,
             'splitPossibilities' => $this->calculateSplitPossibilities($genotype, $isFemale),
@@ -2572,7 +2576,9 @@ public function estimate(string $sex, string $baseColor, string $eyeColor, strin
             // 既にホモ発現していなければスプリットの可能性あり
             foreach ($alleles as $allele) {
                 if (strpos($current, $allele) === false) {
-                    $locusName = AgapornisLoci::LOCI[$locus]['name']['ja'] ?? $locus;
+                    // v7.0: 座位名は言語設定に従う
+                    $currentLang = function_exists('getLang') ? getLang() : 'en';
+                    $locusName = AgapornisLoci::LOCI[$locus]['name'][$currentLang] ?? AgapornisLoci::LOCI[$locus]['name']['en'] ?? $locus;
                     $possibilities[] = [
                         'locus' => $locusName,
                         'allele' => $allele,
