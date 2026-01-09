@@ -7,13 +7,13 @@
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * FamilyEstimator V3 搭載
  * ALBS Peachfaced部門準拠版
- * 
- * v6.7.3 → v6.7.4 変更点:
- * - 全ハードコードをt()関数呼び出しに統一
- * - 多言語対応基盤整備
+ *
+ * v7.0 変更点:
+ * - DBモードで遺伝型JSONを送信するよう修正
+ * - GeneticsCalculator/PathFinder/GenotypeEstimator統合
  */
 require_once 'genetics.php';
 require_once 'lang.php';
@@ -432,7 +432,6 @@ if ($action === 'calculate') {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
-const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
 </script>
 </head>
 
@@ -837,10 +836,11 @@ $mPh = $_POST['m_ph'] ?? '++';
                                     <option value=""><?= t('select_placeholder') ?></option>
                                 </select>
                             </div>
-                            <!-- fromdbモード用隠しフィールド -->
+                            <!-- fromdbモード用隠しフィールド (v7.0: 遺伝型JSON追加) -->
                             <input type="hidden" name="f_db_baseColor" id="f_db_baseColor" value="<?= htmlspecialchars($_POST['f_db_baseColor'] ?? '') ?>">
                             <input type="hidden" name="f_db_eyeColor" id="f_db_eyeColor" value="<?= htmlspecialchars($_POST['f_db_eyeColor'] ?? '') ?>">
                             <input type="hidden" name="f_db_darkness" id="f_db_darkness" value="<?= htmlspecialchars($_POST['f_db_darkness'] ?? '') ?>">
+                            <input type="hidden" name="f_db_genotype" id="f_db_genotype" value="<?= htmlspecialchars($_POST['f_db_genotype'] ?? '') ?>">
 
                         </div>
                         
@@ -885,10 +885,11 @@ $mPh = $_POST['m_ph'] ?? '++';
                                     <option value=""><?= t('select_placeholder') ?></option>
                                 </select>
                             </div>
-                            <!-- fromdbモード用隠しフィールド -->
+                            <!-- fromdbモード用隠しフィールド (v7.0: 遺伝型JSON追加) -->
                             <input type="hidden" name="m_db_baseColor" id="m_db_baseColor" value="<?= htmlspecialchars($_POST['m_db_baseColor'] ?? '') ?>">
                             <input type="hidden" name="m_db_eyeColor" id="m_db_eyeColor" value="<?= htmlspecialchars($_POST['m_db_eyeColor'] ?? '') ?>">
                             <input type="hidden" name="m_db_darkness" id="m_db_darkness" value="<?= htmlspecialchars($_POST['m_db_darkness'] ?? '') ?>">
+                            <input type="hidden" name="m_db_genotype" id="m_db_genotype" value="<?= htmlspecialchars($_POST['m_db_genotype'] ?? '') ?>">
 
                         </div>
                         
@@ -972,33 +973,47 @@ $mPh = $_POST['m_ph'] ?? '++';
                 function getColorLabel(color, isJa) {
                     return COLOR_LABELS[color] || color || '?';
                 }
+                /**
+                 * v7.0: DBから個体情報をフォームにロード
+                 * 遺伝型JSONも送信するように拡張
+                 */
                 function loadBirdToForm(parent, birdId) {
                     const prefix = (parent === 'father' || parent === 'f') ? 'f' : 'm';
 
-                    
                     if (!birdId || typeof BirdDB === 'undefined') return false;
-                    
+
                     const bird = BirdDB.getBird(birdId);
                     if (!bird) return false;
-                    
+
                     let baseColor = 'green';
                     let eyeColor = 'black';
                     let darkness = 'none';
-                    
+
                     if (bird.observed && bird.observed.baseColor) {
                         baseColor = bird.observed.baseColor;
                         eyeColor = bird.observed.eyeColor || 'black';
                         darkness = bird.observed.darkness || 'none';
                     }
-                    
+
                     const bcEl = document.getElementById(prefix + '_db_baseColor');
                     const ecEl = document.getElementById(prefix + '_db_eyeColor');
                     const dkEl = document.getElementById(prefix + '_db_darkness');
-                    
+                    const genoEl = document.getElementById(prefix + '_db_genotype');
+
                     if (bcEl) bcEl.value = baseColor;
                     if (ecEl) ecEl.value = eyeColor;
                     if (dkEl) dkEl.value = darkness;
-                    
+
+                    // v7.0: 遺伝型JSONをセット
+                    if (genoEl && bird.genotype) {
+                        genoEl.value = JSON.stringify(bird.genotype);
+                    } else if (genoEl) {
+                        // 遺伝型がない場合は観察情報から推測
+                        const sex = bird.sex || 'male';
+                        const inferred = inferGenotypeFromObserved(bird.observed || {}, sex);
+                        genoEl.value = JSON.stringify(inferred);
+                    }
+
                     return false;
                 }
                  /**
@@ -1268,9 +1283,8 @@ $mPh = $_POST['m_ph'] ?? '++';
         </footer>
     </div>
     <script src="guardian.js"></script>
-    <script src="genetics-engine.js?v=700"></script>
-    <script src="birds.js?v=700"></script>
-    <script src="breeding.js?v=700"></script>
+    <script src="birds.js?v=674"></script>
+    <script src="breeding.js"></script>
     <script src="pedigree.js"></script>
     <script src="planner.js?v=674"></script>
 <script>
@@ -1419,7 +1433,6 @@ function showTab(id){
 </script>
 <script src="family.js?v=674"></script>
 <script src="app.js?v=<?= time() ?>"></script>
-<script src="debug.js?v=700"></script>
 <script>if(typeof initLang==='function')initLang(T);</script>
 <script>
     // 健康評価タブ用セレクタ初期化（BirdDB準備完了を待つ）
@@ -1458,24 +1471,17 @@ function showTab(id){
         
         // 遺伝構成を短縮表示
         function formatGenoShort(geno, sex) {
-            // v7.0: SSOT準拠キー + 旧キー後方互換
             if (!geno || Object.keys(geno).length === 0) return 'WT';
             const parts = [];
             if (geno.parblue && geno.parblue !== '++') parts.push(geno.parblue);
             if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(geno.ino);
             if (geno.dark && geno.dark !== 'dd') parts.push(geno.dark);
-            const op = geno.opaline || geno.op;
-            if (op && op !== '++' && op !== '+W') parts.push('op');
-            const cin = geno.cinnamon || geno.cin;
-            if (cin && cin !== '++' && cin !== '+W') parts.push('cin');
-            const pirec = geno.pied_rec || geno.pirec;
-            if (pirec && pirec !== '++') parts.push('pirec');
-            const pidom = geno.pied_dom || geno.pidom;
-            if (pidom && pidom !== '++') parts.push('pidom');
-            const flp = geno.fallow_pale || geno.flp;
-            if (flp && flp !== '++') parts.push('flp');
-            const flb = geno.fallow_bronze || geno.flb;
-            if (flb && flb !== '++') parts.push('flb');
+            if (geno.op && geno.op !== '++' && geno.op !== '+W') parts.push('op');
+            if (geno.cin && geno.cin !== '++' && geno.cin !== '+W') parts.push('cin');
+            if (geno.pirec && geno.pirec !== '++') parts.push('pirec');
+if (geno.pidom && geno.pidom !== '++') parts.push('pidom');
+if (geno.flp && geno.flp !== '++') parts.push('flp');
+if (geno.flb && geno.flb !== '++') parts.push('flb');
             return parts.length > 0 ? parts.join('/') : 'WT';
         }
         /**
