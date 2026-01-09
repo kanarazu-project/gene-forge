@@ -1457,17 +1457,24 @@ function showTab(id){
         
         // 遺伝構成を短縮表示
         function formatGenoShort(geno, sex) {
+            // v7.0: SSOT準拠キー + 旧キー後方互換
             if (!geno || Object.keys(geno).length === 0) return 'WT';
             const parts = [];
             if (geno.parblue && geno.parblue !== '++') parts.push(geno.parblue);
             if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(geno.ino);
             if (geno.dark && geno.dark !== 'dd') parts.push(geno.dark);
-            if (geno.op && geno.op !== '++' && geno.op !== '+W') parts.push('op');
-            if (geno.cin && geno.cin !== '++' && geno.cin !== '+W') parts.push('cin');
-            if (geno.pirec && geno.pirec !== '++') parts.push('pirec');
-if (geno.pidom && geno.pidom !== '++') parts.push('pidom');
-if (geno.flp && geno.flp !== '++') parts.push('flp');
-if (geno.flb && geno.flb !== '++') parts.push('flb');
+            const op = geno.opaline || geno.op;
+            if (op && op !== '++' && op !== '+W') parts.push('op');
+            const cin = geno.cinnamon || geno.cin;
+            if (cin && cin !== '++' && cin !== '+W') parts.push('cin');
+            const pirec = geno.pied_rec || geno.pirec;
+            if (pirec && pirec !== '++') parts.push('pirec');
+            const pidom = geno.pied_dom || geno.pidom;
+            if (pidom && pidom !== '++') parts.push('pidom');
+            const flp = geno.fallow_pale || geno.flp;
+            if (flp && flp !== '++') parts.push('flp');
+            const flb = geno.fallow_bronze || geno.flb;
+            if (flb && flb !== '++') parts.push('flb');
             return parts.length > 0 ? parts.join('/') : 'WT';
         }
         /**
