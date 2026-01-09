@@ -889,6 +889,9 @@ class FamilyEstimatorV3
             }
         }
 
+        // v7.0: 連鎖遺伝補正を適用
+        $results = $this->applyLinkageCorrection($results, $notes);
+
         // テスト交配提案を生成
         $testBreedings = $this->generateTestBreedingProposals($results);
 
@@ -903,6 +906,7 @@ class FamilyEstimatorV3
             'notes' => $notes,
             'testBreedings' => $testBreedings,
             'overallConfidence' => round($confidenceSum / count(AgapornisLoci::LOCI), 1),
+            'linkageAware' => true,  // v7.0フラグ
         ];
     }
 
@@ -1696,6 +1700,127 @@ private function genotypeEquivalent(string $g1, string $g2): bool
         }
 
         return '';
+    }
+
+    // ========================================
+    // v7.0: 連鎖遺伝補正
+    // ========================================
+
+    /**
+     * v7.0: 連鎖遺伝補正
+     * LINKAGE_GROUPSに基づいて確率を補正し、注記を追加
+     */
+    private function applyLinkageCorrection(array $results, array &$notes): array
+    {
+        $linkageGroups = AgapornisLoci::LINKAGE_GROUPS;
+
+        foreach ($linkageGroups as $groupName => $groupData) {
+            $loci = $groupData['loci'];
+            $recombRates = $groupData['recombination'];
+
+            // このグループの座位の推論結果を収集
+            $groupResults = [];
+            foreach ($results as $idx => $result) {
+                if (in_array($result['locusKey'], $loci)) {
+                    $groupResults[$result['locusKey']] = [
+                        'index' => $idx,
+                        'result' => $result,
+                        'hasMutant' => $this->hasMutantAllele($result),
+                    ];
+                }
+            }
+
+            if (count($groupResults) < 2) continue;
+
+            // 連鎖補正を適用
+            $results = $this->adjustLinkedProbabilities(
+                $results, $groupResults, $recombRates, $groupName, $notes
+            );
+        }
+
+        return $results;
+    }
+
+    /**
+     * v7.0: 変異アレルを持つかどうか判定
+     */
+    private function hasMutantAllele(array $result): bool
+    {
+        $topGeno = $result['topGenotype'] ?? '';
+        // 野生型(++, +W)以外は変異あり
+        // dark座位のdd, violet座位のvvは野生型扱い
+        return $topGeno !== '++' && $topGeno !== '+W' && $topGeno !== 'dd' && $topGeno !== 'vv';
+    }
+
+    /**
+     * v7.0: 連鎖座位の確率調整と注記追加
+     */
+    private function adjustLinkedProbabilities(
+        array $results,
+        array $groupResults,
+        array $recombRates,
+        string $groupName,
+        array &$notes
+    ): array {
+        $mutantLoci = [];
+        $wildLoci = [];
+
+        foreach ($groupResults as $locusKey => $data) {
+            if ($data['hasMutant']) {
+                $mutantLoci[] = $locusKey;
+            } else {
+                $wildLoci[] = $locusKey;
+            }
+        }
+
+        // 複数の変異座位がある場合 → 連鎖ハプロタイプの可能性
+        if (count($mutantLoci) >= 2) {
+            // 連鎖しているペアを特定
+            foreach ($mutantLoci as $i => $locus1) {
+                for ($j = $i + 1; $j < count($mutantLoci); $j++) {
+                    $locus2 = $mutantLoci[$j];
+                    $key1 = $locus1 . '_' . $locus2;
+                    $key2 = $locus2 . '_' . $locus1;
+
+                    $recombRate = $recombRates[$key1] ?? $recombRates[$key2] ?? null;
+                    if ($recombRate !== null) {
+                        $linkageProb = 1.0 - $recombRate;
+                        $notes[] = sprintf(
+                            '連鎖遺伝: %s-%s (%.0f%%の確率で同一染色体由来)',
+                            $locus1, $locus2, $linkageProb * 100
+                        );
+
+                        // ハプロタイプ推定情報を追加
+                        if ($linkageProb >= 0.9) {
+                            $notes[] = sprintf(
+                                '推定ハプロタイプ: %s-%s (組換え率%.1f%%)',
+                                $locus1, $locus2, $recombRate * 100
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        // 1つだけ変異がある場合 → 組換え or 独立起源の注記
+        if (count($mutantLoci) === 1 && count($wildLoci) >= 1) {
+            $mutantLocus = $mutantLoci[0];
+            foreach ($wildLoci as $wildLocus) {
+                $key1 = $mutantLocus . '_' . $wildLocus;
+                $key2 = $wildLocus . '_' . $mutantLocus;
+                $recombRate = $recombRates[$key1] ?? $recombRates[$key2] ?? null;
+
+                if ($recombRate !== null && $recombRate < 0.1) {
+                    // 組換え率が低い(cin-ino: 3%)場合は注記
+                    $notes[] = sprintf(
+                        '注意: %sと%sは連鎖(組換え率%.1f%%)。親が両方持っていた場合、組換えで分離した可能性あり',
+                        $mutantLocus, $wildLocus, $recombRate * 100
+                    );
+                }
+            }
+        }
+
+        return $results;
     }
 
     /**
