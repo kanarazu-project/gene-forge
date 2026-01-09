@@ -262,29 +262,55 @@ function closeBirdForm() {
 function generateGenotypeFields() {
     const container = document.getElementById('genotypeFields');
     if (!container) return;
-    
+
     const sex = document.getElementById('birdSex')?.value || 'male';
-    
+
+    // SSOT: genetics.php LOCI からローカス定義を取得
+    const ssotLoci = window.GENEFORGE_SSOT?.LOCI || {};
+
+    // 表示用オプション定義（学術記法）
+    const getLocusOptions = (locusKey, sex) => {
+        const locus = ssotLoci[locusKey];
+        if (!locus) return {};
+
+        // 伴性遺伝の場合
+        if (locus.sex_linked) {
+            if (locusKey === 'ino') {
+                return sex === 'male'
+                    ? { '++': 'Z⁺/Z⁺', '+pld': 'Z⁺/Z^pld', '+ino': 'Z⁺/Z^ino', 'pldpld': 'Z^pld/Z^pld', 'inoino': 'Z^ino/Z^ino', 'pldino': 'Z^pld/Z^ino' }
+                    : { '+W': 'Z⁺/W', 'pldW': 'Z^pld/W', 'inoW': 'Z^ino/W' };
+            }
+            // opaline, cinnamon
+            const allele = Object.keys(locus.alleles).find(a => a !== '+') || 'x';
+            return sex === 'male'
+                ? { '++': 'Z⁺/Z⁺', [`+${allele}`]: `Z⁺/Z^${allele}`, [`${allele}${allele}`]: `Z^${allele}/Z^${allele}` }
+                : { '+W': 'Z⁺/W', [`${allele}W`]: `Z^${allele}/W` };
+        }
+
+        // 常染色体
+        switch (locus.type) {
+            case 'AR_MULTI': // parblue
+                return { '++': 'B⁺/B⁺', '+aq': 'B⁺/b^aq', '+tq': 'B⁺/b^tq', 'aqaq': 'b^aq/b^aq', 'tqtq': 'b^tq/b^tq', 'tqaq': 'b^tq/b^aq' };
+            case 'AID': // dark, violet
+                const [wild, mut] = Object.keys(locus.alleles);
+                return { [`${wild}${wild}`]: `${wild}/${wild}`, [`${mut}${wild}`]: `${mut}/${wild} (SF)`, [`${mut}${mut}`]: `${mut}/${mut} (DF)` };
+            case 'AR': // fallow, dilute, pied_rec
+            default:
+                const [w, m] = Object.keys(locus.alleles);
+                return { '++': `${w.toUpperCase()}⁺/${w.toUpperCase()}⁺`, [`+${m}`]: `${w.toUpperCase()}⁺/${m}`, [`${m}${m}`]: `${m}/${m}` };
+        }
+    };
+
     const loci = [
-        { key: 'parblue', label: 'Parblue', options: { '++': 'B⁺/B⁺', '+b': 'B⁺/b', '+tq': 'B⁺/b^tq', 'bb': 'b/b', 'tqtq': 'b^tq/b^tq', 'tqb': 'b^tq/b' }},
-        { key: 'ino', label: 'INO', options: sex === 'male' 
-            ? { '++': 'Z⁺/Z⁺', '+pld': 'Z⁺/Z^pld', '+ino': 'Z⁺/Z^ino', 'pldpld': 'Z^pld/Z^pld', 'inoino': 'Z^ino/Z^ino', 'pldino': 'Z^pld/Z^ino' }
-            : { '+W': 'Z⁺/W', 'pldW': 'Z^pld/W', 'inoW': 'Z^ino/W' }
-        },
-        // v7.0: SSOT準拠キー
-        { key: 'opaline', label: 'Opaline', options: sex === 'male'
-            ? { '++': 'Z⁺/Z⁺', '+op': 'Z⁺/Z^op', 'opop': 'Z^op/Z^op' }
-            : { '+W': 'Z⁺/W', 'opW': 'Z^op/W' }
-        },
-        { key: 'cinnamon', label: 'Cinnamon', options: sex === 'male'
-            ? { '++': 'Z⁺/Z⁺', '+cin': 'Z⁺/Z^cin', 'cincin': 'Z^cin/Z^cin' }
-            : { '+W': 'Z⁺/W', 'cinW': 'Z^cin/W' }
-        },
-        { key: 'dark', label: 'Dark', options: { 'dd': 'd/d', 'Dd': 'D/d (SF)', 'DD': 'D/D (DF)' }},
-        { key: 'violet', label: 'Violet', options: { 'vv': 'v/v', 'Vv': 'V/v (SF)', 'VV': 'V/V (DF)' }},
-        { key: 'fallow_pale', label: 'Fallow', options: { '++': 'Fl⁺/Fl⁺', '+flp': 'Fl⁺/flp', 'flpflp': 'flp/flp' }},
-        { key: 'dilute', label: 'Dilute', options: { '++': 'Dil⁺/Dil⁺', '+dil': 'Dil⁺/dil', 'dildil': 'dil/dil' }},
-        { key: 'pied_rec', label: 'Pied', options: { '++': 'Pi⁺/Pi⁺', '+pi': 'Pi⁺/pi', 'pipi': 'pi/pi' }}
+        { key: 'parblue', label: ssotLoci.parblue?.name?.en || 'Parblue', options: getLocusOptions('parblue', sex) },
+        { key: 'ino', label: ssotLoci.ino?.name?.en || 'INO', options: getLocusOptions('ino', sex) },
+        { key: 'opaline', label: ssotLoci.opaline?.name?.en || 'Opaline', options: getLocusOptions('opaline', sex) },
+        { key: 'cinnamon', label: ssotLoci.cinnamon?.name?.en || 'Cinnamon', options: getLocusOptions('cinnamon', sex) },
+        { key: 'dark', label: ssotLoci.dark?.name?.en || 'Dark', options: { 'dd': 'd/d', 'Dd': 'D/d (SF)', 'DD': 'D/D (DF)' }},
+        { key: 'violet', label: ssotLoci.violet?.name?.en || 'Violet', options: { 'vv': 'v/v', 'Vv': 'V/v (SF)', 'VV': 'V/V (DF)' }},
+        { key: 'fallow_pale', label: ssotLoci.fallow_pale?.name?.en || 'Fallow', options: { '++': 'Fl⁺/Fl⁺', '+flp': 'Fl⁺/flp', 'flpflp': 'flp/flp' }},
+        { key: 'dilute', label: ssotLoci.dilute?.name?.en || 'Dilute', options: { '++': 'Dil⁺/Dil⁺', '+dil': 'Dil⁺/dil', 'dildil': 'dil/dil' }},
+        { key: 'pied_rec', label: ssotLoci.pied_rec?.name?.en || 'Pied', options: { '++': 'Pi⁺/Pi⁺', '+pi': 'Pi⁺/pi', 'pipi': 'pi/pi' }}
     ];
     
     container.innerHTML = loci.map(locus => `
@@ -343,23 +369,46 @@ function updateParentSelectors() {
 /**
  * v7.0: 親子の遺伝整合性チェック
  * 子の表現型が親の組み合わせから生まれ得るかを検証
+ * SSOT: genetics.php COLOR_DEFINITIONS を参照して遺伝子型を推定
  */
 function checkPedigreeConsistency(childBaseColor, childGenotype, sire, dam) {
     const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+    const colorDefs = window.GENEFORGE_SSOT?.COLOR_DEFINITIONS || {};
 
-    // 親の遺伝情報を取得
+    // SSOT参照: 色キーから遺伝子型を推定
+    const getGenotypeFromColor = (colorKey, locusKey) => {
+        const def = colorDefs[colorKey];
+        if (def?.genotype?.[locusKey]) return def.genotype[locusKey];
+        return null;
+    };
+
+    // 親の遺伝情報を取得（SSOT参照）
     const getParblue = (bird) => {
         if (bird.genotype?.parblue) return bird.genotype.parblue;
         const c = bird.phenotype?.baseColor || bird.phenotype || 'green';
-        if (['aqua', 'aqua_dark', 'aqua_olive', 'creamino'].includes(c)) return 'aqaq';
-        if (['turquoise', 'turquoise_dark', 'turquoise_olive', 'pure_white'].includes(c)) return 'tqtq';
-        if (['seagreen', 'seagreen_dark', 'seagreen_olive', 'creamino_seagreen'].includes(c)) return 'tqaq';
+        // SSOT参照
+        const fromSSOT = getGenotypeFromColor(c, 'parblue');
+        if (fromSSOT) return fromSSOT;
+        // フォールバック: カテゴリーから推定
+        if (String(c).includes('aqua') || c === 'creamino') return 'aqaq';
+        if (String(c).includes('turquoise') || c === 'pure_white') return 'tqtq';
+        if (String(c).includes('seagreen')) return 'tqaq';
         return '++';
     };
 
     const getIno = (bird, sex) => {
         if (bird.genotype?.ino) return bird.genotype.ino;
         const c = bird.phenotype?.baseColor || bird.phenotype || 'green';
+        // SSOT参照
+        const fromSSOT = getGenotypeFromColor(c, 'ino');
+        if (fromSSOT) {
+            // 伴性遺伝の場合、雌はW染色体
+            if (sex === 'female' && fromSSOT.includes('ino')) return 'inoW';
+            if (sex === 'female' && fromSSOT.includes('pld')) return 'pldW';
+            if (sex === 'female') return '+W';
+            return fromSSOT;
+        }
+        // フォールバック
         if (['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(c))
             return sex === 'female' ? 'inoW' : 'inoino';
         if (String(c).includes('pallid')) return sex === 'female' ? 'pldW' : 'pldpld';

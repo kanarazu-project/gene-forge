@@ -839,61 +839,31 @@ const BirdDB = {
         return match ? match[1] : 'ja';
     },
 
-    // 特性ラベルを取得（パーツ用）- ALBS標準名を使用
+    // 特性ラベルを取得（パーツ用）- SSOT参照
     _getTraitLabel(key, lang) {
-        // v7.0: ALBS標準名を全言語共通で使用
-        const traits = {
-            pallid: 'Pallid',
-            opaline: 'Opaline',
-            cinnamon: 'Cinnamon',
-            fallow: 'Fallow',
-            pied: 'Pied',
-            lutino: 'Lutino',
-            creamino: 'Creamino',
-            pure_white: 'Pure White',
-            creamino_seagreen: 'Creamino Sea Green',
+        // SSOT: genetics.php COLOR_DEFINITIONS から取得
+        if (window.GENEFORGE_SSOT?.COLOR_DEFINITIONS) {
+            const def = window.GENEFORGE_SSOT.COLOR_DEFINITIONS[key];
+            if (def) return def.albs || def.en || key;
+        }
+        // フォールバック: 基本形質名
+        const fallbackTraits = {
+            pallid: 'Pallid', opaline: 'Opaline', cinnamon: 'Cinnamon',
+            fallow: 'Fallow', pied: 'Pied', lutino: 'Lutino',
+            creamino: 'Creamino', pure_white: 'Pure White',
         };
-        return traits[key] || key;
+        return fallbackTraits[key] || key;
     },
 
-    // v7.0: ALBS標準名を全言語共通で使用
+    // v7.0: SSOT参照 - genetics.php COLOR_DEFINITIONS から取得
     getColorLabel(colorKey, lang = 'en') {
-        const labels = {
-            green: 'Green',
-            darkgreen: 'Dark Green',
-            olive: 'Olive',
-            aqua: 'Aqua',
-            aqua_dark: 'Aqua Dark',
-            aqua_dd: 'Aqua DD',
-            turquoise: 'Turquoise',
-            turquoise_dark: 'Turquoise Dark',
-            seagreen: 'Sea Green',
-            seagreen_dark: 'Sea Green Dark',
-            lutino: 'Lutino',
-            creamino: 'Creamino',
-            pure_white: 'Pure White',
-            creamino_seagreen: 'Creamino Sea Green',
-            pallid_green: 'Pallid Green',
-            pallid_aqua: 'Pallid Aqua',
-            pallid_turquoise: 'Pallid Turquoise',
-            pallid_seagreen: 'Pallid Sea Green',
-            cinnamon_green: 'Cinnamon Green',
-            cinnamon_aqua: 'Cinnamon Aqua',
-            cinnamon_turquoise: 'Cinnamon Turquoise',
-            cinnamon_seagreen: 'Cinnamon Sea Green',
-            opaline_green: 'Opaline Green',
-            opaline_aqua: 'Opaline Aqua',
-            opaline_turquoise: 'Opaline Turquoise',
-            opaline_seagreen: 'Opaline Sea Green',
-            // SSOT準拠キー (fallow_pale_*, pied_rec_*)
-            fallow_pale_green: 'Pale Fallow Green',
-            fallow_pale_aqua: 'Pale Fallow Aqua',
-            pied_rec_green: 'Recessive Pied Green',
-            pied_rec_aqua: 'Recessive Pied Aqua',
-            pied_rec_turquoise: 'Recessive Pied Turquoise',
-            pied_rec_seagreen: 'Recessive Pied Seagreen',
-        };
-        return labels[colorKey] || colorKey || '?';
+        // SSOT: genetics.php から注入された定義を参照
+        if (window.GENEFORGE_SSOT?.COLOR_DEFINITIONS) {
+            const def = window.GENEFORGE_SSOT.COLOR_DEFINITIONS[colorKey];
+            if (def) return def.albs || def[lang] || def.en || colorKey;
+        }
+        // フォールバック: キーをそのまま返す
+        return colorKey || '?';
     },
 
     getAncestors(id, generations = 3) {

@@ -82,33 +82,51 @@ const PedigreeGenerator = {
             return `Z^${allele}/W`;
         }
         
-        // ホモ接合チェック
-        const alleleMap = {
-            // Parblue
-            '++': '+/+', '+aq': '+/b^aq', 'aqaq': 'b^aq/b^aq',
-            '+tq': '+/b^tq', 'tqtq': 'b^tq/b^tq', 'tqaq': 'b^tq/b^aq',
-            // Dark
-            'dd': 'd/d', 'Dd': 'D/d', 'DD': 'D/D',
-            // Violet
-            'vv': 'v/v', 'Vv': 'V/v', 'VV': 'V/V',
-            // INO (オス)
-            '+ino': '+/Z^ino', 'inoino': 'Z^ino/Z^ino',
-            '+pld': '+/Z^pld', 'pldpld': 'Z^pld/Z^pld', 'pldino': 'Z^pld/Z^ino',
-            // Opaline (オス)
-            '+op': '+/Z^op', 'opop': 'Z^op/Z^op',
-            // Cinnamon (オス)
-            '+cin': '+/Z^cin', 'cincin': 'Z^cin/Z^cin',
-            // 常染色体劣性
-            '+flp': '+/flp', 'flpflp': 'flp/flp',
-            '+flb': '+/flb', 'flbflb': 'flb/flb',
-            'Pi+': 'Pi/+', 'PiPi': 'Pi/Pi',
-            '+pi': '+/pi', 'pipi': 'pi/pi',
-            '+dil': '+/dil', 'dildil': 'dil/dil',
-            '+ed': '+/ed', 'eded': 'ed/ed',
-            '+of': '+/of', 'ofof': 'of/of',
-            '+ph': '+/ph', 'phph': 'ph/ph',
+        // SSOT参照: genetics.php LOCI から学術表記マップを生成
+        const buildAlleleMap = () => {
+            const ssot = window.GENEFORGE_SSOT?.LOCI;
+            if (!ssot) {
+                // フォールバック: 基本的なマップのみ
+                return {
+                    '++': '+/+', 'dd': 'd/d', 'Dd': 'D/d', 'DD': 'D/D',
+                    'vv': 'v/v', 'Vv': 'V/v', 'VV': 'V/V',
+                };
+            }
+
+            const map = { '++': '+/+' };
+            for (const [locusKey, locus] of Object.entries(ssot)) {
+                const alleleKeys = Object.keys(locus.alleles).filter(a => a !== '+');
+                const isSexLinked = locus.sex_linked;
+
+                for (const allele of alleleKeys) {
+                    // ヘテロ接合
+                    map[`+${allele}`] = isSexLinked ? `+/Z^${allele}` : `+/${allele}`;
+                    // ホモ接合
+                    map[`${allele}${allele}`] = isSexLinked ? `Z^${allele}/Z^${allele}` : `${allele}/${allele}`;
+                }
+
+                // 特殊ケース: マルチアレル
+                if (locus.type === 'AR_MULTI' && locusKey === 'parblue') {
+                    map['aqaq'] = 'b^aq/b^aq';
+                    map['+aq'] = '+/b^aq';
+                    map['tqtq'] = 'b^tq/b^tq';
+                    map['+tq'] = '+/b^tq';
+                    map['tqaq'] = 'b^tq/b^aq';
+                }
+                if (locus.type === 'AID') {
+                    const [wild, mut] = Object.keys(locus.alleles);
+                    map[`${wild}${wild}`] = `${wild}/${wild}`;
+                    map[`${mut}${wild}`] = `${mut}/${wild}`;
+                    map[`${mut}${mut}`] = `${mut}/${mut}`;
+                }
+                if (locus.type === 'SL_MULTI' && locusKey === 'ino') {
+                    map['pldino'] = 'Z^pld/Z^ino';
+                }
+            }
+            return map;
         };
-        
+
+        const alleleMap = buildAlleleMap();
         return alleleMap[alleles] || alleles;
     },
 

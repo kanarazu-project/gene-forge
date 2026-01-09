@@ -791,6 +791,124 @@ final class AgapornisLoci
             'tier' => 3,
         ];
     }
+
+    // =========================================================================
+    // SSOT JavaScript Export Methods
+    // =========================================================================
+
+    /**
+     * ローカス定義をJSON形式でエクスポート（JavaScript用）
+     * @return string JSON形式のローカス定義
+     */
+    public static function getLocusDefinitionsJSON(): string
+    {
+        return json_encode(self::LOCI, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * 色オプションリストをJSON形式でエクスポート（JavaScript用）
+     * @param string $lang 言語コード ('ja' または 'en')
+     * @return string JSON形式の色オプション配列
+     */
+    public static function getColorOptionsJSON(string $lang = 'ja'): string
+    {
+        $options = [];
+        foreach (self::COLOR_DEFINITIONS as $key => $def) {
+            $options[] = [
+                'value' => $key,
+                'label' => $def[$lang] ?? $def['en'],
+                'albs' => $def['albs'] ?? '',
+                'eye' => $def['eye'] ?? 'black',
+                'category' => $def['category'] ?? '',
+                'tier' => $def['tier'] ?? 1,
+            ];
+        }
+        return json_encode($options, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * 色定義全体をJSON形式でエクスポート（JavaScript用）
+     * @return string JSON形式の色定義
+     */
+    public static function getColorDefinitionsJSON(): string
+    {
+        return json_encode(self::COLOR_DEFINITIONS, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * アレルマップをJSON形式でエクスポート（学術表記用）
+     * @return string JSON形式のアレルマップ
+     */
+    public static function getAlleleMapJSON(): string
+    {
+        $alleleMap = [];
+        foreach (self::LOCI as $locusKey => $locus) {
+            $alleleMap[$locusKey] = [
+                'name' => $locus['name'],
+                'type' => $locus['type'],
+                'sex_linked' => $locus['sex_linked'],
+                'alleles' => $locus['alleles'],
+            ];
+        }
+        return json_encode($alleleMap, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * 表現型オプション（ダークネス、目色など）をJSON形式でエクスポート
+     * @param string $lang 言語コード
+     * @return string JSON形式の表現型オプション
+     */
+    public static function getPhenotypeOptionsJSON(string $lang = 'ja'): string
+    {
+        $options = [
+            'darkness' => [
+                ['value' => 'normal', 'label' => $lang === 'ja' ? 'ノーマル (dd)' : 'Normal (dd)'],
+                ['value' => 'dark', 'label' => $lang === 'ja' ? 'ダーク (Dd)' : 'Dark (Dd)'],
+                ['value' => 'olive', 'label' => $lang === 'ja' ? 'オリーブ (DD)' : 'Olive (DD)'],
+            ],
+            'eyeColor' => [
+                ['value' => 'black', 'label' => $lang === 'ja' ? '黒目' : 'Black'],
+                ['value' => 'red', 'label' => $lang === 'ja' ? '赤目' : 'Red'],
+            ],
+            'melanin' => [
+                ['value' => 'normal', 'label' => $lang === 'ja' ? 'ノーマル' : 'Normal'],
+                ['value' => 'cinnamon', 'label' => $lang === 'ja' ? 'シナモン' : 'Cinnamon'],
+                ['value' => 'pallid', 'label' => $lang === 'ja' ? 'パリッド' : 'Pallid'],
+                ['value' => 'ino', 'label' => 'INO'],
+            ],
+            'sexLinkedTraits' => [
+                ['value' => 'none', 'label' => $lang === 'ja' ? 'なし' : 'None'],
+                ['value' => 'opaline', 'label' => $lang === 'ja' ? 'オパーリン' : 'Opaline'],
+                ['value' => 'cinnamon', 'label' => $lang === 'ja' ? 'シナモン' : 'Cinnamon'],
+                ['value' => 'ino', 'label' => 'INO'],
+                ['value' => 'pallid', 'label' => $lang === 'ja' ? 'パリッド' : 'Pallid'],
+            ],
+        ];
+        return json_encode($options, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
+     * 基底色オプション（グリーン系、アクア系など）をJSON形式でエクスポート
+     * @param string $lang 言語コード
+     * @return string JSON形式の基底色オプション
+     */
+    public static function getBaseColorOptionsJSON(string $lang = 'ja'): string
+    {
+        $baseColors = [
+            'green' => ['ja' => 'グリーン系', 'en' => 'Green Series'],
+            'aqua' => ['ja' => 'アクア系', 'en' => 'Aqua Series'],
+            'turquoise' => ['ja' => 'ターコイズ系', 'en' => 'Turquoise Series'],
+            'seagreen' => ['ja' => 'シーグリーン系', 'en' => 'Seagreen Series'],
+        ];
+        $options = [];
+        foreach ($baseColors as $key => $labels) {
+            $options[] = [
+                'value' => $key,
+                'label' => $labels[$lang] ?? $labels['en'],
+            ];
+        }
+        return json_encode($options, JSON_UNESCAPED_UNICODE);
+    }
 }
 
 /**

@@ -20,79 +20,92 @@ const FamilyMap = {
     },
     targetPosition: null,
 
+    // SSOT参照: genetics.php COLOR_OPTIONS からオプションを生成
     get baseColorOptions() {
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        const ssot = window.GENEFORGE_SSOT;
+
+        // SSOT COLOR_OPTIONS が利用可能な場合
+        if (ssot?.COLOR_OPTIONS) {
+            const categoryGroups = {
+                green: isJa ? 'グリーン系（野生型）' : 'Green (Wild)',
+                aqua: isJa ? 'アクア系' : 'Aqua',
+                turquoise: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)',
+                seagreen: isJa ? 'シーグリーン系' : 'Seagreen',
+                ino: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)',
+                pallid: isJa ? 'パリッド系（メラニン減少）' : 'Pallid (Melanin Reduced)',
+                cinnamon: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon',
+                opaline: isJa ? 'オパーリン系（模様変化）' : 'Opaline',
+                fallow_pale: isJa ? 'フォロー系（赤目）' : 'Fallow',
+                pied_rec: isJa ? 'パイド系（まだら模様）' : 'Pied',
+                pied_dom: isJa ? 'ドミナントパイド系' : 'Dominant Pied',
+            };
+            // Tier 1 のみをFamilyMap用に抽出
+            return ssot.COLOR_OPTIONS
+                .filter(opt => !opt.tier || opt.tier === 1)
+                .map(opt => ({
+                    value: opt.value,
+                    label: opt.albs || opt.label,
+                    group: categoryGroups[opt.category] || opt.category
+                }));
+        }
+        // フォールバック: 最小限のオプション
         return [
-            { value: 'green', label: isJa ? 'グリーン（ノーマル）' : 'Green (Normal)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'darkgreen', label: isJa ? 'ダークグリーン（D/+）' : 'Dark Green (D/+)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'olive', label: isJa ? 'オリーブ（D/D）' : 'Olive (D/D)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'aqua', label: isJa ? 'アクア' : 'Aqua', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'aqua_dark', label: isJa ? 'アクアダーク（D/+）' : 'Aqua Dark (D/+)', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'aqua_dd', label: isJa ? 'アクアDD（D/D）' : 'Aqua DD (D/D)', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'turquoise', label: isJa ? 'ターコイズ' : 'Turquoise', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'turquoise_dark', label: isJa ? 'ターコイズダーク' : 'Turquoise Dark', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'seagreen', label: isJa ? 'シーグリーン' : 'Sea Green', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'seagreen_dark', label: isJa ? 'シーグリーンダーク' : 'Sea Green Dark', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'lutino', label: isJa ? 'ルチノー（黄色・赤目）' : 'Lutino (Yellow/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'creamino', label: isJa ? 'クリーミノ（クリーム・赤目）' : 'Creamino (Cream/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'pure_white', label: isJa ? 'ピュアホワイト（白・赤目）' : 'Pure White (White/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'creamino_seagreen', label: isJa ? 'クリーミノシーグリーン' : 'Creamino Sea Green', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'pallid_green', label: isJa ? 'パリッドグリーン' : 'Pallid Green', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_aqua', label: isJa ? 'パリッドアクア' : 'Pallid Aqua', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_turquoise', label: isJa ? 'パリッドターコイズ' : 'Pallid Turquoise', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_seagreen', label: isJa ? 'パリッドシーグリーン' : 'Pallid Sea Green', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'cinnamon_green', label: isJa ? 'シナモングリーン' : 'Cinnamon Green', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_aqua', label: isJa ? 'シナモンアクア' : 'Cinnamon Aqua', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_turquoise', label: isJa ? 'シナモンターコイズ' : 'Cinnamon Turquoise', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_seagreen', label: isJa ? 'シナモンシーグリーン' : 'Cinnamon Sea Green', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'opaline_green', label: isJa ? 'オパーリングリーン' : 'Opaline Green', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_aqua', label: isJa ? 'オパーリンアクア' : 'Opaline Aqua', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_turquoise', label: isJa ? 'オパーリンターコイズ' : 'Opaline Turquoise', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_seagreen', label: isJa ? 'オパーリンシーグリーン' : 'Opaline Sea Green', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'fallow_green', label: isJa ? 'フォローグリーン' : 'Fallow Green', group: isJa ? 'フォロー系（赤目）' : 'Fallow' },
-            { value: 'fallow_aqua', label: isJa ? 'フォローアクア' : 'Fallow Aqua', group: isJa ? 'フォロー系（赤目）' : 'Fallow' },
-            { value: 'pied_green', label: isJa ? 'パイドグリーン' : 'Pied Green', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_aqua', label: isJa ? 'パイドアクア' : 'Pied Aqua', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_turquoise', label: isJa ? 'パイドターコイズ' : 'Pied Turquoise', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_seagreen', label: isJa ? 'パイドシーグリーン' : 'Pied Sea Green', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
+            { value: 'green', label: 'Green', group: 'Green' },
+            { value: 'aqua', label: 'Aqua', group: 'Aqua' },
+            { value: 'turquoise', label: 'Turquoise', group: 'Turquoise' },
+            { value: 'lutino', label: 'Lutino', group: 'INO' },
         ];
     },
 
+    // SSOT参照: genetics.php PHENOTYPE_OPTIONS.darkness から取得
     get darknessOptions() {
+        const ssot = window.GENEFORGE_SSOT;
+        if (ssot?.PHENOTYPE_OPTIONS?.darkness) {
+            return ssot.PHENOTYPE_OPTIONS.darkness;
+        }
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
         return [
-            { value: 'none', label: isJa ? 'なし（ライト）' : 'None (Light)' },
-            { value: 'sf', label: isJa ? '1つ（ダークグリーン/アクアダーク）' : 'Single (Dark Green/Aqua Dark)' },
-            { value: 'df', label: isJa ? '2つ（オリーブ/アクアDD）' : 'Double (Olive/Aqua DD)' },
-            { value: 'unknown', label: isJa ? '不明' : 'Unknown' },
+            { value: 'normal', label: isJa ? 'ノーマル (dd)' : 'Normal (dd)' },
+            { value: 'dark', label: isJa ? 'ダーク (Dd)' : 'Dark (Dd)' },
+            { value: 'olive', label: isJa ? 'オリーブ (DD)' : 'Olive (DD)' },
         ];
     },
 
+    // SSOT参照: genetics.php PHENOTYPE_OPTIONS.eyeColor から取得
     get eyeColorOptions() {
+        const ssot = window.GENEFORGE_SSOT;
+        if (ssot?.PHENOTYPE_OPTIONS?.eyeColor) {
+            return ssot.PHENOTYPE_OPTIONS.eyeColor;
+        }
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
         return [
-            { value: 'black', label: isJa ? '黒目（通常）' : 'Black (Normal)' },
-            { value: 'red', label: isJa ? '赤目（ルチノー/クリーミノ/ピュアホワイト等）' : 'Red (Lutino/Creamino/Pure White etc.)' },
-            { value: 'plum', label: isJa ? 'プラム色（パリッド幼鳥）' : 'Plum (Pallid juvenile)' },
+            { value: 'black', label: isJa ? '黒目' : 'Black' },
+            { value: 'red', label: isJa ? '赤目' : 'Red' },
         ];
     },
 
+    // SSOT参照: genetics.php PHENOTYPE_OPTIONS.melanin から取得
     get melaninOptions() {
+        const ssot = window.GENEFORGE_SSOT;
+        if (ssot?.PHENOTYPE_OPTIONS?.melanin) {
+            return ssot.PHENOTYPE_OPTIONS.melanin;
+        }
         return [
-            { value: '', label: T.unknown },
-            { value: 'normal', label: T.normal },
-            { value: 'diluted', label: T.diluted },
-            { value: 'absent', label: T.absent },
-            { value: 'brown', label: T.brown },
+            { value: '', label: T?.unknown || 'Unknown' },
+            { value: 'normal', label: T?.normal || 'Normal' },
+            { value: 'diluted', label: T?.diluted || 'Diluted' },
+            { value: 'absent', label: T?.absent || 'Absent' },
+            { value: 'brown', label: T?.brown || 'Brown' },
         ];
     },
 
     get patternOptions() {
         return [
-            { value: '', label: T.unknown },
-            { value: 'normal', label: T.normal },
-            { value: 'opaline', label: T.opaline },
-            { value: 'pied', label: T.pied },
+            { value: '', label: T?.unknown || 'Unknown' },
+            { value: 'normal', label: T?.normal || 'Normal' },
+            { value: 'opaline', label: T?.opaline || 'Opaline' },
+            { value: 'pied', label: T?.pied || 'Pied' },
         ];
     },
 

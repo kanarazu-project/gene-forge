@@ -41,30 +41,49 @@ const BreedingEngine = {
     },
     
     /**
-     * 伴性遺伝座位を取得
+     * 伴性遺伝座位を取得（SSOT参照）
      */
     getSexLinkedLoci() {
+        // SSOT参照: genetics.php LOCI
+        const ssot = window.GENEFORGE_SSOT?.LOCI;
+        if (ssot) {
+            return Object.keys(ssot).filter(k => ssot[k].sex_linked === true);
+        }
+        // 旧形式フォールバック
         if (typeof LOCI_MASTER !== 'undefined') {
             return Object.keys(LOCI_MASTER).filter(k => LOCI_MASTER[k].sex_linked === true);
         }
         return ['ino', 'opaline', 'cinnamon'];
     },
-    
+
     /**
-     * 常染色体座位を取得
+     * 常染色体座位を取得（SSOT参照）
      */
     getAutosomalLoci() {
+        // SSOT参照: genetics.php LOCI
+        const ssot = window.GENEFORGE_SSOT?.LOCI;
+        if (ssot) {
+            return Object.keys(ssot).filter(k => ssot[k].sex_linked !== true);
+        }
+        // 旧形式フォールバック
         if (typeof LOCI_MASTER !== 'undefined') {
             return Object.keys(LOCI_MASTER).filter(k => LOCI_MASTER[k].sex_linked !== true);
         }
-        return ['parblue', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 
+        return ['parblue', 'dark', 'violet', 'fallow_pale', 'fallow_bronze',
                 'pied_dom', 'pied_rec', 'dilute', 'edged', 'orangeface', 'pale_headed'];
     },
-    
+
     /**
-     * 色名を取得（SSOT）
+     * 色名を取得（SSOT参照）
      */
     getColorLabel(colorKey) {
+        // SSOT参照: genetics.php COLOR_DEFINITIONS
+        const ssot = window.GENEFORGE_SSOT?.COLOR_DEFINITIONS;
+        if (ssot?.[colorKey]) {
+            const lang = window.GENEFORGE_SSOT?.lang || 'ja';
+            return ssot[colorKey].albs || ssot[colorKey][lang] || ssot[colorKey].en || colorKey;
+        }
+        // 旧形式フォールバック
         if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) {
             return COLOR_MASTER[colorKey].ja || COLOR_MASTER[colorKey].en || colorKey;
         }

@@ -1437,6 +1437,18 @@ $mPh = $_POST['m_ph'] ?? '++';
             </details>
         </footer>
     </div>
+    <!-- SSOT: genetics.php からエクスポートしたグローバル定義 -->
+    <script>
+    window.GENEFORGE_SSOT = {
+        LOCI: <?= AgapornisLoci::getLocusDefinitionsJSON() ?>,
+        COLOR_DEFINITIONS: <?= AgapornisLoci::getColorDefinitionsJSON() ?>,
+        COLOR_OPTIONS: <?= AgapornisLoci::getColorOptionsJSON($lang) ?>,
+        ALLELE_MAP: <?= AgapornisLoci::getAlleleMapJSON() ?>,
+        PHENOTYPE_OPTIONS: <?= AgapornisLoci::getPhenotypeOptionsJSON($lang) ?>,
+        BASE_COLOR_OPTIONS: <?= AgapornisLoci::getBaseColorOptionsJSON($lang) ?>,
+        lang: '<?= $lang ?>'
+    };
+    </script>
     <script src="guardian.js"></script>
     <script src="birds.js?v=674"></script>
     <script src="breeding.js"></script>

@@ -91,16 +91,24 @@ const BreedingPlanner = {
     },
     
     /**
-     * v6.7.5: 色名取得ヘルパー（SSOT対応）
-     * COLOR_LABELSから取得、なければキーをそのまま返す
+     * v7.0: 色名取得ヘルパー（SSOT対応）
+     * GENEFORGE_SSOT.COLOR_DEFINITIONSから取得、なければCOLOR_LABELS、最終フォールバックはキー
      * @param {string} colorKey - 色キー
      * @returns {string} 表示用色名
      */
     getColorName(colorKey) {
+        // SSOT参照: genetics.php COLOR_DEFINITIONS
+        const ssot = window.GENEFORGE_SSOT;
+        if (ssot?.COLOR_DEFINITIONS?.[colorKey]) {
+            const def = ssot.COLOR_DEFINITIONS[colorKey];
+            const lang = ssot.lang || 'ja';
+            return def.albs || def[lang] || def.en || colorKey;
+        }
+        // フォールバック: 旧COLOR_LABELS
         if (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) {
             return COLOR_LABELS[colorKey];
         }
-        // フォールバック: キーをそのまま返す
+        // 最終フォールバック: キーをそのまま返す
         return colorKey;
     },
     
