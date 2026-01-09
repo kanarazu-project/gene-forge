@@ -34,15 +34,15 @@ const BirdDB = {
             sire_dam_dam:   { id: 'demo_51', name: 'Victoria', color: 'pure_white' },  // ピュアホワイト♀
             dam_sire_sire:  { id: 'demo_85', name: 'Sean', color: 'cinnamon_seagreen' }, // シナモンシーグリーン♂
             dam_sire_dam:   { id: 'demo_95', name: 'Riley', color: 'opaline_aqua' },    // オパーリンアクア♀
-            dam_dam_sire:   { id: 'demo_125', name: 'Troy', color: 'pied_seagreen' },   // パイドシーグリーン♂
-            dam_dam_dam:    { id: 'demo_111', name: 'Hazel', color: 'fallow_aqua' },    // フォローアクア♀
+            dam_dam_sire:   { id: 'demo_125', name: 'Troy', color: 'pied_rec_seagreen' },   // パイドシーグリーン♂
+            dam_dam_dam:    { id: 'demo_111', name: 'Hazel', color: 'fallow_pale_aqua' },    // フォローアクア♀
         },
         // 祖父母4羽（pedigree: 親2羽のみ）
         grandparents: {
             sire_sire: { id: 'demo_45', name: 'Adam', color: 'creamino' },              // クリーミノ♂（Jack×Chloe）
             sire_dam:  { id: 'demo_52', name: 'Aurora', color: 'pure_white' },          // ピュアホワイト♀（Paul×Victoria）
             dam_sire:  { id: 'demo_101', name: 'Zack', color: 'opaline_seagreen' },     // オパーリンシーグリーン♂（Sean×Riley）
-            dam_dam:   { id: 'demo_119', name: 'Eleanor', color: 'pied_aqua' },         // パイドアクア♀（Troy×Hazel）
+            dam_dam:   { id: 'demo_119', name: 'Eleanor', color: 'pied_rec_aqua' },         // パイドアクア♀（Troy×Hazel）
         },
         // 父母2羽（pedigree: 親2 + 祖父母4）
         parents: {
@@ -73,15 +73,15 @@ const BirdDB = {
             { id: 'demo_102', name: 'Jude', color: 'opaline_seagreen' },
             { id: 'demo_103', name: 'Nora', color: 'opaline_seagreen' },
             { id: 'demo_104', name: 'Hannah', color: 'opaline_seagreen' },
-            { id: 'demo_117', name: 'Brad', color: 'pied_aqua' },
-            { id: 'demo_118', name: 'Drew', color: 'pied_aqua' },
-            { id: 'demo_120', name: 'Stella', color: 'pied_aqua' },
-            { id: 'demo_121', name: 'Carl', color: 'pied_turquoise' },
-            { id: 'demo_122', name: 'Dale', color: 'pied_turquoise' },
-            { id: 'demo_123', name: 'Lucy', color: 'pied_turquoise' },
-            { id: 'demo_124', name: 'Maya', color: 'pied_turquoise' },
-            { id: 'demo_126', name: 'Earl', color: 'pied_seagreen' },
-            { id: 'demo_128', name: 'Alice', color: 'pied_seagreen' },
+            { id: 'demo_117', name: 'Brad', color: 'pied_rec_aqua' },
+            { id: 'demo_118', name: 'Drew', color: 'pied_rec_aqua' },
+            { id: 'demo_120', name: 'Stella', color: 'pied_rec_aqua' },
+            { id: 'demo_121', name: 'Carl', color: 'pied_rec_turquoise' },
+            { id: 'demo_122', name: 'Dale', color: 'pied_rec_turquoise' },
+            { id: 'demo_123', name: 'Lucy', color: 'pied_rec_turquoise' },
+            { id: 'demo_124', name: 'Maya', color: 'pied_rec_turquoise' },
+            { id: 'demo_126', name: 'Earl', color: 'pied_rec_seagreen' },
+            { id: 'demo_128', name: 'Alice', color: 'pied_rec_seagreen' },
         ]
     },
 
@@ -277,12 +277,12 @@ const BirdDB = {
             { key: 'opaline_aqua', name: 'Opaline Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', opaline: true },
             { key: 'opaline_turquoise', name: 'Opaline Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', opaline: true },
             { key: 'opaline_seagreen', name: 'Opaline Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', opaline: true },
-            { key: 'fallow_green', name: 'Fallow Green', eye: 'red', parblue: '++', ino: '++', dark: 'dd', fallow_pale: true },
-            { key: 'fallow_aqua', name: 'Fallow Aqua', eye: 'red', parblue: 'aqaq', ino: '++', dark: 'dd', fallow_pale: true },
-            { key: 'pied_green', name: 'Pied Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_aqua', name: 'Pied Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_turquoise', name: 'Pied Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_seagreen', name: 'Pied Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'fallow_pale_green', name: 'Pale Fallow Green', eye: 'red', parblue: '++', ino: '++', dark: 'dd', fallow_pale: true },
+            { key: 'fallow_pale_aqua', name: 'Pale Fallow Aqua', eye: 'red', parblue: 'aqaq', ino: '++', dark: 'dd', fallow_pale: true },
+            { key: 'pied_rec_green', name: 'Recessive Pied Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_rec_aqua', name: 'Recessive Pied Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_rec_turquoise', name: 'Recessive Pied Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_rec_seagreen', name: 'Recessive Pied Seagreen', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', pied_rec: true },
         ];
         
         let idCounter = 1;
@@ -595,8 +595,8 @@ const BirdDB = {
         else if (p.includes('クリーミノシーグリーン')) { observed.baseColor = 'creamino_seagreen'; observed.eyeColor = 'red'; }
         else if (p.includes('クリーミノ') || p.includes('creamino')) { observed.baseColor = 'creamino'; observed.eyeColor = 'red'; }
         else if (p.includes('ピュアホワイト') || p.includes('pure white') || p.includes('アルビノ')) { observed.baseColor = 'pure_white'; observed.eyeColor = 'red'; }
-        else if ((p.includes('フォロー') || p.includes('fallow')) && p.includes('アクア')) { observed.baseColor = 'fallow_aqua'; observed.eyeColor = 'red'; }
-        else if (p.includes('フォロー') || p.includes('fallow')) { observed.baseColor = 'fallow_green'; observed.eyeColor = 'red'; }
+        else if ((p.includes('フォロー') || p.includes('fallow')) && p.includes('アクア')) { observed.baseColor = 'fallow_pale_aqua'; observed.eyeColor = 'red'; }
+        else if (p.includes('フォロー') || p.includes('fallow')) { observed.baseColor = 'fallow_pale_green'; observed.eyeColor = 'red'; }
         else if (p.includes('パリッド') && p.includes('シーグリーン')) { observed.baseColor = 'pallid_seagreen'; }
         else if (p.includes('パリッド') && p.includes('ターコイズ')) { observed.baseColor = 'pallid_turquoise'; }
         else if (p.includes('パリッド') && p.includes('アクア')) { observed.baseColor = 'pallid_aqua'; }
@@ -609,10 +609,10 @@ const BirdDB = {
         else if (p.includes('オパーリン') && p.includes('ターコイズ')) { observed.baseColor = 'opaline_turquoise'; }
         else if (p.includes('オパーリン') && p.includes('アクア')) { observed.baseColor = 'opaline_aqua'; }
         else if (p.includes('オパーリン')) { observed.baseColor = 'opaline_green'; }
-        else if (p.includes('パイド') && p.includes('シーグリーン')) { observed.baseColor = 'pied_seagreen'; }
-        else if (p.includes('パイド') && p.includes('ターコイズ')) { observed.baseColor = 'pied_turquoise'; }
-        else if (p.includes('パイド') && p.includes('アクア')) { observed.baseColor = 'pied_aqua'; }
-        else if (p.includes('パイド')) { observed.baseColor = 'pied_green'; }
+        else if (p.includes('パイド') && p.includes('シーグリーン')) { observed.baseColor = 'pied_rec_seagreen'; }
+        else if (p.includes('パイド') && p.includes('ターコイズ')) { observed.baseColor = 'pied_rec_turquoise'; }
+        else if (p.includes('パイド') && p.includes('アクア')) { observed.baseColor = 'pied_rec_aqua'; }
+        else if (p.includes('パイド')) { observed.baseColor = 'pied_rec_green'; }
         else if (p.includes('シーグリーンダーク')) { observed.baseColor = 'seagreen_dark'; observed.darkness = 'sf'; }
         else if (p.includes('シーグリーン')) { observed.baseColor = 'seagreen'; }
         else if (p.includes('ターコイズダーク')) { observed.baseColor = 'turquoise_dark'; observed.darkness = 'sf'; }
@@ -885,12 +885,13 @@ const BirdDB = {
             opaline_aqua: 'Opaline Aqua',
             opaline_turquoise: 'Opaline Turquoise',
             opaline_seagreen: 'Opaline Sea Green',
-            fallow_green: 'Fallow Green',
-            fallow_aqua: 'Fallow Aqua',
-            pied_green: 'Pied Green',
-            pied_aqua: 'Pied Aqua',
-            pied_turquoise: 'Pied Turquoise',
-            pied_seagreen: 'Pied Sea Green',
+            // SSOT準拠キー (fallow_pale_*, pied_rec_*)
+            fallow_pale_green: 'Pale Fallow Green',
+            fallow_pale_aqua: 'Pale Fallow Aqua',
+            pied_rec_green: 'Recessive Pied Green',
+            pied_rec_aqua: 'Recessive Pied Aqua',
+            pied_rec_turquoise: 'Recessive Pied Turquoise',
+            pied_rec_seagreen: 'Recessive Pied Seagreen',
         };
         return labels[colorKey] || colorKey || '?';
     },

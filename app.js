@@ -619,66 +619,9 @@ function exportBirdsCSV() {
 }
 
 // ========================================
-// 計算結果からの登録
-// ========================================
-function saveBreedingResult() {
-    const sireId = document.getElementById('dbSelectSire')?.value;
-    const damId = document.getElementById('dbSelectDam')?.value;
-    
-    const offspring = [];
-    document.querySelectorAll('.offspring-card').forEach(card => {
-        offspring.push({
-            sex: card.dataset.sex,
-            phenotype: card.dataset.pheno,
-            geno: JSON.parse(card.dataset.geno || '{}')
-        });
-    });
-    
-    if (offspring.length === 0) {
-        showToast(t('no_result'));
-        return;
-    }
-    
-    BirdDB.saveBreedingResult({
-        sire: sireId ? BirdDB.getBird(sireId) : null,
-        dam: damId ? BirdDB.getBird(damId) : null,
-        offspring
-    });
-    
-    showToast(t('save') + ' OK');
-}
-
-function registerOffspring(button) {
-    const card = button.closest('.offspring-card');
-    if (!card) return;
-    
-    const sex = card.dataset.sex;
-    const geno = JSON.parse(card.dataset.geno || '{}');
-    
-    const sireId = document.getElementById('dbSelectSire')?.value;
-    const damId = document.getElementById('dbSelectDam')?.value;
-    
-    openBirdForm();
-    
-    document.getElementById('birdSex').value = sex;
-    generateGenotypeFields();
-    
-    setTimeout(() => {
-        Object.keys(geno).forEach(key => {
-            const el = document.getElementById('geno_' + key);
-            if (el) { /* genotype conversion */ }
-        });
-        
-        if (sireId) document.getElementById('birdSire').value = sireId;
-        if (damId) document.getElementById('birdDam').value = damId;
-    }, 100);
-    
-    showToast(t('set_info'));
-}
-
-// ========================================
 // DB連携セレクタ更新
 // ========================================
+// Note: refreshDBSelectors() is defined in index.php (updates f_db_select, m_db_select)
 function refreshHealthSelectors() {
     const birds = BirdDB.getAllBirds();
     const males = birds.filter(b => b.sex === 'male');
@@ -697,29 +640,6 @@ function refreshHealthSelectors() {
     if (damSelect) {
         const currentVal = damSelect.value;
         damSelect.innerHTML = `<option value="">${t('select_placeholder')}</option>` + 
-            females.map(b => `<option value="${b.id}">${escapeHtml(b.name)} - ${escapeHtml(b.phenotype)}</option>`).join('');
-        damSelect.value = currentVal;
-    }
-}
-
-function refreshDBSelectors() {
-    const birds = BirdDB.getAllBirds();
-    const males = birds.filter(b => b.sex === 'male');
-    const females = birds.filter(b => b.sex === 'female');
-    
-    const sireSelect = document.getElementById('dbSelectSire');
-    const damSelect = document.getElementById('dbSelectDam');
-    
-    if (sireSelect) {
-        const currentVal = sireSelect.value;
-        sireSelect.innerHTML = `<option value="">${t('manual_input')}</option>` + 
-            males.map(b => `<option value="${b.id}">${escapeHtml(b.name)} - ${escapeHtml(b.phenotype)}</option>`).join('');
-        sireSelect.value = currentVal;
-    }
-    
-    if (damSelect) {
-        const currentVal = damSelect.value;
-        damSelect.innerHTML = `<option value="">${t('manual_input')}</option>` + 
             females.map(b => `<option value="${b.id}">${escapeHtml(b.name)} - ${escapeHtml(b.phenotype)}</option>`).join('');
         damSelect.value = currentVal;
     }
