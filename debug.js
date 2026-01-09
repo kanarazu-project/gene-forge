@@ -19,6 +19,31 @@ const DebugPanel = {
     },
 
     createPanel() {
+        // タッチ用フローティングボタン
+        const fab = document.createElement('div');
+        fab.id = 'debug-fab';
+        fab.innerHTML = '🔧';
+        fab.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 50px;
+            height: 50px;
+            background: #222;
+            color: #0f0;
+            border: 2px solid #0f0;
+            border-radius: 50%;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99998;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,255,0,0.3);
+        `;
+        fab.addEventListener('click', () => this.toggle());
+        document.body.appendChild(fab);
+
         const panel = document.createElement('div');
         panel.id = 'debug-panel';
         panel.innerHTML = `
@@ -26,14 +51,14 @@ const DebugPanel = {
                 #debug-panel {
                     position: fixed;
                     top: 10px;
+                    left: 10px;
                     right: 10px;
-                    width: 420px;
-                    max-height: 90vh;
+                    max-height: 80vh;
                     background: rgba(0,0,0,0.95);
                     color: #0f0;
                     font-family: monospace;
-                    font-size: 11px;
-                    padding: 10px;
+                    font-size: 12px;
+                    padding: 12px;
                     border-radius: 8px;
                     z-index: 99999;
                     overflow-y: auto;
