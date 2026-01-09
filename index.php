@@ -762,11 +762,88 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
                 </form>
                 <div id="pathfinder-result">
                 <?php if ($action === 'pathfind' && $result && !isset($result['error'])): ?>
+                <?php
+                // v7.0: PathFinder結果の翻訳処理
+                $targetName = '';
+                if (!empty($result['targetKey'])) {
+                    $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$result['targetKey']] ?? null;
+                    $targetName = $colorDef[$lang] ?? $colorDef['en'] ?? $result['targetKey'];
+                }
+
+                // 警告メッセージの処理
+                $warningText = '';
+                if (!empty($result['warnings']) && is_array($result['warnings'])) {
+                    $warningText = implode(', ', array_map(function($w) use ($lang) {
+                        return t($w['key'] ?? $w) ?? $w;
+                    }, $result['warnings']));
+                }
+
+                // ステップの翻訳ヘルパー
+                if (!function_exists('resolveColorName')) {
+                    function resolveColorName($key, $lang) {
+                        if (empty($key)) return '';
+                        $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$key] ?? null;
+                        return $colorDef[$lang] ?? $colorDef['en'] ?? $key;
+                    }
+                }
+                ?>
                 <div class="output-panel" style="margin-top:1rem;">
-                    <h4><?= htmlspecialchars($result['name']) ?></h4>
-                    <?php if(!empty($result['warning'])): ?><div class="warning-box"><?= htmlspecialchars($result['warning']) ?></div><?php endif; ?>
-                    <?php foreach($result['steps'] as $s): ?><div style="margin:.5rem 0;padding:.5rem;background:var(--bg-tertiary);border-radius:4px;"><strong><?= htmlspecialchars($s['title']) ?></strong><br>♂<?= htmlspecialchars($s['male']) ?> × ♀<?= htmlspecialchars($s['female']) ?><br>→ <?= htmlspecialchars($s['result']) ?></div><?php endforeach; ?>
+                    <h4><?= t('pf_target') ?>: <?= htmlspecialchars($targetName) ?></h4>
+                    <?php if(!empty($warningText)): ?><div class="warning-box"><?= htmlspecialchars($warningText) ?></div><?php endif; ?>
+                    <?php if(!empty($result['steps'])): ?>
+                    <?php foreach($result['steps'] as $idx => $s): ?>
+                    <?php
+                    // タイトルの翻訳
+                    $stepTitle = t($s['title_key'] ?? 'pf_step') ?? 'Step';
+                    if (!empty($s['title_params'])) {
+                        // locus キーを locus_name (人間が読める名前) に変換
+                        $params = $s['title_params'];
+                        if (isset($params['locus'])) {
+                            $locusKey = $params['locus'];
+                            $locusInfo = AgapornisLoci::LOCI[$locusKey] ?? null;
+                            $locusName = $locusInfo['name'][$lang] ?? $locusInfo['name']['en'] ?? $locusKey;
+                            $params['locus_name'] = $locusName;
+                            $params['locus'] = $locusName; // 両方に対応
+                        }
+                        foreach ($params as $pk => $pv) {
+                            $stepTitle = str_replace('{'.$pk.'}', $pv, $stepTitle);
+                        }
+                    }
+                    $stepTitle = ($idx + 1) . '. ' . $stepTitle;
+
+                    // 親鳥と結果の色名解決
+                    $maleName = resolveColorName($s['male_key'] ?? '', $lang);
+                    $femaleName = resolveColorName($s['female_key'] ?? '', $lang);
+                    $resultName = t($s['result_key'] ?? '') ?? $s['result_key'] ?? '';
+                    if (!empty($s['result_params'])) {
+                        $resultParams = $s['result_params'];
+                        if (isset($resultParams['locus'])) {
+                            $locusKey = $resultParams['locus'];
+                            $locusInfo = AgapornisLoci::LOCI[$locusKey] ?? null;
+                            $locusName = $locusInfo['name'][$lang] ?? $locusInfo['name']['en'] ?? $locusKey;
+                            $resultParams['locus_name'] = $locusName;
+                            $resultParams['locus'] = $locusName;
+                        }
+                        foreach ($resultParams as $rk => $rv) {
+                            $resultName = str_replace('{'.$rk.'}', $rv, $resultName);
+                        }
+                    }
+                    ?>
+                    <div style="margin:.5rem 0;padding:.5rem;background:var(--bg-tertiary);border-radius:4px;">
+                        <strong><?= htmlspecialchars($stepTitle) ?></strong><br>
+                        ♂ <?= htmlspecialchars($maleName) ?> × ♀ <?= htmlspecialchars($femaleName) ?><br>
+                        → <?= htmlspecialchars($resultName) ?>
+                    </div>
+                    <?php endforeach; ?>
+                    <?php else: ?>
+                    <p><?= t('pf_no_steps') ?? 'ノーマル（green）から直接得られます' ?></p>
+                    <?php endif; ?>
+                    <p style="margin-top:0.5rem;font-size:0.9em;color:var(--text-secondary);">
+                        <?= t('pf_min_generations') ?? '最短世代数' ?>: <?= htmlspecialchars($result['minGenerations'] ?? '?') ?>
+                    </p>
                 </div>
+                <?php elseif ($action === 'pathfind' && isset($result['error'])): ?>
+                <div class="warning-box"><?= htmlspecialchars(t($result['error']) ?? $result['error']) ?></div>
                 <?php endif; ?>
                 </div>
             </section>

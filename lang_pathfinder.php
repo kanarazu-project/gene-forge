@@ -38,6 +38,9 @@ $pf_ja = [
     
     // その他
     'pf_estimated_gen' => '推定世代数',
+    'pf_target' => '目標',
+    'pf_min_generations' => '最短世代数',
+    'pf_no_steps' => 'ノーマル（green）から直接得られます',
 ];
 
 // ============================================================
@@ -69,6 +72,9 @@ $pf_en = [
     
     // Other
     'pf_estimated_gen' => 'Estimated generations',
+    'pf_target' => 'Target',
+    'pf_min_generations' => 'Minimum generations',
+    'pf_no_steps' => 'Achievable directly from Normal (green)',
 ];
 
 // ============================================================
@@ -100,6 +106,9 @@ $pf_de = [
     
     // Sonstiges
     'pf_estimated_gen' => 'Geschätzte Generationen',
+    'pf_target' => 'Ziel',
+    'pf_min_generations' => 'Mindestgenerationen',
+    'pf_no_steps' => 'Direkt vom Wildtyp (Grün) erreichbar',
 ];
 
 // ============================================================
@@ -131,6 +140,9 @@ $pf_fr = [
     
     // Autre
     'pf_estimated_gen' => 'Générations estimées',
+    'pf_target' => 'Cible',
+    'pf_min_generations' => 'Générations minimum',
+    'pf_no_steps' => 'Réalisable directement à partir du type sauvage (vert)',
 ];
 
 // ============================================================
@@ -162,6 +174,9 @@ $pf_it = [
     
     // Altro
     'pf_estimated_gen' => 'Generazioni stimate',
+    'pf_target' => 'Obiettivo',
+    'pf_min_generations' => 'Generazioni minime',
+    'pf_no_steps' => 'Raggiungibile direttamente dal tipo selvatico (verde)',
 ];
 
 // ============================================================
@@ -193,4 +208,7 @@ $pf_es = [
     
     // Otro
     'pf_estimated_gen' => 'Generaciones estimadas',
+    'pf_target' => 'Objetivo',
+    'pf_min_generations' => 'Generaciones mínimas',
+    'pf_no_steps' => 'Alcanzable directamente desde tipo salvaje (verde)',
 ];
