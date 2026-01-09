@@ -1228,12 +1228,18 @@ $mPh = $_POST['m_ph'] ?? '++';
                     healthSire.innerHTML = `<option value="">${T.select_placeholder}</option>`;
                     healthDam.innerHTML = `<option value="">${T.select_placeholder}</option>`;
                     males.forEach(b => {
-                        const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
+                        // v7.0: 現在言語で phenotype を再計算
+                        const pheno = (b.genotype && typeof BirdDB.calculatePhenotype === 'function')
+                            ? BirdDB.calculatePhenotype(b.genotype, b.sex, b.observed)
+                            : (b.phenotype || '?');
                         const lineage = b.lineage ? ` [${b.lineage}]` : '';
                         healthSire.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno}${lineage}</option>`;
                     });
                     females.forEach(b => {
-                        const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
+                        // v7.0: 現在言語で phenotype を再計算
+                        const pheno = (b.genotype && typeof BirdDB.calculatePhenotype === 'function')
+                            ? BirdDB.calculatePhenotype(b.genotype, b.sex, b.observed)
+                            : (b.phenotype || '?');
                         const lineage = b.lineage ? ` [${b.lineage}]` : '';
                         healthDam.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno}${lineage}</option>`;
                     });
@@ -1423,6 +1429,10 @@ function refreshBirdList() {
     }
     
     listEl.innerHTML = filtered.map(function(bird) {
+        // v7.0: 現在言語で phenotype を再計算
+        var pheno = (bird.genotype && typeof BirdDB !== 'undefined' && typeof BirdDB.calculatePhenotype === 'function')
+            ? BirdDB.calculatePhenotype(bird.genotype, bird.sex, bird.observed)
+            : (bird.phenotype || '');
         return '<div class="bird-card" style="background:var(--bg-tertiary);padding:.75rem;border-radius:8px;margin-bottom:.5rem;">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                 '<div>' +
@@ -1436,7 +1446,7 @@ function refreshBirdList() {
                     '<button type="button" class="btn btn-tiny" onclick="deleteBird(\'' + bird.id + '\')">🗑️</button>' +
                 '</div>' +
             '</div>' +
-            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + (bird.phenotype || '') + '</div>' +
+            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + pheno + '</div>' +
         '</div>';
     }).join('');
 }
@@ -1551,14 +1561,20 @@ function showTab(id){
             healthDam.innerHTML = `<option value="">${T.select_placeholder}</option>`;
             
             males.forEach(b => {
-                const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
+                // v7.0: 現在言語で phenotype を再計算
+                const pheno = (b.genotype && typeof BirdDB.calculatePhenotype === 'function')
+                    ? BirdDB.calculatePhenotype(b.genotype, b.sex, b.observed)
+                    : (b.phenotype || '?');
                 const geno = formatGenoShort(b.genotype, b.sex);
                 const lineage = b.lineage ? ` [${b.lineage}]` : '';
                 healthSire.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno} (${geno})${lineage}</option>`;
             });
-            
+
             females.forEach(b => {
-                const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
+                // v7.0: 現在言語で phenotype を再計算
+                const pheno = (b.genotype && typeof BirdDB.calculatePhenotype === 'function')
+                    ? BirdDB.calculatePhenotype(b.genotype, b.sex, b.observed)
+                    : (b.phenotype || '?');
                 const geno = formatGenoShort(b.genotype, b.sex);
                 const lineage = b.lineage ? ` [${b.lineage}]` : '';
                 healthDam.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno} (${geno})${lineage}</option>`;
