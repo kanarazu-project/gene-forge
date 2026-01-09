@@ -1176,7 +1176,10 @@ $mPh = $_POST['m_ph'] ?? '++';
                 <div id="feasibility-result">
                 <?php if ($action === 'calculate' && $result): ?>
                 <div class="output-panel" style="margin-top:1rem;"><div class="offspring-grid">
-                    <?php foreach($result as $o): ?><div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($o['prob']*100,1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype']) ?></div></div><?php endforeach; ?>
+                    <?php
+                    // v7.0: 結果構造対応
+                    $offspring = isset($result['phenotype']) ? $result['phenotype'] : $result;
+                    foreach($offspring as $o): ?><div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($o['prob'],1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype']) ?></div></div><?php endforeach; ?>
                 </div></div>
                 <?php endif; ?>
                 </div>
