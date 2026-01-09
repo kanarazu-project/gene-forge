@@ -83,24 +83,25 @@ const BreedingEngine = {
      */
     execute(sireId, damId, options = {}) {
         const mode = options.mode || 'plan';
-        
+        const _t = (k, fb) => (typeof T !== 'undefined' && T[k]) ? T[k] : fb;
+
         if (typeof BirdDB === 'undefined') {
-            return { success: false, error: 'BirdDB未定義' };
+            return { success: false, error: _t('birddb_undefined', 'BirdDB not loaded') };
         }
-        
+
         const sire = BirdDB.getBird(sireId);
         const dam = BirdDB.getBird(damId);
-        
-        if (!sire) return { success: false, error: '父個体が見つかりません' };
-        if (!dam) return { success: false, error: '母個体が見つかりません' };
-        
+
+        if (!sire) return { success: false, error: _t('sire_not_found', 'Sire not found') };
+        if (!dam) return { success: false, error: _t('dam_not_found', 'Dam not found') };
+
         // BreedingValidator によるチェック
         if (typeof BreedingValidator !== 'undefined' && !options.skipValidation) {
             const validation = BreedingValidator.validate(sire, dam, mode);
             if (!validation.allowed) {
                 return {
                     success: false,
-                    error: validation.reason || '交配できません',
+                    error: validation.reason || _t('breeding_not_allowed', 'Breeding not allowed'),
                     blockType: validation.type
                 };
             }
@@ -559,7 +560,7 @@ const BreedingEngine = {
             }
         }
         
-        return '不明';
+        return (typeof T !== 'undefined' && T.unknown) ? T.unknown : 'Unknown';
     },
     
     /**
@@ -602,8 +603,9 @@ const BreedingEngine = {
     // ========================================
     
     saveResult(result, options = {}) {
+        const _t = (k, fb) => (typeof T !== 'undefined' && T[k]) ? T[k] : fb;
         if (typeof BirdDB === 'undefined') {
-            return { success: false, error: 'BirdDB未定義' };
+            return { success: false, error: _t('birddb_undefined', 'BirdDB not loaded') };
         }
         const record = BirdDB.saveBreedingResult({
             sire: result.sire,
@@ -614,12 +616,16 @@ const BreedingEngine = {
         });
         return { success: true, record };
     },
-    
+
     registerOffspring(offspringData, parentResult) {
+        const _t = (k, fb) => (typeof T !== 'undefined' && T[k]) ? T[k] : fb;
         if (typeof BirdDB === 'undefined') {
-            return { success: false, error: 'BirdDB未定義' };
+            return { success: false, error: _t('birddb_undefined', 'BirdDB not loaded') };
         }
         const pedigree = BirdDB.buildPedigreeFromParents(parentResult.sire.id, parentResult.dam.id);
+        const offspringNote = _t('offspring_of', 'Offspring of {sire} × {dam}')
+            .replace('{sire}', parentResult.sire.name)
+            .replace('{dam}', parentResult.dam.name);
         const bird = BirdDB.addBird({
             name: offspringData.name || '',
             sex: offspringData.sex,
@@ -629,7 +635,7 @@ const BreedingEngine = {
             dam: { id: parentResult.dam.id, name: parentResult.dam.name },
             pedigree,
             birthDate: offspringData.birthDate || new Date().toISOString().split('T')[0],
-            notes: offspringData.notes || `${parentResult.sire.name} × ${parentResult.dam.name} の子`
+            notes: offspringData.notes || offspringNote
         });
         return { success: true, bird };
     },

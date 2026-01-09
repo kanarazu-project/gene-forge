@@ -785,40 +785,73 @@ const BirdDB = {
     },
 
     calculatePhenotype(geno, sex, observed) {
-        if (observed?.baseColor) return this.getColorLabel(observed.baseColor, 'ja');
+        // v7.0: i18n対応 - 現在の言語を取得
+        const lang = this._getCurrentLang();
+
+        if (observed?.baseColor) return this.getColorLabel(observed.baseColor, lang);
 
         const parts = [];
-        let baseColor = 'グリーン';
+        let baseColorKey = 'green';
 
-        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseColor = 'アクア';
-        else if (geno.parblue === 'tqtq') baseColor = 'ターコイズ';
-        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseColor = 'シーグリーン';
+        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseColorKey = 'aqua';
+        else if (geno.parblue === 'tqtq') baseColorKey = 'turquoise';
+        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseColorKey = 'seagreen';
 
         if (['inoino', 'inoW'].includes(geno.ino)) {
-            if (baseColor === 'アクア') { parts.push('クリーミノ'); baseColor = ''; }
-            else if (baseColor === 'ターコイズ') { parts.push('ピュアホワイト'); baseColor = ''; }
-            else if (baseColor === 'シーグリーン') { parts.push('クリーミノシーグリーン'); baseColor = ''; }
-            else { parts.push('ルチノー'); baseColor = ''; }
-        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push('パリッド');
+            if (baseColorKey === 'aqua') { parts.push(this._getTraitLabel('creamino', lang)); baseColorKey = ''; }
+            else if (baseColorKey === 'turquoise') { parts.push(this._getTraitLabel('pure_white', lang)); baseColorKey = ''; }
+            else if (baseColorKey === 'seagreen') { parts.push(this._getTraitLabel('creamino_seagreen', lang)); baseColorKey = ''; }
+            else { parts.push(this._getTraitLabel('lutino', lang)); baseColorKey = ''; }
+        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push(this._getTraitLabel('pallid', lang));
 
         // v7.0: SSOT準拠キー + 旧キー後方互換
-        if (['opop', 'opW'].includes(geno.opaline) || ['opop', 'opW'].includes(geno.op)) parts.push('オパーリン');
-        if (['cincin', 'cinW'].includes(geno.cinnamon) || ['cincin', 'cinW'].includes(geno.cin)) parts.push('シナモン');
+        if (['opop', 'opW'].includes(geno.opaline) || ['opop', 'opW'].includes(geno.op)) parts.push(this._getTraitLabel('opaline', lang));
+        if (['cincin', 'cinW'].includes(geno.cinnamon) || ['cincin', 'cinW'].includes(geno.cin)) parts.push(this._getTraitLabel('cinnamon', lang));
 
         if (geno.dark === 'DD') {
-            if (baseColor === 'グリーン') baseColor = 'オリーブ';
-            else if (baseColor === 'アクア') baseColor = 'アクアDD';
+            if (baseColorKey === 'green') baseColorKey = 'olive';
+            else if (baseColorKey === 'aqua') baseColorKey = 'aqua_dd';
         } else if (geno.dark === 'Dd') {
-            if (baseColor === 'グリーン') baseColor = 'ダークグリーン';
-            else if (baseColor === 'アクア') baseColor = 'アクアダーク';
+            if (baseColorKey === 'green') baseColorKey = 'darkgreen';
+            else if (baseColorKey === 'aqua') baseColorKey = 'aqua_dark';
         }
 
         // v7.0: SSOT準拠キー + 旧キー後方互換
-        if (['flpflp', 'flfl'].includes(geno.fallow_pale) || geno.fl === 'flfl') parts.push('フォロー');
-        if (geno.pied_rec === 'pipi' || geno.pi === 'pipi') parts.push('パイド');
+        if (['flpflp', 'flfl'].includes(geno.fallow_pale) || geno.fl === 'flfl') parts.push(this._getTraitLabel('fallow', lang));
+        if (geno.pied_rec === 'pipi' || geno.pi === 'pipi') parts.push(this._getTraitLabel('pied', lang));
 
-        let result = parts.length > 0 ? parts.join(' ') + ' ' + baseColor : baseColor;
+        const baseLabel = baseColorKey ? this.getColorLabel(baseColorKey, lang) : '';
+        let result = parts.length > 0 ? parts.join(' ') + ' ' + baseLabel : baseLabel;
         return result.trim();
+    },
+
+    // 現在の言語を取得
+    _getCurrentLang() {
+        if (typeof T !== 'undefined' && T._lang) return T._lang;
+        if (typeof LANG !== 'undefined' && LANG._lang) return LANG._lang;
+        // URLパラメータまたはcookieから取得
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlLang = urlParams.get('lang');
+        if (urlLang) return urlLang;
+        // cookieから取得
+        const match = document.cookie.match(/(?:^|;\s*)lang=([^;]*)/);
+        return match ? match[1] : 'ja';
+    },
+
+    // 特性ラベルを取得（パーツ用）
+    _getTraitLabel(key, lang) {
+        const traits = {
+            pallid: lang === 'ja' ? 'パリッド' : 'Pallid',
+            opaline: lang === 'ja' ? 'オパーリン' : 'Opaline',
+            cinnamon: lang === 'ja' ? 'シナモン' : 'Cinnamon',
+            fallow: lang === 'ja' ? 'フォロー' : 'Fallow',
+            pied: lang === 'ja' ? 'パイド' : 'Pied',
+            lutino: lang === 'ja' ? 'ルチノー' : 'Lutino',
+            creamino: lang === 'ja' ? 'クリーミノ' : 'Creamino',
+            pure_white: lang === 'ja' ? 'ピュアホワイト' : 'Pure White',
+            creamino_seagreen: lang === 'ja' ? 'クリーミノシーグリーン' : 'Creamino Sea Green',
+        };
+        return traits[key] || key;
     },
 
     getColorLabel(colorKey, lang = 'ja') {

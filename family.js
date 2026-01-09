@@ -170,9 +170,10 @@ const FamilyMap = {
     validateBreeding(sire, dam) {
         if (!sire || !dam) return { allowed: true };
         if (typeof BreedingValidator !== 'undefined') return BreedingValidator.validate(sire, dam, this.familyMode);
-        if (sire.sex !== 'male') return { allowed: false, reason: '父には♂を指定してください', type: 'fact' };
-        if (dam.sex !== 'female') return { allowed: false, reason: '母には♀を指定してください', type: 'fact' };
-        if (sire.id === dam.id) return { allowed: false, reason: '同一個体です', type: 'fact' };
+        const _t = (k, fb) => (typeof T !== 'undefined' && T[k]) ? T[k] : fb;
+        if (sire.sex !== 'male') return { allowed: false, reason: _t('bv_sex_male', 'Please specify a male for the sire'), type: 'fact' };
+        if (dam.sex !== 'female') return { allowed: false, reason: _t('bv_sex_female', 'Please specify a female for the dam'), type: 'fact' };
+        if (sire.id === dam.id) return { allowed: false, reason: _t('bv_same_bird', 'Same individual'), type: 'fact' };
         return { allowed: true };
     },
 
@@ -326,7 +327,7 @@ const FamilyMap = {
         return `<div class="bird-card ${isEmpty ? 'empty' : 'filled'} ${isTarget ? 'target' : ''} ${isParent ? 'parent' : ''}" data-position="${position}">
             <div class="card-header" onclick="FamilyMap.selectSlot('${position}')"><span class="card-label">${label}${sexSymbol}</span><div class="card-actions"><button class="act-btn" onclick="event.stopPropagation(); FamilyMap.loadFromDB('${position}')" title="DB">📂</button>${!isEmpty ? `<button class="act-btn del" onclick="event.stopPropagation(); FamilyMap.clearSlot('${position}')" title="${T.clear}">×</button>` : ''}</div></div>
             <div class="card-body" onclick="FamilyMap.selectSlot('${position}')">${content}</div>
-            <button class="target-select-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('${position}')" ${targetBtnDisabled}>🎯 ${isTarget ? '推論対象' : '対象に設定'}</button>
+            <button class="target-select-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('${position}')" ${targetBtnDisabled}>🎯 ${isTarget ? (T.inference_target || 'Target') : (T.set_as_target || 'Set Target')}</button>
         </div>`;
     },
 
@@ -346,7 +347,7 @@ const FamilyMap = {
             html += `<div class="child-card ${isTarget ? 'target' : ''}" data-position="offspring_${idx}">
                 <div class="child-header" onclick="FamilyMap.selectSlot('offspring_${idx}')"><span>${T.child}${idx + 1}</span><button class="act-btn del" onclick="event.stopPropagation(); FamilyMap.removeOffspring(${idx})">×</button></div>
                 <div class="child-body" onclick="FamilyMap.selectSlot('offspring_${idx}')"><span class="sex-icon">${bird.sex === 'male' ? '♂' : '♀'}</span><span class="pheno-color">${colorLabel}</span>${bird.name ? `<span class="bird-name">${bird.name}</span>` : ''}${idDisplay}</div>
-                <button class="child-target-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('offspring_${idx}')" ${targetBtnDisabled}>🎯${isTarget ? '対象' : ''}</button>
+                <button class="child-target-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('offspring_${idx}')" ${targetBtnDisabled}>🎯${isTarget ? (T.target || 'Target') : ''}</button>
             </div>`;
         });
         return html;
@@ -445,17 +446,18 @@ const FamilyMap = {
         const container = modal.querySelector('#familyGenotypeFields');
         if (!container) return;
         const sex = modal.querySelector('[name="bird_sex"]')?.value || 'male';
-        // v7.0: SSOT準拠キー
+        // v7.0: SSOT準拠キー, i18n対応
+        const unk = '-- ' + (T.unknown || 'Unknown') + ' --';
         const loci = [
-            { key: 'parblue', label: 'Parblue', options: [['', '-- 不明 --'], ['++', 'B⁺/B⁺'], ['+aq', 'B⁺/b^aq'], ['+tq', 'B⁺/b^tq'], ['aqaq', 'b^aq/b^aq'], ['tqtq', 'b^tq/b^tq'], ['tqaq', 'b^tq/b^aq']]},
-            { key: 'ino', label: 'INO', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+pld', 'Z⁺/Z^pld'], ['+ino', 'Z⁺/Z^ino'], ['pldpld', 'Z^pld/Z^pld'], ['inoino', 'Z^ino/Z^ino'], ['pldino', 'Z^pld/Z^ino']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['pldW', 'Z^pld/W'], ['inoW', 'Z^ino/W']]},
-            { key: 'opaline', label: 'Opaline', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+op', 'Z⁺/Z^op'], ['opop', 'Z^op/Z^op']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['opW', 'Z^op/W']]},
-            { key: 'cinnamon', label: 'Cinnamon', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+cin', 'Z⁺/Z^cin'], ['cincin', 'Z^cin/Z^cin']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['cinW', 'Z^cin/W']]},
-            { key: 'dark', label: 'Dark', options: [['', '-- 不明 --'], ['dd', 'd/d'], ['Dd', 'D/d (SF)'], ['DD', 'D/D (DF)']]},
-            { key: 'violet', label: 'Violet', options: [['', '-- 不明 --'], ['vv', 'v/v'], ['Vv', 'V/v (SF)'], ['VV', 'V/V (DF)']]},
-            { key: 'fallow_pale', label: 'Fallow', options: [['', '-- 不明 --'], ['++', 'Fl⁺/Fl⁺'], ['+flp', 'Fl⁺/flp'], ['flpflp', 'flp/flp']]},
-            { key: 'dilute', label: 'Dilute', options: [['', '-- 不明 --'], ['++', 'Dil⁺/Dil⁺'], ['+dil', 'Dil⁺/dil'], ['dildil', 'dil/dil']]},
-            { key: 'pied_rec', label: 'Pied', options: [['', '-- 不明 --'], ['++', 'Pi⁺/Pi⁺'], ['+pi', 'Pi⁺/pi'], ['pipi', 'pi/pi']]}
+            { key: 'parblue', label: 'Parblue', options: [['', unk], ['++', 'B⁺/B⁺'], ['+aq', 'B⁺/b^aq'], ['+tq', 'B⁺/b^tq'], ['aqaq', 'b^aq/b^aq'], ['tqtq', 'b^tq/b^tq'], ['tqaq', 'b^tq/b^aq']]},
+            { key: 'ino', label: 'INO', options: sex === 'male' ? [['', unk], ['++', 'Z⁺/Z⁺'], ['+pld', 'Z⁺/Z^pld'], ['+ino', 'Z⁺/Z^ino'], ['pldpld', 'Z^pld/Z^pld'], ['inoino', 'Z^ino/Z^ino'], ['pldino', 'Z^pld/Z^ino']] : [['', unk], ['+W', 'Z⁺/W'], ['pldW', 'Z^pld/W'], ['inoW', 'Z^ino/W']]},
+            { key: 'opaline', label: 'Opaline', options: sex === 'male' ? [['', unk], ['++', 'Z⁺/Z⁺'], ['+op', 'Z⁺/Z^op'], ['opop', 'Z^op/Z^op']] : [['', unk], ['+W', 'Z⁺/W'], ['opW', 'Z^op/W']]},
+            { key: 'cinnamon', label: 'Cinnamon', options: sex === 'male' ? [['', unk], ['++', 'Z⁺/Z⁺'], ['+cin', 'Z⁺/Z^cin'], ['cincin', 'Z^cin/Z^cin']] : [['', unk], ['+W', 'Z⁺/W'], ['cinW', 'Z^cin/W']]},
+            { key: 'dark', label: 'Dark', options: [['', unk], ['dd', 'd/d'], ['Dd', 'D/d (SF)'], ['DD', 'D/D (DF)']]},
+            { key: 'violet', label: 'Violet', options: [['', unk], ['vv', 'v/v'], ['Vv', 'V/v (SF)'], ['VV', 'V/V (DF)']]},
+            { key: 'fallow_pale', label: 'Fallow', options: [['', unk], ['++', 'Fl⁺/Fl⁺'], ['+flp', 'Fl⁺/flp'], ['flpflp', 'flp/flp']]},
+            { key: 'dilute', label: 'Dilute', options: [['', unk], ['++', 'Dil⁺/Dil⁺'], ['+dil', 'Dil⁺/dil'], ['dildil', 'dil/dil']]},
+            { key: 'pied_rec', label: 'Pied', options: [['', unk], ['++', 'Pi⁺/Pi⁺'], ['+pi', 'Pi⁺/pi'], ['pipi', 'pi/pi']]}
         ];
         container.innerHTML = loci.map(locus => `<div class="form-group"><label class="form-label">${locus.label}</label><select name="geno_${locus.key}" class="form-select">${locus.options.map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}</select></div>`).join('');
     },
@@ -527,9 +529,9 @@ const FamilyMap = {
     },
 
     loadFromDB(position) {
-        if (typeof BirdDB === 'undefined') { alert('BirdDBが利用できません'); return; }
+        if (typeof BirdDB === 'undefined') { alert(T.health_guardian_missing || 'BirdDB not available'); return; }
         const birds = BirdDB.getAllBirds();
-        if (!birds || birds.length === 0) { const isJa = (typeof LANG !== 'undefined' && LANG === 'ja'); alert(isJa ? '登録されている個体がありません' : 'No birds registered'); return; }
+        if (!birds || birds.length === 0) { alert(T.no_birds || 'No birds registered'); return; }
         let expectedSex = null;
         if (position === 'sire' || position.endsWith('_sire')) expectedSex = 'male';
         else if (position === 'dam' || position.endsWith('_dam')) expectedSex = 'female';

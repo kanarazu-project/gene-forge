@@ -321,18 +321,19 @@ const BreedingPlanner = {
             health.warnings.forEach(w => warnings.push('⚠️ ' + w.message));
         }
         
-        // v6.7.4: 近交係数による推奨メッセージ
+        // v6.7.4: 近交係数による推奨メッセージ (v7.0 i18n対応)
         let recommendation;
+        const _t = (k, fb) => (typeof T !== 'undefined' && T[k]) ? T[k] : fb;
         if (!canBreed) {
-            recommendation = '🚫 繁殖禁止';
+            recommendation = '🚫 ' + _t('planner_breeding_prohibited', 'Breeding Prohibited');
         } else if (inbreedingCoef >= this.INBREEDING_THRESHOLD) {
-            recommendation = '⚠️ 競走馬では禁忌とされる配合';
+            recommendation = '⚠️ ' + _t('planner_ethics_warning', 'Prohibited in thoroughbred breeding');
         } else if (prob >= 0.5) {
-            recommendation = '🌟 最適ペア';
+            recommendation = '🌟 ' + _t('planner_optimal_pair', 'Optimal Pair');
         } else if (prob > 0) {
-            recommendation = '✓ 可能';
+            recommendation = '✓ ' + _t('planner_possible', 'Possible');
         } else {
-            recommendation = '✗ 目標への貢献度低';
+            recommendation = '✗ ' + _t('planner_low_contribution', 'Low contribution to goal');
         }
         
         return { 
@@ -387,10 +388,12 @@ const BreedingPlanner = {
     },
     
     generateRoadmap(topPairing, target, targetKey, missingGenes) {
-        if (!topPairing) return [{ generation: 0, action: '繁殖可能なペアがありません', goal: '健康リスクの低い個体を導入してください' }];
+        const _t = (k, fb) => (typeof T !== 'undefined' && T[k]) ? T[k] : fb;
+        if (!topPairing) return [{ generation: 0, action: _t('planner_no_pairs', 'No breedable pairs available'), goal: _t('planner_introduce_healthy', 'Please introduce healthy individuals') }];
         // v6.7.5: COLOR_LABELSから色名取得
         const targetName = this.getColorName(targetKey);
-        return [{ generation: 1, action: `${topPairing.male.name} × ${topPairing.female.name}`, goal: targetName + 'の作出', probability: `${(topPairing.probability * 100).toFixed(1)}%` }];
+        const goalText = _t('planner_produce_goal', 'Produce {target}').replace('{target}', targetName);
+        return [{ generation: 1, action: `${topPairing.male.name} × ${topPairing.female.name}`, goal: goalText, probability: `${(topPairing.probability * 100).toFixed(1)}%` }];
     }
 };
 
@@ -399,38 +402,43 @@ const BreedingPlanner = {
  * 表示時はCOLOR_LABELSから色名を取得
  */
 function runPlanner() {
+    const _t = (k, fb) => (typeof T !== 'undefined' && T[k]) ? T[k] : fb;
     const targetSelect = document.getElementById('plannerTarget'), resultPanel = document.getElementById('plannerResult');
     if (!targetSelect || !resultPanel) return;
     const targetKey = targetSelect.value;
-    if (!targetKey) { alert('目標形質を選択してください'); return; }
+    if (!targetKey) { alert(_t('planner_select_target', 'Please select a target trait')); return; }
     const result = BreedingPlanner.plan(targetKey);
-    
-    if (result.error) { 
+
+    if (result.error) {
         let errorHtml = `<div class="empty-state"><p>⚠️ ${result.error}</p>`;
         if (result.suggestion) errorHtml += `<p>${result.suggestion}</p>`;
         // v6.7.4: フィルタリングによる候補なしの場合の追加メッセージ
         if (result.filteredOut) {
-            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ 近交係数12.5%以上のペアは倫理基準により候補から除外されています</p>`;
+            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ ${_t('planner_filtered_note', 'Pairs with inbreeding coefficient ≥12.5% are excluded per ethics standards')}</p>`;
         }
         errorHtml += '</div>';
-        resultPanel.innerHTML = errorHtml; 
-        resultPanel.style.display = 'block'; 
-        return; 
+        resultPanel.innerHTML = errorHtml;
+        resultPanel.style.display = 'block';
+        return;
     }
     
     // v6.7.5: targetNameはresultから取得（SSOT対応）
     const targetName = result.targetName;
-    
-    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} 作出計画</span></div>`;
-    html += '<h4>🏆 推奨ペアリング TOP5</h4><div class="pairing-list">';
+    const planTitle = _t('planner_plan_title', '{target} Breeding Plan').replace('{target}', targetName);
+    const topPairingsLabel = _t('planner_top_pairings', 'Recommended Pairings TOP5');
+    const probLabel = _t('planner_probability', 'Prob');
+    const fValueLabel = _t('planner_f_value', 'F-value');
+
+    let html = `<div class="output-header"><span class="output-title">🎯 ${planTitle}</span></div>`;
+    html += `<h4>🏆 ${topPairingsLabel}</h4><div class="pairing-list">`;
     result.topPairings.forEach((p, i) => {
         // v6.7.4: 近交係数表示の強化
         const icPercent = (p.inbreedingCoef * 100).toFixed(2);
         const icClass = p.inbreedingCoef >= 0.125 ? 'ic-warning' : (p.inbreedingCoef >= 0.0625 ? 'ic-caution' : 'ic-safe');
-        
+
         html += `<div class="pairing-card ${p.canBreed ? '' : 'pairing-blocked'}">`;
         html += `<div class="pairing-header">#${i+1} ♂${p.male.name} × ♀${p.female.name} ${!p.canBreed ? '🚫' : ''}</div>`;
-        html += `<div class="pairing-stats">確率: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">F値: ${icPercent}%</span></div>`;
+        html += `<div class="pairing-stats">${probLabel}: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">${fValueLabel}: ${icPercent}%</span></div>`;
         html += `<div class="pairing-recommendation">${p.recommendation}</div>`;
         if (p.warnings.length > 0) {
             html += `<div class="pairing-warnings">${p.warnings.join('<br>')}</div>`;
@@ -438,10 +446,12 @@ function runPlanner() {
         html += '</div>';
     });
     html += '</div>';
-    
+
     // v6.7.4: 倫理基準の説明を追加
+    const ethicsLabel = _t('planner_ethics_label', 'Ethics Standard');
+    const ethicsNote = _t('planner_ethics_note', 'Pairs with inbreeding coefficient ≥12.5% are excluded (Thoroughbred rules)');
     html += `<div class="ethics-note" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 0.85em;">`;
-    html += `<p>📋 <strong>倫理基準:</strong> 近交係数12.5%以上のペアは候補から除外されています（サラブレッド規則準拠）</p>`;
+    html += `<p>📋 <strong>${ethicsLabel}:</strong> ${ethicsNote}</p>`;
     html += `</div>`;
     
     resultPanel.innerHTML = html; 
