@@ -432,6 +432,7 @@ if ($action === 'calculate') {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
+const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
 </script>
 </head>
 
@@ -1267,8 +1268,9 @@ $mPh = $_POST['m_ph'] ?? '++';
         </footer>
     </div>
     <script src="guardian.js"></script>
-    <script src="birds.js?v=674"></script>
-    <script src="breeding.js"></script>
+    <script src="genetics-engine.js?v=700"></script>
+    <script src="birds.js?v=700"></script>
+    <script src="breeding.js?v=700"></script>
     <script src="pedigree.js"></script>
     <script src="planner.js?v=674"></script>
 <script>
