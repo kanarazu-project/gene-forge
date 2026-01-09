@@ -221,7 +221,8 @@ const FamilyMap = {
                 </div>
                 <div class="family-map-actions-grid">
                     <button class="fmap-btn fmap-btn-outline" onclick="FamilyMap.clearAll()">🗑️ ${T.clear}</button>
-                    <button class="fmap-btn fmap-btn-primary" onclick="FamilyMap.saveSnapshot()">💾 ${T.save}</button>
+                    <button class="fmap-btn fmap-btn-primary" onclick="FamilyMap.finalizeFamilyMap()">✅ ${isJa ? '決定' : 'Finalize'}</button>
+                    <button class="fmap-btn fmap-btn-outline" onclick="FamilyMap.saveSnapshot()">💾 ${T.save}</button>
                     <button class="fmap-btn fmap-btn-outline" onclick="FamilyMap.showLoadModal()">📂 ${T.load}</button>
                     <button class="fmap-btn fmap-btn-outline" onclick="FamilyMap.exportJSON()">📤 JSON</button>
                 </div>
@@ -633,6 +634,117 @@ const FamilyMap = {
             this.targetPosition = null;
             this.renderUI();
         }
+    },
+
+    /**
+     * v7.0: 家系図決定 - 全体の遺伝整合性をチェックして確定
+     */
+    finalizeFamilyMap() {
+        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        const sire = this.data.sire;
+        const dam = this.data.dam;
+
+        // 両親が揃っているか確認
+        if (!sire || !dam) {
+            alert(isJa ? '❌ 父と母の両方を配置してください' : '❌ Please place both sire and dam');
+            return;
+        }
+
+        // 子がいるか確認
+        const offspring = (this.data.offspring || []).filter(c => c && c.phenotype);
+        if (offspring.length === 0) {
+            alert(isJa ? '❌ 少なくとも1羽の子を配置してください' : '❌ Please place at least one offspring');
+            return;
+        }
+
+        // 親の遺伝情報を取得
+        const getParblue = (bird) => {
+            if (bird.genotype?.parblue) return bird.genotype.parblue;
+            const c = bird.phenotype?.baseColor || 'green';
+            if (['aqua', 'aqua_dark', 'aqua_olive', 'creamino'].includes(c)) return 'aqaq';
+            if (['turquoise', 'turquoise_dark', 'turquoise_olive', 'pure_white'].includes(c)) return 'tqtq';
+            if (['seagreen', 'seagreen_dark', 'seagreen_olive', 'creamino_seagreen'].includes(c)) return 'tqaq';
+            return '++';
+        };
+
+        const getIno = (bird, sex) => {
+            if (bird.genotype?.ino) return bird.genotype.ino;
+            const c = bird.phenotype?.baseColor || 'green';
+            if (['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(c))
+                return sex === 'female' ? 'inoW' : 'inoino';
+            if (c.includes('pallid')) return sex === 'female' ? 'pldW' : 'pldpld';
+            return sex === 'female' ? '+W' : '++';
+        };
+
+        const fParblue = getParblue(sire), mParblue = getParblue(dam);
+        const fIno = getIno(sire, 'male');
+        const possibleParblue = this.getPossibleParblueAlleles(fParblue, mParblue);
+
+        // 全ての子の整合性をチェック
+        const errors = [];
+        offspring.forEach((child, idx) => {
+            const childC = child.phenotype?.baseColor || 'green';
+            const childParblue = child.genotype?.parblue || getParblue(child);
+            const childName = child.name || `${isJa ? '子' : 'Child'}${idx + 1}`;
+
+            // パーブルー系チェック
+            if (childParblue === 'aqaq' && !possibleParblue.includes('aqaq') && !possibleParblue.includes('+aq')) {
+                errors.push(`${childName}: ${isJa ? 'アクア系は生まれません' : 'Aqua cannot be produced'}`);
+            }
+            if (childParblue === 'tqtq' && !possibleParblue.includes('tqtq') && !possibleParblue.includes('+tq')) {
+                errors.push(`${childName}: ${isJa ? 'ターコイズ系は生まれません' : 'Turquoise cannot be produced'}`);
+            }
+            if (childParblue === '++' && !possibleParblue.includes('++') && !possibleParblue.includes('+aq') && !possibleParblue.includes('+tq')) {
+                errors.push(`${childName}: ${isJa ? 'グリーン系は生まれません' : 'Green cannot be produced'}`);
+            }
+
+            // INO系チェック
+            const childIsIno = ['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(childC);
+            if (childIsIno && !fIno.includes('ino')) {
+                errors.push(`${childName}: ${isJa ? 'INO系は父がino持ちでないと生まれません' : 'INO requires father to carry ino gene'}`);
+            }
+        });
+
+        // エラーがあれば拒否
+        if (errors.length > 0) {
+            alert(`❌ ${isJa ? 'この家系図は成立しません' : 'This pedigree is invalid'}:\n\n${errors.join('\n')}`);
+            return;
+        }
+
+        // 整合性OK: 各子のpedigreeを設定
+        const sireId = sire.dbId || sire.id || null;
+        const damId = dam.dbId || dam.id || null;
+
+        this.data.offspring.forEach(child => {
+            if (!child) return;
+            child.pedigree = child.pedigree || {};
+            child.pedigree.sire = sireId;
+            child.pedigree.dam = damId;
+            // 祖父母以降も設定（親のpedigreeから継承）
+            if (sire.pedigree) {
+                child.pedigree.sire_sire = sire.pedigree.sire || null;
+                child.pedigree.sire_dam = sire.pedigree.dam || null;
+                child.pedigree.sire_sire_sire = sire.pedigree.sire_sire || null;
+                child.pedigree.sire_sire_dam = sire.pedigree.sire_dam || null;
+                child.pedigree.sire_dam_sire = sire.pedigree.dam_sire || null;
+                child.pedigree.sire_dam_dam = sire.pedigree.dam_dam || null;
+            }
+            if (dam.pedigree) {
+                child.pedigree.dam_sire = dam.pedigree.sire || null;
+                child.pedigree.dam_dam = dam.pedigree.dam || null;
+                child.pedigree.dam_sire_sire = dam.pedigree.sire_sire || null;
+                child.pedigree.dam_sire_dam = dam.pedigree.sire_dam || null;
+                child.pedigree.dam_dam_sire = dam.pedigree.dam_sire || null;
+                child.pedigree.dam_dam_dam = dam.pedigree.dam_dam || null;
+            }
+        });
+
+        // 成功メッセージ
+        const msg = isJa
+            ? `✅ 家系図が確定しました\n\n${offspring.length}羽の子に血統情報を設定しました`
+            : `✅ Pedigree finalized\n\nPedigree set for ${offspring.length} offspring`;
+        alert(msg);
+        this.renderUI();
     },
 
     getPositionLabel(position) {
