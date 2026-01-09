@@ -1,160 +1,526 @@
-# v7.0 連鎖遺伝メソッド バックアップ
-# genetics.php の AgapornisLoci クラスに追加
+# v7.0 連鎖遺伝メソッド設計書
+# genetics.php への追加・修正内容
+#
+# 出典: Lovebirds Compendium (Dirk Van den Abeele, 2016) p.228-231
 
+================================================================================
 ## 1. LINKAGE_GROUPS 定数 (AgapornisLoci クラス内)
+================================================================================
 
     public const LINKAGE_GROUPS = [
         'Z_chromosome' => [
             'loci' => ['cinnamon', 'ino', 'opaline'],
+            'order' => ['cinnamon', 'ino', 'opaline'],  // 染色体上の物理的順序
             'recombination' => [
-                'cinnamon_ino' => 0.03,
-                'cinnamon_opaline' => 0.33,
-                'ino_opaline' => 0.30,
+                'cinnamon_ino' => 0.03,      // 3%
+                'ino_opaline' => 0.30,       // 30%
+                'cinnamon_opaline' => 0.33,  // 33%
             ],
+            'sex_linked' => true,
         ],
         'autosomal_1' => [
             'loci' => ['dark', 'parblue'],
+            'order' => ['dark', 'parblue'],
             'recombination' => [
-                'dark_parblue' => 0.07,
+                'dark_parblue' => 0.07,  // 7%
+            ],
+            'sex_linked' => false,
+        ],
+    ];
+
+================================================================================
+## 2. ハプロタイプ型定義（PHPDoc）
+================================================================================
+
+    /**
+     * Z染色体ハプロタイプ
+     * @typedef array{cin: string, ino: string, op: string}
+     *
+     * 例:
+     *   ['cin' => 'cin', 'ino' => 'ino', 'op' => '+']  // cin-ino linked
+     *   ['cin' => '+', 'ino' => '+', 'op' => 'op']     // opaline only
+     */
+
+    /**
+     * 常染色体1ハプロタイプ
+     * @typedef array{dark: string, parblue: string}
+     *
+     * 例:
+     *   ['dark' => 'd', 'parblue' => 'aq']  // dark-aqua linked
+     *   ['dark' => 'D', 'parblue' => '+']   // Dark factor only
+     */
+
+================================================================================
+## 3. 配偶子生成クラス (GametesGenerator)
+================================================================================
+
+/**
+ * v7.0: 連鎖を考慮した配偶子生成
+ */
+final class GametesGenerator
+{
+    /**
+     * Z染色体連鎖グループの配偶子生成（オス用）
+     *
+     * @param array $hap1 Z1ハプロタイプ ['cin'=>..., 'ino'=>..., 'op'=>...]
+     * @param array $hap2 Z2ハプロタイプ ['cin'=>..., 'ino'=>..., 'op'=>...]
+     * @return array<array, float> [ハプロタイプ => 確率]
+     */
+    public static function generateZGametesMale(array $hap1, array $hap2): array
+    {
+        $recomb = AgapornisLoci::LINKAGE_GROUPS['Z_chromosome']['recombination'];
+        $r_cin_ino = $recomb['cinnamon_ino'];     // 0.03
+        $r_ino_op = $recomb['ino_opaline'];       // 0.30
+
+        // 親型配偶子（組み換えなし）
+        $parentalProb = (1 - $r_cin_ino) * (1 - $r_ino_op);
+
+        // 単一組み換え（cin-ino間）
+        $recomb1Prob = $r_cin_ino * (1 - $r_ino_op);
+
+        // 単一組み換え（ino-op間）
+        $recomb2Prob = (1 - $r_cin_ino) * $r_ino_op;
+
+        // 2重組み換え（cin-ino間 AND ino-op間）
+        $doubleRecombProb = $r_cin_ino * $r_ino_op;
+
+        $gametes = [];
+
+        // 親型: hap1そのまま, hap2そのまま
+        self::addGamete($gametes, $hap1, $parentalProb / 2);
+        self::addGamete($gametes, $hap2, $parentalProb / 2);
+
+        // 単一組み換え（cin-ino間）: cinが入れ替わる
+        $recomb1_from_hap1 = ['cin' => $hap2['cin'], 'ino' => $hap1['ino'], 'op' => $hap1['op']];
+        $recomb1_from_hap2 = ['cin' => $hap1['cin'], 'ino' => $hap2['ino'], 'op' => $hap2['op']];
+        self::addGamete($gametes, $recomb1_from_hap1, $recomb1Prob / 2);
+        self::addGamete($gametes, $recomb1_from_hap2, $recomb1Prob / 2);
+
+        // 単一組み換え（ino-op間）: opが入れ替わる
+        $recomb2_from_hap1 = ['cin' => $hap1['cin'], 'ino' => $hap1['ino'], 'op' => $hap2['op']];
+        $recomb2_from_hap2 = ['cin' => $hap2['cin'], 'ino' => $hap2['ino'], 'op' => $hap1['op']];
+        self::addGamete($gametes, $recomb2_from_hap1, $recomb2Prob / 2);
+        self::addGamete($gametes, $recomb2_from_hap2, $recomb2Prob / 2);
+
+        // 2重組み換え: cinとopが入れ替わる（inoはそのまま）
+        $double_from_hap1 = ['cin' => $hap2['cin'], 'ino' => $hap1['ino'], 'op' => $hap2['op']];
+        $double_from_hap2 = ['cin' => $hap1['cin'], 'ino' => $hap2['ino'], 'op' => $hap1['op']];
+        self::addGamete($gametes, $double_from_hap1, $doubleRecombProb / 2);
+        self::addGamete($gametes, $double_from_hap2, $doubleRecombProb / 2);
+
+        return $gametes;
+    }
+
+    /**
+     * Z染色体連鎖グループの配偶子生成（メス用）
+     * メスはZ1本のみなので組み換えなし
+     *
+     * @param array $hapZ Zハプロタイプ
+     * @return array<string, float> ['Z' => [haplotype, 0.5], 'W' => 0.5]
+     */
+    public static function generateZGametesFemale(array $hapZ): array
+    {
+        return [
+            self::haplotypeToKey($hapZ) => ['haplotype' => $hapZ, 'prob' => 0.5, 'type' => 'Z'],
+            'W' => ['haplotype' => null, 'prob' => 0.5, 'type' => 'W'],
+        ];
+    }
+
+    /**
+     * 常染色体連鎖グループの配偶子生成
+     *
+     * @param array $hap1 chr1ハプロタイプ ['dark'=>..., 'parblue'=>...]
+     * @param array $hap2 chr2ハプロタイプ
+     * @return array<array, float>
+     */
+    public static function generateAutosomal1Gametes(array $hap1, array $hap2): array
+    {
+        $r = AgapornisLoci::LINKAGE_GROUPS['autosomal_1']['recombination']['dark_parblue'];  // 0.07
+
+        $gametes = [];
+
+        // 親型（93%）
+        self::addGamete($gametes, $hap1, (1 - $r) / 2);
+        self::addGamete($gametes, $hap2, (1 - $r) / 2);
+
+        // 組み換え型（7%）
+        $recomb1 = ['dark' => $hap1['dark'], 'parblue' => $hap2['parblue']];
+        $recomb2 = ['dark' => $hap2['dark'], 'parblue' => $hap1['parblue']];
+        self::addGamete($gametes, $recomb1, $r / 2);
+        self::addGamete($gametes, $recomb2, $r / 2);
+
+        return $gametes;
+    }
+
+    /**
+     * ハプロタイプをキー文字列に変換
+     */
+    private static function haplotypeToKey(array $hap): string
+    {
+        return implode('-', $hap);
+    }
+
+    /**
+     * 配偶子を追加（同じハプロタイプは確率を合算）
+     */
+    private static function addGamete(array &$gametes, array $hap, float $prob): void
+    {
+        $key = self::haplotypeToKey($hap);
+        if (!isset($gametes[$key])) {
+            $gametes[$key] = ['haplotype' => $hap, 'prob' => 0];
+        }
+        $gametes[$key]['prob'] += $prob;
+    }
+}
+
+================================================================================
+## 4. calculateOffspring() の改修
+================================================================================
+
+/**
+ * v7.0: 連鎖を考慮した子孫計算
+ *
+ * 変更点:
+ * 1. 入力データ形式の変更（ハプロタイプベース）
+ * 2. 連鎖グループ単位での配偶子生成
+ * 3. 独立座位と連鎖座位の分離処理
+ */
+public function calculateOffspring(array $input): array
+{
+    // === 独立座位（従来通り） ===
+    $independentLoci = [
+        'violet', 'fallow_pale', 'fallow_bronze',
+        'pied_dom', 'pied_rec', 'dilute', 'edged',
+        'orangeface', 'pale_headed'
+    ];
+
+    $independentResults = [];
+    foreach ($independentLoci as $locus) {
+        $independentResults[$locus] = $this->calcAutosomal(
+            $input['f_' . $locus] ?? '++',
+            $input['m_' . $locus] ?? '++',
+            $this->labels[$locus]
+        );
+    }
+
+    // === Z染色体連鎖グループ ===
+    // 父親（オス）の配偶子
+    $sireZGametes = GametesGenerator::generateZGametesMale(
+        $input['f_Z_linked']['Z1'],
+        $input['f_Z_linked']['Z2']
+    );
+
+    // 母親（メス）の配偶子
+    $damZGametes = GametesGenerator::generateZGametesFemale(
+        $input['m_Z_linked']['Z']
+    );
+
+    // === 常染色体連鎖グループ ===
+    $sireAutoGametes = GametesGenerator::generateAutosomal1Gametes(
+        $input['f_autosomal_1']['chr1'],
+        $input['f_autosomal_1']['chr2']
+    );
+    $damAutoGametes = GametesGenerator::generateAutosomal1Gametes(
+        $input['m_autosomal_1']['chr1'],
+        $input['m_autosomal_1']['chr2']
+    );
+
+    // === 子孫の列挙 ===
+    $results = [];
+
+    // 性別ごとに処理
+    foreach (['male', 'female'] as $offspringSex) {
+        // ... 配偶子の組み合わせを列挙 ...
+        // ... 独立座位の組み合わせとマージ ...
+        // ... 表現型を解決 ...
+    }
+
+    return $results;
+}
+
+================================================================================
+## 5. 相（Phase）判定ヘルパー
+================================================================================
+
+/**
+ * 2つのハプロタイプ間の相を判定
+ *
+ * @param array $hap1 ハプロタイプ1
+ * @param array $hap2 ハプロタイプ2
+ * @param string $locus1 座位1
+ * @param string $locus2 座位2
+ * @return string 'cis' | 'trans' | 'homozygous' | 'wild'
+ */
+public static function determinePhase(array $hap1, array $hap2, string $locus1, string $locus2): string
+{
+    $mut1_in_hap1 = $hap1[$locus1] !== '+' && $hap1[$locus1] !== 'd' && $hap1[$locus1] !== 'v';
+    $mut2_in_hap1 = $hap1[$locus2] !== '+' && $hap1[$locus2] !== 'd' && $hap1[$locus2] !== 'v';
+    $mut1_in_hap2 = $hap2[$locus1] !== '+' && $hap2[$locus1] !== 'd' && $hap2[$locus1] !== 'v';
+    $mut2_in_hap2 = $hap2[$locus2] !== '+' && $hap2[$locus2] !== 'd' && $hap2[$locus2] !== 'v';
+
+    // 両方ホモ接合
+    if ($mut1_in_hap1 && $mut1_in_hap2 && $mut2_in_hap1 && $mut2_in_hap2) {
+        return 'homozygous';
+    }
+
+    // 両方野生型
+    if (!$mut1_in_hap1 && !$mut1_in_hap2 && !$mut2_in_hap1 && !$mut2_in_hap2) {
+        return 'wild';
+    }
+
+    // 片方だけ変異（相の概念なし）
+    $hasMut1 = $mut1_in_hap1 || $mut1_in_hap2;
+    $hasMut2 = $mut2_in_hap1 || $mut2_in_hap2;
+    if (!$hasMut1 || !$hasMut2) {
+        return 'n/a';  // 単一変異なので相の概念がない
+    }
+
+    // Cis: 両方の変異が同じハプロタイプ
+    if (($mut1_in_hap1 && $mut2_in_hap1) || ($mut1_in_hap2 && $mut2_in_hap2)) {
+        return 'cis';
+    }
+
+    // Trans: 変異が異なるハプロタイプ
+    return 'trans';
+}
+
+================================================================================
+## 6. FamilyEstimatorV3 への相推論ロジック追加
+================================================================================
+
+/**
+ * v7.0: 家系情報からの相推論
+ *
+ * @param array $familyTree 家系図データ
+ * @param string $targetId 推論対象の個体ID
+ * @return array 推論された相情報
+ */
+public function inferPhase(array $familyTree, string $targetId): array
+{
+    $target = $familyTree[$targetId] ?? null;
+    if (!$target) {
+        return ['status' => 'error', 'message' => 'Target not found'];
+    }
+
+    $result = [
+        'Z_linked' => ['phase' => 'unknown', 'confidence' => 0, 'evidence' => []],
+        'autosomal_1' => ['phase' => 'unknown', 'confidence' => 0, 'evidence' => []],
+    ];
+
+    // === 表現型からの直接判定 ===
+    // 例: cin発現 + ino発現 → 少なくとも1本はCis
+    if ($target['sex'] === 'male') {
+        $phenotype = $target['phenotype'] ?? [];
+        if ($this->expressesMultipleMutations($phenotype, ['cinnamon', 'ino'])) {
+            $result['Z_linked'] = [
+                'phase' => 'cis',
+                'confidence' => 100,
+                'evidence' => ['Lacewing phenotype: cin-ino must be on same chromosome'],
+            ];
+        }
+    }
+
+    // === 子孫からの逆推論 ===
+    $offspring = $this->getOffspring($familyTree, $targetId);
+    foreach ($offspring as $child) {
+        // 子の表現型から親の相を推論
+        // ...
+    }
+
+    // === 親からの順推論 ===
+    $sireId = $target['sire_id'] ?? null;
+    $damId = $target['dam_id'] ?? null;
+    if ($sireId && $damId) {
+        // 親の相から子の相を推論
+        // ...
+    }
+
+    return $result;
+}
+
+================================================================================
+## 7. index.php への追加（JSへの受け渡し）
+================================================================================
+
+<!-- v7.0: 連鎖遺伝データをJSに渡す -->
+<script>
+    const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
+
+    // 連鎖グループのUI表示用ラベル
+    const LINKAGE_LABELS = {
+        'Z_chromosome': {
+            'ja': 'Z染色体連鎖（cinnamon-ino-opaline）',
+            'en': 'Z Chromosome Linkage (cinnamon-ino-opaline)'
+        },
+        'autosomal_1': {
+            'ja': '常染色体連鎖（dark-parblue）',
+            'en': 'Autosomal Linkage (dark-parblue)'
+        }
+    };
+</script>
+
+================================================================================
+## 8. birds.js データ構造の変更
+================================================================================
+
+// v6.8 形式（廃止）
+const oldFormat = {
+    genotype: {
+        parblue: 'aqaq',
+        dark: 'dd',
+        ino: '+ino',
+        cinnamon: '+cin',
+        opaline: '++',
+        // ... その他
+    }
+};
+
+// v7.0 形式（新）
+const newFormat = {
+    genotype: {
+        // 独立座位（従来形式を維持）
+        violet: 'vv',
+        fallow_pale: '++',
+        fallow_bronze: '++',
+        pied_dom: '++',
+        pied_rec: '++',
+        dilute: '++',
+        edged: '++',
+        orangeface: '++',
+        pale_headed: '++',
+
+        // Z染色体連鎖グループ（新形式）
+        Z_linked: {
+            Z1: { cin: 'cin', ino: 'ino', op: '+' },  // Cis: cin-ino linked
+            Z2: { cin: '+',   ino: '+',   op: '+' }
+        },
+
+        // 常染色体連鎖グループ（新形式）
+        autosomal_1: {
+            chr1: { dark: 'd', parblue: 'aq' },
+            chr2: { dark: 'd', parblue: '+' }
+        }
+    }
+};
+
+// メス（ZW）の場合
+const femaleFormat = {
+    genotype: {
+        // ... 独立座位 ...
+
+        Z_linked: {
+            Z: { cin: 'cin', ino: '+', op: 'op' },
+            W: null
+        },
+
+        // ... 常染色体連鎖 ...
+    }
+};
+
+================================================================================
+## 9. 相が不明な場合の計算ロジック
+================================================================================
+
+/**
+ * 相が不明な場合、Cis/Trans両方の可能性を考慮して計算
+ *
+ * @param array $knownAlleles 既知のアレル情報（座位ごと）
+ * @return array 可能なハプロタイプの組み合わせと確率
+ */
+public static function generatePossibleHaplotypes(array $knownAlleles): array
+{
+    // 例: ino と cin のダブルスプリットだが相が不明
+    // knownAlleles = ['ino' => '+ino', 'cin' => '+cin', 'op' => '++']
+
+    // 可能性1: Cis (cin-ino が同じ染色体)
+    $cisPossibility = [
+        'Z1' => ['cin' => 'cin', 'ino' => 'ino', 'op' => '+'],
+        'Z2' => ['cin' => '+', 'ino' => '+', 'op' => '+'],
+        'prob' => 0.5,  // 事前確率（均等）
+    ];
+
+    // 可能性2: Trans (cin と ino が別の染色体)
+    $transPossibility = [
+        'Z1' => ['cin' => 'cin', 'ino' => '+', 'op' => '+'],
+        'Z2' => ['cin' => '+', 'ino' => 'ino', 'op' => '+'],
+        'prob' => 0.5,
+    ];
+
+    return [$cisPossibility, $transPossibility];
+}
+
+/**
+ * 相不明時の子孫計算（両方の可能性を重み付け合算）
+ */
+public function calculateOffspringWithUnknownPhase(array $input): array
+{
+    $possibilities = self::generatePossibleHaplotypes($input['f_alleles']);
+
+    $allResults = [];
+    foreach ($possibilities as $poss) {
+        $input['f_Z_linked'] = ['Z1' => $poss['Z1'], 'Z2' => $poss['Z2']];
+        $results = $this->calculateOffspring($input);
+
+        // 確率を重み付け
+        foreach ($results as &$r) {
+            $r['prob'] *= $poss['prob'];
+        }
+        $allResults = array_merge($allResults, $results);
+    }
+
+    // 同じ表現型/遺伝型を合算
+    return $this->aggregateResults($allResults);
+}
+
+================================================================================
+## 10. テスト用ヘルパー
+================================================================================
+
+/**
+ * テストケース: Cis配置 cin-ino/++ ♂ × 野生型 ♀
+ * 期待結果: p.230-231 の文献値に準拠
+ */
+public static function testCase_CisCinIno(): array
+{
+    $sire = [
+        'sex' => 'male',
+        'genotype' => [
+            'Z_linked' => [
+                'Z1' => ['cin' => 'cin', 'ino' => 'ino', 'op' => '+'],
+                'Z2' => ['cin' => '+', 'ino' => '+', 'op' => '+'],
+            ],
+            'autosomal_1' => [
+                'chr1' => ['dark' => 'd', 'parblue' => '+'],
+                'chr2' => ['dark' => 'd', 'parblue' => '+'],
             ],
         ],
     ];
 
-## 2. FamilyEstimatorV3 に追加するメソッド群
+    $dam = [
+        'sex' => 'female',
+        'genotype' => [
+            'Z_linked' => [
+                'Z' => ['cin' => '+', 'ino' => '+', 'op' => '+'],
+                'W' => null,
+            ],
+            'autosomal_1' => [
+                'chr1' => ['dark' => 'd', 'parblue' => '+'],
+                'chr2' => ['dark' => 'd', 'parblue' => '+'],
+            ],
+        ],
+    ];
 
-    /**
-     * v7.0: 連鎖遺伝補正
-     * LINKAGE_GROUPSに基づいて確率を補正
-     */
-    private function applyLinkageCorrection(array $results, array &$notes): array
-    {
-        $linkageGroups = AgapornisLoci::LINKAGE_GROUPS;
+    // 期待される結果（3%組み換え）
+    $expected = [
+        ['phenotype' => 'green', 'sex' => 'male', 'split' => 'cin-ino', 'prob' => 24.25],
+        ['phenotype' => 'green', 'sex' => 'male', 'split' => null, 'prob' => 24.25],
+        ['phenotype' => 'green', 'sex' => 'male', 'split' => 'cin', 'prob' => 0.75],
+        ['phenotype' => 'green', 'sex' => 'male', 'split' => 'ino', 'prob' => 0.75],
+        ['phenotype' => 'cinnamon_lutino', 'sex' => 'female', 'split' => null, 'prob' => 24.25],
+        ['phenotype' => 'green', 'sex' => 'female', 'split' => null, 'prob' => 24.25],
+        ['phenotype' => 'cinnamon', 'sex' => 'female', 'split' => null, 'prob' => 0.75],
+        ['phenotype' => 'lutino', 'sex' => 'female', 'split' => null, 'prob' => 0.75],
+    ];
 
-        foreach ($linkageGroups as $groupName => $groupData) {
-            $loci = $groupData['loci'];
-            $recombRates = $groupData['recombination'];
-
-            // このグループの座位の推論結果を収集
-            $groupResults = [];
-            foreach ($results as $idx => $result) {
-                if (in_array($result['locusKey'], $loci)) {
-                    $groupResults[$result['locusKey']] = [
-                        'index' => $idx,
-                        'result' => $result,
-                        'hasMutant' => $this->hasMutantAllele($result),
-                    ];
-                }
-            }
-
-            if (count($groupResults) < 2) continue;
-
-            // 連鎖補正を適用
-            $results = $this->adjustLinkedProbabilities(
-                $results, $groupResults, $recombRates, $groupName, $notes
-            );
-        }
-
-        return $results;
-    }
-
-    /**
-     * 変異アレルを持つかどうか判定
-     */
-    private function hasMutantAllele(array $result): bool
-    {
-        $topGeno = $result['topGenotype'] ?? '';
-        // 野生型(++, +W)以外は変異あり
-        return $topGeno !== '++' && $topGeno !== '+W' && $topGeno !== 'dd' && $topGeno !== 'vv';
-    }
-
-    /**
-     * 連鎖座位の確率調整
-     */
-    private function adjustLinkedProbabilities(
-        array $results,
-        array $groupResults,
-        array $recombRates,
-        string $groupName,
-        array &$notes
-    ): array {
-        $mutantLoci = [];
-        $wildLoci = [];
-
-        foreach ($groupResults as $locusKey => $data) {
-            if ($data['hasMutant']) {
-                $mutantLoci[] = $locusKey;
-            } else {
-                $wildLoci[] = $locusKey;
-            }
-        }
-
-        // 複数の変異座位がある場合 → 連鎖ハプロタイプの可能性
-        if (count($mutantLoci) >= 2) {
-            // 連鎖しているペアを特定
-            foreach ($mutantLoci as $i => $locus1) {
-                for ($j = $i + 1; $j < count($mutantLoci); $j++) {
-                    $locus2 = $mutantLoci[$j];
-                    $key1 = $locus1 . '_' . $locus2;
-                    $key2 = $locus2 . '_' . $locus1;
-
-                    $recombRate = $recombRates[$key1] ?? $recombRates[$key2] ?? null;
-                    if ($recombRate !== null) {
-                        $linkageProb = 1.0 - $recombRate;
-                        $notes[] = sprintf(
-                            '連鎖遺伝: %s-%s (%.0f%%の確率で同一染色体由来)',
-                            $locus1, $locus2, $linkageProb * 100
-                        );
-
-                        // ハプロタイプ推定情報を追加
-                        if ($linkageProb >= 0.9) {
-                            $notes[] = sprintf(
-                                '推定ハプロタイプ: %s-%s (組換え率%.1f%%)',
-                                $locus1, $locus2, $recombRate * 100
-                            );
-                        }
-                    }
-                }
-            }
-        }
-
-        // 1つだけ変異がある場合 → 組換え or 独立起源の注記
-        if (count($mutantLoci) === 1 && count($wildLoci) >= 1) {
-            $mutantLocus = $mutantLoci[0];
-            foreach ($wildLoci as $wildLocus) {
-                $key1 = $mutantLocus . '_' . $wildLocus;
-                $key2 = $wildLocus . '_' . $mutantLocus;
-                $recombRate = $recombRates[$key1] ?? $recombRates[$key2] ?? null;
-
-                if ($recombRate !== null && $recombRate < 0.1) {
-                    // 組換え率が低い(cin-ino: 3%)場合は注記
-                    $notes[] = sprintf(
-                        '注意: %sと%sは連鎖(組換え率%.1f%%)。親が両方持っていた場合、組換えで分離した可能性あり',
-                        $mutantLocus, $wildLocus, $recombRate * 100
-                    );
-                }
-            }
-        }
-
-        return $results;
-    }
-
-## 3. estimate() メソッド内の呼び出し追加箇所
-
-        // v7.0: 連鎖遺伝補正を適用
-        $results = $this->applyLinkageCorrection($results, $notes);
-
-        // テスト交配提案を生成 (この行の直前に追加)
-
-## 4. 戻り値に追加するフラグ
-
-            'linkageAware' => true,  // v7.0フラグ
-
-## 5. index.php に追加 (JSへ渡す)
-
-const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
-
-## 6. window.T 修正 (index.php)
-
-    window.T = <?= json_encode(getLangDict()) ?>;
-    window.T_GUARDIAN = <?= json_encode(getGuardianLangDict()) ?>;
-
+    return ['sire' => $sire, 'dam' => $dam, 'expected' => $expected];
+}
