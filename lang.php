@@ -30,6 +30,15 @@ $translations['fr'] = array_merge($translations['fr'], $pf_fr);
 $translations['it'] = array_merge($translations['it'], $pf_it);
 $translations['es'] = array_merge($translations['es'], $pf_es);
 
+// HealthGuardian翻訳をマージ
+require_once 'lang_guardian.php';
+$translations['ja'] = array_merge($translations['ja'], $guardian_translations['ja']);
+$translations['en'] = array_merge($translations['en'], $guardian_translations['en']);
+$translations['de'] = array_merge($translations['de'], $guardian_translations['de']);
+$translations['fr'] = array_merge($translations['fr'], $guardian_translations['fr']);
+$translations['it'] = array_merge($translations['it'], $guardian_translations['it']);
+$translations['es'] = array_merge($translations['es'], $guardian_translations['es']);
+
 function getLang(): string {
     global $translations;
     $lang = $_GET['lang'] ?? $_COOKIE['lang'] ?? 'ja';

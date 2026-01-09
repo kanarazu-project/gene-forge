@@ -1314,7 +1314,7 @@ $mPh = $_POST['m_ph'] ?? '++';
         $borderLeft = '3px solid #4ecdc4';
         $textColor = '#4ecdc4';
         $valueColor = '#e0e0e0';
-        $confidenceLabel = '✓ 確定';
+        $confidenceLabel = t('status_confirmed');
     } elseif (!$isKnown) {
         // 0%は完全に不明 - 表示しない（スキップ）
         continue;
@@ -1323,7 +1323,7 @@ $mPh = $_POST['m_ph'] ?? '++';
         $borderLeft = '3px solid #555';
         $textColor = '#4ecdc4';
         $valueColor = '#e0e0e0';
-        $confidenceLabel = '? 推定';
+        $confidenceLabel = t('status_estimated');
     }
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
@@ -1407,10 +1407,10 @@ function refreshBirdList() {
     if (statsEl) {
         statsEl.innerHTML = 
             '<div style="display:flex;gap:1rem;flex-wrap:wrap;">' +
-            '<div class="stat-card"><span class="stat-num">' + stats.totalBirds + '</span><span class="stat-label">' + (T.total_birds || '総個体数') + '</span></div>' +
+            '<div class="stat-card"><span class="stat-num">' + stats.totalBirds + '</span><span class="stat-label">' + (T.total_birds || 'Total') + '</span></div>' +
             '<div class="stat-card"><span class="stat-num">' + stats.males + '</span><span class="stat-label">♂</span></div>' +
             '<div class="stat-card"><span class="stat-num">' + stats.females + '</span><span class="stat-label">♀</span></div>' +
-            '<div class="stat-card"><span class="stat-num">' + filtered.length + '</span><span class="stat-label">' + (T.filtered || '表示中') + '</span></div>' +
+            '<div class="stat-card"><span class="stat-num">' + filtered.length + '</span><span class="stat-label">' + (T.filtered || 'Showing') + '</span></div>' +
             '</div>';
     }
     
@@ -1418,7 +1418,7 @@ function refreshBirdList() {
     if (!listEl) return;
     
     if (filtered.length === 0) {
-        listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🐣</div><p>' + (T.no_birds || '個体が登録されていません') + '</p></div>';
+        listEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🐣</div><p>' + (T.no_birds || 'No birds registered') + '</p></div>';
         return;
     }
     
@@ -1447,9 +1447,9 @@ function filterBirds() { refreshBirdList(); }
 function editBird(id) {
     if (typeof BirdDB === 'undefined') return;
     var bird = BirdDB.getBird(id);
-    if (!bird) { alert(T.bird_not_found || '個体が見つかりません'); return; }
+    if (!bird) { alert(T.bird_not_found || 'Bird not found'); return; }
     
-    document.getElementById('birdModalTitle').textContent = T.edit || '編集';
+    document.getElementById('birdModalTitle').textContent = T.edit || 'Edit';
     document.getElementById('birdName').value = bird.name || '';
     document.getElementById('birdCode').value = bird.code || '';
     document.getElementById('birdSex').value = bird.sex || 'male';
@@ -1478,7 +1478,7 @@ function deleteBird(id) {
     var bird = BirdDB.getBird(id);
     if (!bird) return;
     
-    customConfirm((T.confirm_delete || '削除しますか？') + '\n' + (bird.name || id)).then(function(confirmed) {
+    customConfirm((T.confirm_delete || 'Delete?') + '\n' + (bird.name || id)).then(function(confirmed) {
         if (!confirmed) return;
         BirdDB.deleteBird(id);
         refreshBirdList();
@@ -1500,7 +1500,7 @@ function closePedigreeModal() {
     document.getElementById('pedigreeModal').classList.remove('active');
 }
 function openBirdForm() {
-    document.getElementById('birdModalTitle').textContent = T.add_bird || '個体を追加';
+    document.getElementById('birdModalTitle').textContent = T.add_bird || 'Add Bird';
     document.getElementById('birdForm').reset();
     document.getElementById('birdForm').dataset.editId = '';
     document.getElementById('birdModal').classList.add('active');
@@ -1590,12 +1590,12 @@ function checkPairingHealth() {
     const T = window.T || {};
     
     if (!sireId || !damId) {
-        resultEl.innerHTML = '<div class="warning-box">' + (T.select_both_parents || '父と母を選択してください') + '</div>';
+        resultEl.innerHTML = '<div class="warning-box">' + (T.select_both_parents || 'Please select both sire and dam') + '</div>';
         return;
     }
     
     if (typeof BirdDB === 'undefined') {
-        resultEl.innerHTML = '<div class="warning-box">' + (T.bird_not_found || 'BirdDBが読み込まれていません') + '</div>';
+        resultEl.innerHTML = '<div class="warning-box">' + (T.health_guardian_missing || 'BirdDB not loaded') + '</div>';
         return;
     }
     
@@ -1603,7 +1603,7 @@ function checkPairingHealth() {
     const dam = BirdDB.getBird(damId);
     
     if (!sire || !dam) {
-        resultEl.innerHTML = '<div class="warning-box">' + (T.bird_not_found || '個体が見つかりません') + '</div>';
+        resultEl.innerHTML = '<div class="warning-box">' + (T.bird_not_found || 'Bird not found') + '</div>';
         return;
     }
     
@@ -1621,68 +1621,69 @@ function checkPairingHealth() {
         let riskColor = '#10b981';
         let riskBg = 'rgba(16,185,129,0.1)';
         let riskIcon = '✓';
-        let riskLabel = T.risk_safe || '安全';
-        let summary = T.low_health_risk || '健康リスクは低いです';
-        
+        let riskLabel = T.risk_safe || 'Safe';
+        let summary = T.low_health_risk || 'Health risk is low';
+
         if (ic >= 0.25) {
             riskLevel = 'critical';
             riskColor = '#ef4444';
             riskBg = 'rgba(239,68,68,0.1)';
             riskIcon = '🚫';
-            riskLabel = T.risk_critical || '危険';
-            summary = T.inbreeding_danger || '近交係数が25%以上です';
+            riskLabel = T.risk_critical || 'Critical';
+            summary = T.inbreeding_danger || 'Inbreeding coefficient is 25% or higher';
         } else if (ic >= 0.125) {
             riskLevel = 'warning';
             riskColor = '#f59e0b';
             riskBg = 'rgba(245,158,11,0.1)';
             riskIcon = '⚠️';
-            riskLabel = T.risk_high || '高リスク';
-            summary = T.inbreeding_warning || '近交係数が12.5%以上です';
+            riskLabel = T.risk_high || 'High Risk';
+            summary = T.inbreeding_warning || 'Inbreeding coefficient is 12.5% or higher';
         }
-        
+
         let html = '<div class="health-result" style="margin-top:1rem;padding:1rem;background:' + riskBg + ';border-radius:8px;border-left:4px solid ' + riskColor + ';">';
         html += '<div style="font-size:1.2rem;font-weight:bold;color:' + riskColor + ';">' + riskIcon + ' ' + riskLabel + '</div>';
         html += '<div style="margin-top:0.5rem;color:#e0e0e0;">' + summary + '</div>';
-        html += '<div style="margin-top:0.5rem;font-size:0.9rem;color:#aaa;">' + (T.inbreeding_coefficient || '近交係数') + ': F = ' + (ic * 100).toFixed(2) + '%</div>';
+        html += '<div style="margin-top:0.5rem;font-size:0.9rem;color:#aaa;">' + (T.inbreeding_coefficient || 'Inbreeding Coefficient') + ': F = ' + (ic * 100).toFixed(2) + '%</div>';
         html += '</div>';
         resultEl.innerHTML = html;
         return;
     }
-    
+
     // HealthGuardian評価（正常パス）
     const evaluation = HealthGuardian.evaluateHealth(sire, dam, ic);
-    
+    const riskLabel = HealthGuardian.getRiskLabel(evaluation.riskLevel);
+
     let html = '<div class="health-result" style="margin-top:1rem;padding:1rem;background:' + evaluation.riskStyle.bg + ';border-radius:8px;border-left:4px solid ' + evaluation.riskStyle.color + ';">';
-    html += '<div style="font-size:1.2rem;font-weight:bold;color:' + evaluation.riskStyle.color + ';">' + evaluation.riskStyle.icon + ' ' + evaluation.riskStyle.label + '</div>';
+    html += '<div style="font-size:1.2rem;font-weight:bold;color:' + evaluation.riskStyle.color + ';">' + evaluation.riskStyle.icon + ' ' + riskLabel + '</div>';
     html += '<div style="margin-top:0.5rem;color:#e0e0e0;">' + evaluation.summary + '</div>';
-    html += '<div style="margin-top:0.5rem;font-size:0.9rem;color:#aaa;">' + (T.inbreeding_coefficient || '近交係数') + ': F = ' + (ic * 100).toFixed(2) + '%</div>';
-    
+    html += '<div style="margin-top:0.5rem;font-size:0.9rem;color:#aaa;">' + (T.inbreeding_coefficient || 'Inbreeding Coefficient') + ': F = ' + (ic * 100).toFixed(2) + '%</div>';
+
     if (evaluation.blocks && evaluation.blocks.length > 0) {
-        html += '<div style="margin-top:1rem;"><strong style="color:#ef4444;">🚫 ' + (T.risk_critical || '繁殖禁止') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
+        html += '<div style="margin-top:1rem;"><strong style="color:#ef4444;">🚫 ' + (T.breeding_prohibited || 'Breeding Prohibited') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
         evaluation.blocks.forEach(function(b) {
             html += '<li style="color:#fca5a5;margin:0.25rem 0;">' + b.message + '<br><span style="font-size:0.85rem;color:#888;">' + b.detail + '</span></li>';
         });
         html += '</ul></div>';
     }
-    
+
     if (evaluation.warnings && evaluation.warnings.length > 0) {
-        html += '<div style="margin-top:1rem;"><strong style="color:#f59e0b;">⚠️ ' + (T.risk_high || '警告') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
+        html += '<div style="margin-top:1rem;"><strong style="color:#f59e0b;">⚠️ ' + (T.risk_high || 'High Risk') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
         evaluation.warnings.forEach(function(w) {
             html += '<li style="color:#fcd34d;margin:0.25rem 0;">' + w.message + '<br><span style="font-size:0.85rem;color:#888;">' + w.detail + '</span></li>';
         });
         html += '</ul></div>';
     }
-    
+
     if (evaluation.risks && evaluation.risks.length > 0) {
-        html += '<div style="margin-top:1rem;"><strong style="color:#eab308;">⚡ ' + (T.risk_moderate || '注意') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
+        html += '<div style="margin-top:1rem;"><strong style="color:#eab308;">⚡ ' + (T.risk_moderate || 'Caution') + ':</strong><ul style="margin:0.5rem 0;padding-left:1.5rem;">';
         evaluation.risks.forEach(function(r) {
             html += '<li style="color:#fef08a;margin:0.25rem 0;">' + r.message + '<br><span style="font-size:0.85rem;color:#888;">' + r.detail + '</span></li>';
         });
         html += '</ul></div>';
     }
-    
+
     if ((!evaluation.blocks || evaluation.blocks.length === 0) && (!evaluation.warnings || evaluation.warnings.length === 0) && (!evaluation.risks || evaluation.risks.length === 0)) {
-        html += '<div style="margin-top:0.5rem;color:#10b981;">✓ ' + (T.low_health_risk || '健康上の問題は検出されませんでした') + '</div>';
+        html += '<div style="margin-top:0.5rem;color:#10b981;">✓ ' + (T.low_health_risk || 'No health issues detected') + '</div>';
     }
     
     html += '</div>';
