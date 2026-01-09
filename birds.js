@@ -1,12 +1,20 @@
 /**
  * Agapornis Gene-Forge v7.0.0
  * 個体データベース管理（localStorage）
- * 
+ *
+ * v7.0.0 変更点:
+ * - SSOT化: genetics.php COLOR_DEFINITIONS を参照
+ * - デモデータ再設計: Constellation一族（24羽）
+ *   - 8始祖（Sirius, Vega, Altair, Deneb, Rigel, Capella, Pollux, Spica）
+ *   - 4祖父母（Nova, Luna, Atlas, Lyra）
+ *   - 2父母（Orion, Aurora）
+ *   - 10子（Phoenix, Celeste, Cosmo, Stella, Leo, Diana, Marcus, Helena, Castor, Selene）
+ * - F3世代で最大限の羽色多様性を実現
+ *
  * v6.7.5 変更点:
  * - デモデータに血統情報（pedigree）をプリセット
- * - 44羽の家系図構築（曽祖父母8 + 祖父母4 + 父母2 + 子30）
  * - FamilyMap デモモード連携
- * 
+ *
  * v6.7.4 変更点:
  * - pedigree フィールド追加（14枠の祖先ID）
  * - BreedingValidator連携用メソッド追加
@@ -23,67 +31,159 @@ const BirdDB = {
     _initialized: false,
 
     // ========================================
-    // デモ家系図プリセット定義
+    // デモ始祖8羽定義（v7.0: 一族の祖）
+    // F3世代で最大限の羽色多様性を実現する遺伝子構成
     // ========================================
-    DEMO_PEDIGREE_CONFIG: {
-        // 曽祖父母8羽（pedigree: 全てnull）
-        greatGrandparents: {
-            sire_sire_sire: { id: 'demo_41', name: 'Jack', color: 'lutino' },           // ルチノー♂
-            sire_sire_dam:  { id: 'demo_47', name: 'Chloe', color: 'creamino' },        // クリーミノ♀
-            sire_dam_sire:  { id: 'demo_65', name: 'Paul', color: 'pallid_turquoise' }, // パリッドターコイズ♂
-            sire_dam_dam:   { id: 'demo_51', name: 'Victoria', color: 'pure_white' },  // ピュアホワイト♀
-            dam_sire_sire:  { id: 'demo_85', name: 'Sean', color: 'cinnamon_seagreen' }, // シナモンシーグリーン♂
-            dam_sire_dam:   { id: 'demo_95', name: 'Riley', color: 'opaline_aqua' },    // オパーリンアクア♀
-            dam_dam_sire:   { id: 'demo_125', name: 'Troy', color: 'pied_rec_seagreen' },   // パイドシーグリーン♂
-            dam_dam_dam:    { id: 'demo_111', name: 'Hazel', color: 'fallow_pale_aqua' },    // フォローアクア♀
+    DEMO_FOUNDERS: [
+        // =======================================
+        // Pair A: Green系 × Aqua系 (aqua/ino/opaline キャリア)
+        // =======================================
+        {
+            id: 'founder_1',
+            name: 'Sirius',
+            sex: 'male',
+            color: 'green',
+            genotype: {
+                parblue: '+aq',      // split aqua
+                ino: '+ino',         // split ino
+                opaline: '+op',      // split opaline
+                cinnamon: '++',
+                dark: 'dd',
+                violet: 'vv',
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♂ - Green /aqua /ino /opaline（多重スプリット）'
         },
-        // 祖父母4羽（pedigree: 親2羽のみ）
-        grandparents: {
-            sire_sire: { id: 'demo_45', name: 'Adam', color: 'creamino' },              // クリーミノ♂（Jack×Chloe）
-            sire_dam:  { id: 'demo_52', name: 'Aurora', color: 'pure_white' },          // ピュアホワイト♀（Paul×Victoria）
-            dam_sire:  { id: 'demo_101', name: 'Zack', color: 'opaline_seagreen' },     // オパーリンシーグリーン♂（Sean×Riley）
-            dam_dam:   { id: 'demo_119', name: 'Eleanor', color: 'pied_rec_aqua' },         // パイドアクア♀（Troy×Hazel）
+        {
+            id: 'founder_2',
+            name: 'Vega',
+            sex: 'female',
+            color: 'aqua',
+            genotype: {
+                parblue: 'aqaq',
+                ino: '+W',
+                opaline: '+W',
+                cinnamon: '+W',
+                dark: 'dd',
+                violet: 'vv',
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♀ - Aqua（アクア系基盤）'
         },
-        // 父母2羽（pedigree: 親2 + 祖父母4）
-        parents: {
-            sire: { id: 'demo_53', name: 'Eric', color: 'creamino_seagreen' },          // クリーミノシーグリーン♂（Adam×Aurora）
-            dam:  { id: 'demo_99', name: 'Zoey', color: 'opaline_turquoise' },          // オパーリンターコイズ♀（Zack×Eleanor）
+        // =======================================
+        // Pair B: Dark × Turquoise/Cinnamon キャリア
+        // =======================================
+        {
+            id: 'founder_3',
+            name: 'Altair',
+            sex: 'male',
+            color: 'darkgreen',
+            genotype: {
+                parblue: '+tq',      // split turquoise
+                ino: '++',
+                opaline: '++',
+                cinnamon: '+cin',    // split cinnamon
+                dark: 'Dd',          // dark factor
+                violet: 'vv',
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♂ - Dark Green /turquoise /cinnamon（ダーク+スプリット）'
         },
-        // 子30羽（pedigree: 全14枠）
-        offspring: [
-            // 多様な色を選択（Eric×Zoeyの子として設定）
-            { id: 'demo_33', name: 'Finn', color: 'seagreen' },
-            { id: 'demo_34', name: 'Noah', color: 'seagreen' },
-            { id: 'demo_37', name: 'Isabella', color: 'seagreen' },
-            { id: 'demo_38', name: 'Mia', color: 'seagreen' },
-            { id: 'demo_25', name: 'Tom', color: 'turquoise' },
-            { id: 'demo_26', name: 'Ben', color: 'turquoise' },
-            { id: 'demo_27', name: 'Charlotte', color: 'turquoise' },
-            { id: 'demo_28', name: 'Amelia', color: 'turquoise' },
-            { id: 'demo_29', name: 'Luke', color: 'turquoise_dark' },
-            { id: 'demo_30', name: 'Owen', color: 'turquoise_dark' },
-            { id: 'demo_31', name: 'Harper', color: 'turquoise_dark' },
-            { id: 'demo_32', name: 'Evelyn', color: 'turquoise_dark' },
-            { id: 'demo_93', name: 'Hugo', color: 'opaline_aqua' },
-            { id: 'demo_94', name: 'Ivan', color: 'opaline_aqua' },
-            { id: 'demo_96', name: 'Aria', color: 'opaline_aqua' },
-            { id: 'demo_97', name: 'Kent', color: 'opaline_turquoise' },
-            { id: 'demo_98', name: 'Neil', color: 'opaline_turquoise' },
-            { id: 'demo_100', name: 'Lily', color: 'opaline_turquoise' },
-            { id: 'demo_102', name: 'Jude', color: 'opaline_seagreen' },
-            { id: 'demo_103', name: 'Nora', color: 'opaline_seagreen' },
-            { id: 'demo_104', name: 'Hannah', color: 'opaline_seagreen' },
-            { id: 'demo_117', name: 'Brad', color: 'pied_rec_aqua' },
-            { id: 'demo_118', name: 'Drew', color: 'pied_rec_aqua' },
-            { id: 'demo_120', name: 'Stella', color: 'pied_rec_aqua' },
-            { id: 'demo_121', name: 'Carl', color: 'pied_rec_turquoise' },
-            { id: 'demo_122', name: 'Dale', color: 'pied_rec_turquoise' },
-            { id: 'demo_123', name: 'Lucy', color: 'pied_rec_turquoise' },
-            { id: 'demo_124', name: 'Maya', color: 'pied_rec_turquoise' },
-            { id: 'demo_126', name: 'Earl', color: 'pied_rec_seagreen' },
-            { id: 'demo_128', name: 'Alice', color: 'pied_rec_seagreen' },
-        ]
-    },
+        {
+            id: 'founder_4',
+            name: 'Deneb',
+            sex: 'female',
+            color: 'cinnamon_turquoise',
+            genotype: {
+                parblue: 'tqtq',
+                ino: '+W',
+                opaline: '+W',
+                cinnamon: 'cinW',    // visual cinnamon
+                dark: 'dd',
+                violet: 'vv',
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♀ - Cinnamon Turquoise（シナモン発現）'
+        },
+        // =======================================
+        // Pair C: Seagreen × Lutino (pallid キャリア)
+        // =======================================
+        {
+            id: 'founder_5',
+            name: 'Rigel',
+            sex: 'male',
+            color: 'seagreen',
+            genotype: {
+                parblue: 'tqaq',     // seagreen
+                ino: '+pld',         // split pallid
+                opaline: '++',
+                cinnamon: '++',
+                dark: 'dd',
+                violet: 'vv',
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♂ - Seagreen /pallid（シーグリーン+パリッドキャリア）'
+        },
+        {
+            id: 'founder_6',
+            name: 'Capella',
+            sex: 'female',
+            color: 'lutino',
+            genotype: {
+                parblue: '++',
+                ino: 'inoW',         // visual lutino
+                opaline: '+W',
+                cinnamon: '+W',
+                dark: 'dd',
+                violet: 'vv',
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♀ - Lutino（INO系赤目）'
+        },
+        // =======================================
+        // Pair D: Olive × Opaline Aqua (violet キャリア)
+        // =======================================
+        {
+            id: 'founder_7',
+            name: 'Pollux',
+            sex: 'male',
+            color: 'olive',
+            genotype: {
+                parblue: '++',
+                ino: '++',
+                opaline: '++',
+                cinnamon: '++',
+                dark: 'DD',          // double dark (olive)
+                violet: 'Vv',        // split violet
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♂ - Olive /violet（オリーブ+バイオレットキャリア）'
+        },
+        {
+            id: 'founder_8',
+            name: 'Spica',
+            sex: 'female',
+            color: 'opaline_aqua',
+            genotype: {
+                parblue: 'aqaq',
+                ino: '+W',
+                opaline: 'opW',      // visual opaline
+                cinnamon: '+W',
+                dark: 'dd',
+                violet: 'vv',
+                fallow_pale: '++',
+                pied_rec: '++'
+            },
+            notes: '始祖♀ - Opaline Aqua（オパーリン発現）'
+        }
+    ],
 
     get STORAGE_KEY() {
         return this._currentMode === 'demo' ? this.STORAGE_KEY_DEMO : this.STORAGE_KEY_USER;
@@ -220,274 +320,251 @@ const BirdDB = {
     },
 
     /**
-     * デモ用サンプル鳥を生成（128羽）+ 血統情報付き
+     * v7.0: デモ用始祖一族を生成（24羽 = 8始祖 + 4祖父母 + 2父母 + 10子）
+     * 3世代後に最大限の羽色多様性を実現する家系図
      */
     generateDemoBirds() {
         const birds = [];
         const now = new Date().toISOString();
-        
-        const maleNames = [
-            'John', 'Sam', 'Ron', 'Max', 'Leo', 'Jack', 'Tom', 'Ben',
-            'Luke', 'Owen', 'Finn', 'Noah', 'Liam', 'Evan', 'Ryan', 'Cole',
-            'Adam', 'Eric', 'Paul', 'Mark', 'Sean', 'Dean', 'Kyle', 'Troy',
-            'Zack', 'Jude', 'Hugo', 'Ivan', 'Kent', 'Neil', 'Brad', 'Drew',
-            'Carl', 'Dale', 'Earl', 'Fred', 'Gary', 'Hans', 'Igor', 'Jake',
-            'Kirk', 'Lane', 'Mike', 'Nick', 'Omar', 'Pete', 'Reed', 'Seth',
-            'Todd', 'Vick', 'Wade', 'Xavi', 'Yuri', 'Zane', 'Abel', 'Axel',
-            'Bart', 'Cody', 'Dane', 'Enzo', 'Gabe', 'Hugh', 'Joel', 'Knox'
-        ];
-        
-        const femaleNames = [
-            'Elizabeth', 'Catherine', 'Megan', 'Emma', 'Olivia', 'Ava', 'Sophia', 'Isabella',
-            'Mia', 'Charlotte', 'Amelia', 'Harper', 'Evelyn', 'Abigail', 'Emily', 'Ella',
-            'Scarlett', 'Grace', 'Chloe', 'Victoria', 'Riley', 'Aria', 'Lily', 'Aurora',
-            'Zoey', 'Nora', 'Hannah', 'Hazel', 'Eleanor', 'Stella', 'Lucy', 'Maya',
-            'Alice', 'Bella', 'Clara', 'Diana', 'Elena', 'Fiona', 'Gloria', 'Helen',
-            'Irene', 'Julia', 'Karen', 'Laura', 'Marie', 'Nancy', 'Opal', 'Paula',
-            'Quinn', 'Rosa', 'Sarah', 'Tina', 'Uma', 'Vera', 'Wendy', 'Xena',
-            'Yolanda', 'Zara', 'Amy', 'Beth', 'Cara', 'Dina', 'Eva', 'Gwen'
-        ];
-        
-        // v7.0: ALBS標準名を全言語共通で使用
-        const colors = [
-            { key: 'green', name: 'Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd' },
-            { key: 'darkgreen', name: 'Dark Green', eye: 'black', parblue: '++', ino: '++', dark: 'Dd' },
-            { key: 'olive', name: 'Olive', eye: 'black', parblue: '++', ino: '++', dark: 'DD' },
-            { key: 'aqua', name: 'Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd' },
-            { key: 'aqua_dark', name: 'Aqua Dark', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'Dd' },
-            { key: 'aqua_dd', name: 'Aqua DD', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'DD' },
-            { key: 'turquoise', name: 'Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd' },
-            { key: 'turquoise_dark', name: 'Turquoise Dark', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'Dd' },
-            { key: 'seagreen', name: 'Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd' },
-            { key: 'seagreen_dark', name: 'Sea Green Dark', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'Dd' },
-            { key: 'lutino', name: 'Lutino', eye: 'red', parblue: '++', ino: 'inoino', dark: 'dd' },
-            { key: 'creamino', name: 'Creamino', eye: 'red', parblue: 'aqaq', ino: 'inoino', dark: 'dd' },
-            { key: 'pure_white', name: 'Pure White', eye: 'red', parblue: 'tqtq', ino: 'inoino', dark: 'dd' },
-            { key: 'creamino_seagreen', name: 'Creamino Sea Green', eye: 'red', parblue: 'tqaq', ino: 'inoino', dark: 'dd' },
-            { key: 'pallid_green', name: 'Pallid Green', eye: 'black', parblue: '++', ino: 'pldpld', dark: 'dd' },
-            { key: 'pallid_aqua', name: 'Pallid Aqua', eye: 'black', parblue: 'aqaq', ino: 'pldpld', dark: 'dd' },
-            { key: 'pallid_turquoise', name: 'Pallid Turquoise', eye: 'black', parblue: 'tqtq', ino: 'pldpld', dark: 'dd' },
-            { key: 'pallid_seagreen', name: 'Pallid Sea Green', eye: 'black', parblue: 'tqaq', ino: 'pldpld', dark: 'dd' },
-            // v7.0: SSOT準拠キー (cinnamon, opaline, fallow_pale, pied_rec)
-            { key: 'cinnamon_green', name: 'Cinnamon Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'cinnamon_aqua', name: 'Cinnamon Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'cinnamon_turquoise', name: 'Cinnamon Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'cinnamon_seagreen', name: 'Cinnamon Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'opaline_green', name: 'Opaline Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', opaline: true },
-            { key: 'opaline_aqua', name: 'Opaline Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', opaline: true },
-            { key: 'opaline_turquoise', name: 'Opaline Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', opaline: true },
-            { key: 'opaline_seagreen', name: 'Opaline Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', opaline: true },
-            { key: 'fallow_pale_green', name: 'Pale Fallow Green', eye: 'red', parblue: '++', ino: '++', dark: 'dd', fallow_pale: true },
-            { key: 'fallow_pale_aqua', name: 'Pale Fallow Aqua', eye: 'red', parblue: 'aqaq', ino: '++', dark: 'dd', fallow_pale: true },
-            { key: 'pied_rec_green', name: 'Recessive Pied Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_rec_aqua', name: 'Recessive Pied Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_rec_turquoise', name: 'Recessive Pied Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_rec_seagreen', name: 'Recessive Pied Seagreen', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', pied_rec: true },
-        ];
-        
-        let idCounter = 1;
-        let maleIndex = 0;
-        let femaleIndex = 0;
-        
-        // まず128羽を生成（pedigreeは空）
-        colors.forEach(color => {
-            ['male', 'female'].forEach(sex => {
-                for (let i = 0; i < 2; i++) {
-                    const isMale = sex === 'male';
-                    const birdName = isMale ? maleNames[maleIndex++] : femaleNames[femaleIndex++];
-                    
-                    // v7.0: SSOT準拠キー
-                    const geno = {
-                        parblue: color.parblue,
-                        ino: isMale ? color.ino : (color.ino === 'inoino' ? 'inoW' : (color.ino === 'pldpld' ? 'pldW' : '+W')),
-                        opaline: color.opaline ? (isMale ? 'opop' : 'opW') : (isMale ? '++' : '+W'),
-                        cinnamon: color.cinnamon ? (isMale ? 'cincin' : 'cinW') : (isMale ? '++' : '+W'),
-                        dark: color.dark,
-                        violet: 'vv',
-                        fallow_pale: color.fallow_pale ? 'flpflp' : '++',
-                        dilute: '++',
-                        pied_rec: color.pied_rec ? 'pipi' : '++'
-                    };
-                    
-                    const darkness = color.dark === 'DD' ? 'df' : (color.dark === 'Dd' ? 'sf' : 'none');
-                    
-                    birds.push({
-                        id: 'demo_' + idCounter,
-                        name: birdName,
-                        code: `DEMO${String(idCounter).padStart(3, '0')}`,
-                        sex: sex,
-                        birthDate: '2024-01-01',
-                        sire: null,
-                        dam: null,
-                        lineage: '',
-                        observed: {
-                            baseColor: color.key,
-                            eyeColor: color.eye,
-                            darkness: darkness
-                        },
-                        genotype: geno,
-                        pedigree: this.createEmptyPedigree(),
-                        phase: 'independent',
-                        phenotype: color.name,
-                        inbreedingGen: 0,
-                        notes: `Demo specimen (${color.name})`,
-                        createdAt: now,
-                        updatedAt: now
-                    });
-                    
-                    idCounter++;
-                }
+        const lineage = 'Constellation'; // 一族名: 星座
+
+        // ========================================
+        // GEN 0: 曽祖父母（8羽始祖）
+        // ========================================
+        this.DEMO_FOUNDERS.forEach((founder, idx) => {
+            const eyeColor = ['lutino', 'creamino', 'pure_white', 'fallow_pale_green', 'fallow_pale_aqua'].some(c => founder.color.includes(c) || founder.color === 'lutino') ? 'red' : 'black';
+            const darkness = founder.genotype.dark === 'DD' ? 'df' : (founder.genotype.dark === 'Dd' ? 'sf' : 'none');
+
+            birds.push({
+                id: founder.id,
+                name: founder.name,
+                code: `STAR${String(idx + 1).padStart(3, '0')}`,
+                sex: founder.sex,
+                birthDate: '2020-01-01',
+                sire: null,
+                dam: null,
+                lineage: lineage,
+                observed: {
+                    baseColor: founder.color,
+                    eyeColor: founder.color === 'lutino' ? 'red' : (founder.color.includes('fallow') ? 'red' : 'black'),
+                    darkness: darkness
+                },
+                genotype: founder.genotype,
+                pedigree: this.createEmptyPedigree(),
+                phase: 'retired',
+                phenotype: founder.color,
+                inbreedingGen: 0,
+                notes: founder.notes,
+                createdAt: now,
+                updatedAt: now
             });
         });
-        
-        // 血統情報を書き込む
-        this.applyDemoPedigree(birds);
-        
+
+        // ========================================
+        // GEN 1: 祖父母（4羽）
+        // ========================================
+        const grandparents = [
+            // Nova ♂: Sirius × Vega → Aqua /ino /op
+            {
+                id: 'gen1_nova', name: 'Nova', sex: 'male', color: 'aqua',
+                sire: 'founder_1', dam: 'founder_2',
+                genotype: { parblue: 'aqaq', ino: '+ino', opaline: '+op', cinnamon: '++', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+                notes: 'GEN1♂ - Aqua /ino /opaline (Sirius×Vega)'
+            },
+            // Luna ♀: Altair × Deneb → Cinnamon Seagreen (tq from Deneb + tq from Altair = tqtq? No, Altair is +tq)
+            // Altair +tq × Deneb tqtq → offspring: tqtq or +tq. Let's say Luna got +tq from Altair and tq from Deneb → seagreen-ish
+            // Actually: +tq × tqtq → 50% tqtq, 50% +tq. Let's make Luna tqtq (turquoise) with cinnamon
+            {
+                id: 'gen1_luna', name: 'Luna', sex: 'female', color: 'cinnamon_turquoise',
+                sire: 'founder_3', dam: 'founder_4',
+                genotype: { parblue: 'tqtq', ino: '+W', opaline: '+W', cinnamon: 'cinW', dark: 'Dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+                notes: 'GEN1♀ - Cinnamon Turquoise Dark (Altair×Deneb)'
+            },
+            // Atlas ♂: Rigel × Capella → Green /tq /ino (Rigel tqaq gives tq or aq, Capella ++ gives +)
+            {
+                id: 'gen1_atlas', name: 'Atlas', sex: 'male', color: 'green',
+                sire: 'founder_5', dam: 'founder_6',
+                genotype: { parblue: '+tq', ino: '+ino', opaline: '++', cinnamon: '++', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+                notes: 'GEN1♂ - Green /turquoise /ino (Rigel×Capella)'
+            },
+            // Lyra ♀: Pollux × Spica → Opaline Dark Green /aq /violet
+            {
+                id: 'gen1_lyra', name: 'Lyra', sex: 'female', color: 'opaline_darkgreen',
+                sire: 'founder_7', dam: 'founder_8',
+                genotype: { parblue: '+aq', ino: '+W', opaline: 'opW', cinnamon: '+W', dark: 'Dd', violet: 'Vv', fallow_pale: '++', pied_rec: '++' },
+                notes: 'GEN1♀ - Opaline Dark Green /aqua /violet (Pollux×Spica)'
+            }
+        ];
+
+        grandparents.forEach((gp, idx) => {
+            birds.push({
+                id: gp.id,
+                name: gp.name,
+                code: `STAR${String(9 + idx).padStart(3, '0')}`,
+                sex: gp.sex,
+                birthDate: '2022-01-01',
+                sire: gp.sire,
+                dam: gp.dam,
+                lineage: lineage,
+                observed: {
+                    baseColor: gp.color,
+                    eyeColor: 'black',
+                    darkness: gp.genotype.dark === 'Dd' ? 'sf' : 'none'
+                },
+                genotype: gp.genotype,
+                pedigree: {
+                    sire: gp.sire, dam: gp.dam,
+                    sire_sire: null, sire_dam: null, dam_sire: null, dam_dam: null,
+                    sire_sire_sire: null, sire_sire_dam: null, sire_dam_sire: null, sire_dam_dam: null,
+                    dam_sire_sire: null, dam_sire_dam: null, dam_dam_sire: null, dam_dam_dam: null
+                },
+                phase: 'breeding',
+                phenotype: gp.color,
+                inbreedingGen: 0,
+                notes: gp.notes,
+                createdAt: now,
+                updatedAt: now
+            });
+        });
+
+        // ========================================
+        // GEN 2: 父母（2羽）
+        // ========================================
+        const parents = [
+            // Orion ♂: Nova × Luna → Seagreen /ino /op /cin
+            {
+                id: 'gen2_orion', name: 'Orion', sex: 'male', color: 'seagreen',
+                sire: 'gen1_nova', dam: 'gen1_luna',
+                genotype: { parblue: 'tqaq', ino: '+ino', opaline: '+op', cinnamon: '+cin', dark: 'Dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+                notes: 'GEN2♂ - Seagreen Dark /ino /opaline /cinnamon (Nova×Luna)'
+            },
+            // Aurora ♀: Atlas × Lyra → Opaline Seagreen /ino /violet
+            {
+                id: 'gen2_aurora', name: 'Aurora', sex: 'female', color: 'opaline_seagreen',
+                sire: 'gen1_atlas', dam: 'gen1_lyra',
+                genotype: { parblue: 'tqaq', ino: '+W', opaline: 'opW', cinnamon: '+W', dark: 'Dd', violet: 'Vv', fallow_pale: '++', pied_rec: '++' },
+                notes: 'GEN2♀ - Opaline Seagreen /violet (Atlas×Lyra)'
+            }
+        ];
+
+        parents.forEach((p, idx) => {
+            birds.push({
+                id: p.id,
+                name: p.name,
+                code: `STAR${String(13 + idx).padStart(3, '0')}`,
+                sex: p.sex,
+                birthDate: '2024-01-01',
+                sire: p.sire,
+                dam: p.dam,
+                lineage: lineage,
+                observed: {
+                    baseColor: p.color,
+                    eyeColor: 'black',
+                    darkness: p.genotype.dark === 'Dd' ? 'sf' : 'none'
+                },
+                genotype: p.genotype,
+                pedigree: {
+                    sire: p.sire, dam: p.dam,
+                    sire_sire: p.sire === 'gen1_nova' ? 'founder_1' : 'founder_5',
+                    sire_dam: p.sire === 'gen1_nova' ? 'founder_2' : 'founder_6',
+                    dam_sire: p.dam === 'gen1_luna' ? 'founder_3' : 'founder_7',
+                    dam_dam: p.dam === 'gen1_luna' ? 'founder_4' : 'founder_8',
+                    sire_sire_sire: null, sire_sire_dam: null, sire_dam_sire: null, sire_dam_dam: null,
+                    dam_sire_sire: null, dam_sire_dam: null, dam_dam_sire: null, dam_dam_dam: null
+                },
+                phase: 'breeding',
+                phenotype: p.color,
+                inbreedingGen: 0,
+                notes: p.notes,
+                createdAt: now,
+                updatedAt: now
+            });
+        });
+
+        // ========================================
+        // GEN 3: 子（10羽）- Orion × Aurora
+        // 多様な羽色を表現
+        // ========================================
+        const children = [
+            // 多様な表現型を持つ10羽
+            { id: 'gen3_01', name: 'Phoenix', sex: 'male', color: 'opaline_seagreen',
+              genotype: { parblue: 'tqaq', ino: '+ino', opaline: '+op', cinnamon: '+cin', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♂ - Opaline Seagreen /ino /cin' },
+            { id: 'gen3_02', name: 'Celeste', sex: 'female', color: 'creamino_seagreen',
+              genotype: { parblue: 'tqaq', ino: 'inoW', opaline: '+W', cinnamon: '+W', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♀ - Creamino Seagreen (INO発現!)' },
+            { id: 'gen3_03', name: 'Cosmo', sex: 'male', color: 'aqua_dark',
+              genotype: { parblue: 'aqaq', ino: '++', opaline: '+op', cinnamon: '++', dark: 'Dd', violet: 'Vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♂ - Aqua Dark /opaline /violet' },
+            { id: 'gen3_04', name: 'Stella', sex: 'female', color: 'opaline_turquoise',
+              genotype: { parblue: 'tqtq', ino: '+W', opaline: 'opW', cinnamon: '+W', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♀ - Opaline Turquoise' },
+            { id: 'gen3_05', name: 'Leo', sex: 'male', color: 'seagreen_dark',
+              genotype: { parblue: 'tqaq', ino: '++', opaline: '++', cinnamon: '+cin', dark: 'DD', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♂ - Seagreen Olive /cinnamon' },
+            { id: 'gen3_06', name: 'Diana', sex: 'female', color: 'cinnamon_aqua',
+              genotype: { parblue: 'aqaq', ino: '+W', opaline: '+W', cinnamon: 'cinW', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♀ - Cinnamon Aqua (シナモン発現!)' },
+            { id: 'gen3_07', name: 'Marcus', sex: 'male', color: 'violet_seagreen',
+              genotype: { parblue: 'tqaq', ino: '+ino', opaline: '++', cinnamon: '++', dark: 'Dd', violet: 'Vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♂ - Violet Seagreen Dark /ino' },
+            { id: 'gen3_08', name: 'Helena', sex: 'female', color: 'lutino',
+              genotype: { parblue: '++', ino: 'inoW', opaline: 'opW', cinnamon: '+W', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♀ - Lutino (Opaline) - INO発現で黄色!' },
+            { id: 'gen3_09', name: 'Castor', sex: 'male', color: 'turquoise',
+              genotype: { parblue: 'tqtq', ino: '++', opaline: '+op', cinnamon: '+cin', dark: 'dd', violet: 'vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♂ - Turquoise /opaline /cinnamon' },
+            { id: 'gen3_10', name: 'Selene', sex: 'female', color: 'opaline_aqua_dark',
+              genotype: { parblue: 'aqaq', ino: '+W', opaline: 'opW', cinnamon: 'cinW', dark: 'Dd', violet: 'Vv', fallow_pale: '++', pied_rec: '++' },
+              notes: 'GEN3♀ - Opaline Cinnamon Aqua Dark /violet' }
+        ];
+
+        children.forEach((c, idx) => {
+            const eyeColor = c.genotype.ino.includes('ino') && c.genotype.ino !== '+ino' && c.genotype.ino !== '++' ? 'red' : 'black';
+            birds.push({
+                id: c.id,
+                name: c.name,
+                code: `STAR${String(15 + idx).padStart(3, '0')}`,
+                sex: c.sex,
+                birthDate: '2025-06-01',
+                sire: 'gen2_orion',
+                dam: 'gen2_aurora',
+                lineage: lineage,
+                observed: {
+                    baseColor: c.color,
+                    eyeColor: eyeColor,
+                    darkness: c.genotype.dark === 'DD' ? 'df' : (c.genotype.dark === 'Dd' ? 'sf' : 'none')
+                },
+                genotype: c.genotype,
+                pedigree: {
+                    sire: 'gen2_orion', dam: 'gen2_aurora',
+                    sire_sire: 'gen1_nova', sire_dam: 'gen1_luna',
+                    dam_sire: 'gen1_atlas', dam_dam: 'gen1_lyra',
+                    sire_sire_sire: 'founder_1', sire_sire_dam: 'founder_2',
+                    sire_dam_sire: 'founder_3', sire_dam_dam: 'founder_4',
+                    dam_sire_sire: 'founder_5', dam_sire_dam: 'founder_6',
+                    dam_dam_sire: 'founder_7', dam_dam_dam: 'founder_8'
+                },
+                phase: 'juvenile',
+                phenotype: c.color,
+                inbreedingGen: 0,
+                notes: c.notes,
+                createdAt: now,
+                updatedAt: now
+            });
+        });
+
         return birds;
     },
 
     /**
-     * v6.7.5: デモデータに血統情報を適用
-     */
-    applyDemoPedigree(birds) {
-        const cfg = this.DEMO_PEDIGREE_CONFIG;
-        const findBird = (id) => birds.find(b => b.id === id);
-        
-        // ========================================
-        // 曽祖父母8羽: pedigree は全てnull（変更なし）
-        // ========================================
-        
-        // ========================================
-        // 祖父母4羽: 親2羽のIDを設定
-        // ========================================
-        
-        // sire_sire（父方祖父）: Jack×Chloe の息子
-        const sire_sire = findBird(cfg.grandparents.sire_sire.id);
-        if (sire_sire) {
-            sire_sire.pedigree = {
-                ...this.createEmptyPedigree(),
-                sire: cfg.greatGrandparents.sire_sire_sire.id,  // demo_41 Jack
-                dam: cfg.greatGrandparents.sire_sire_dam.id,    // demo_47 Chloe
-            };
-        }
-        
-        // sire_dam（父方祖母）: Paul×Victoria の娘
-        const sire_dam = findBird(cfg.grandparents.sire_dam.id);
-        if (sire_dam) {
-            sire_dam.pedigree = {
-                ...this.createEmptyPedigree(),
-                sire: cfg.greatGrandparents.sire_dam_sire.id,   // demo_65 Paul
-                dam: cfg.greatGrandparents.sire_dam_dam.id,     // demo_51 Victoria
-            };
-        }
-        
-        // dam_sire（母方祖父）: Sean×Riley の息子
-        const dam_sire = findBird(cfg.grandparents.dam_sire.id);
-        if (dam_sire) {
-            dam_sire.pedigree = {
-                ...this.createEmptyPedigree(),
-                sire: cfg.greatGrandparents.dam_sire_sire.id,   // demo_85 Sean
-                dam: cfg.greatGrandparents.dam_sire_dam.id,     // demo_95 Riley
-            };
-        }
-        
-        // dam_dam（母方祖母）: Troy×Hazel の娘
-        const dam_dam = findBird(cfg.grandparents.dam_dam.id);
-        if (dam_dam) {
-            dam_dam.pedigree = {
-                ...this.createEmptyPedigree(),
-                sire: cfg.greatGrandparents.dam_dam_sire.id,    // demo_125 Troy
-                dam: cfg.greatGrandparents.dam_dam_dam.id,      // demo_111 Hazel
-            };
-        }
-        
-        // ========================================
-        // 父母2羽: 親2 + 祖父母4 のIDを設定
-        // ========================================
-        
-        // sire（父）: Adam×Aurora の息子
-        const sire = findBird(cfg.parents.sire.id);
-        if (sire) {
-            sire.pedigree = {
-                sire: cfg.grandparents.sire_sire.id,            // demo_45 Adam
-                dam: cfg.grandparents.sire_dam.id,              // demo_52 Aurora
-                sire_sire: cfg.greatGrandparents.sire_sire_sire.id, // demo_41 Jack
-                sire_dam: cfg.greatGrandparents.sire_sire_dam.id,   // demo_47 Chloe
-                dam_sire: cfg.greatGrandparents.sire_dam_sire.id,   // demo_65 Paul
-                dam_dam: cfg.greatGrandparents.sire_dam_dam.id,     // demo_51 Victoria
-                sire_sire_sire: null,
-                sire_sire_dam: null,
-                sire_dam_sire: null,
-                sire_dam_dam: null,
-                dam_sire_sire: null,
-                dam_sire_dam: null,
-                dam_dam_sire: null,
-                dam_dam_dam: null,
-            };
-        }
-        
-        // dam（母）: Zack×Eleanor の娘
-        const dam = findBird(cfg.parents.dam.id);
-        if (dam) {
-            dam.pedigree = {
-                sire: cfg.grandparents.dam_sire.id,             // demo_101 Zack
-                dam: cfg.grandparents.dam_dam.id,               // demo_119 Eleanor
-                sire_sire: cfg.greatGrandparents.dam_sire_sire.id, // demo_85 Sean
-                sire_dam: cfg.greatGrandparents.dam_sire_dam.id,   // demo_95 Riley
-                dam_sire: cfg.greatGrandparents.dam_dam_sire.id,   // demo_125 Troy
-                dam_dam: cfg.greatGrandparents.dam_dam_dam.id,     // demo_111 Hazel
-                sire_sire_sire: null,
-                sire_sire_dam: null,
-                sire_dam_sire: null,
-                sire_dam_dam: null,
-                dam_sire_sire: null,
-                dam_sire_dam: null,
-                dam_dam_sire: null,
-                dam_dam_dam: null,
-            };
-        }
-        
-        // ========================================
-        // 子30羽: 全14枠のIDを設定
-        // ========================================
-        
-        const childPedigree = {
-            // 親
-            sire: cfg.parents.sire.id,                          // demo_53 Eric
-            dam: cfg.parents.dam.id,                            // demo_99 Zoey
-            // 祖父母
-            sire_sire: cfg.grandparents.sire_sire.id,           // demo_45 Adam
-            sire_dam: cfg.grandparents.sire_dam.id,             // demo_52 Aurora
-            dam_sire: cfg.grandparents.dam_sire.id,             // demo_101 Zack
-            dam_dam: cfg.grandparents.dam_dam.id,               // demo_119 Eleanor
-            // 曽祖父母（父方）
-            sire_sire_sire: cfg.greatGrandparents.sire_sire_sire.id, // demo_41 Jack
-            sire_sire_dam: cfg.greatGrandparents.sire_sire_dam.id,   // demo_47 Chloe
-            sire_dam_sire: cfg.greatGrandparents.sire_dam_sire.id,   // demo_65 Paul
-            sire_dam_dam: cfg.greatGrandparents.sire_dam_dam.id,     // demo_51 Victoria
-            // 曽祖父母（母方）
-            dam_sire_sire: cfg.greatGrandparents.dam_sire_sire.id,   // demo_85 Sean
-            dam_sire_dam: cfg.greatGrandparents.dam_sire_dam.id,     // demo_95 Riley
-            dam_dam_sire: cfg.greatGrandparents.dam_dam_sire.id,     // demo_125 Troy
-            dam_dam_dam: cfg.greatGrandparents.dam_dam_dam.id,       // demo_111 Hazel
-        };
-        
-        cfg.offspring.forEach(childCfg => {
-            const child = findBird(childCfg.id);
-            if (child) {
-                child.pedigree = { ...childPedigree };
-            }
-        });
-    },
-
-    /**
-     * v6.7.5: デモ家系図をFamilyMap形式で取得
+     * v7.0: デモ家系図をFamilyMap形式で取得
+     * Constellation一族の家系図データを返す
      */
     getDemoPedigreeForFamilyMap() {
-        const cfg = this.DEMO_PEDIGREE_CONFIG;
         const birds = this.getAllBirds();
         const findBird = (id) => birds.find(b => b.id === id);
-        
+
         const toBirdData = (id) => {
             const bird = findBird(id);
             if (!bird) return null;
@@ -501,29 +578,34 @@ const BirdDB = {
                 fromDB: true
             };
         };
-        
+
+        // v7.0: 新しいConstellation一族の構造
+        // GEN0: 8始祖, GEN1: 4祖父母, GEN2: 2父母, GEN3: 10子
         return {
-            name: 'Demo Pedigree (Rare Color Family)',
+            name: 'Demo Pedigree (Constellation Family)',
             savedAt: new Date().toISOString(),
-            // 曽祖父母
-            sire_sire_sire: toBirdData(cfg.greatGrandparents.sire_sire_sire.id),
-            sire_sire_dam: toBirdData(cfg.greatGrandparents.sire_sire_dam.id),
-            sire_dam_sire: toBirdData(cfg.greatGrandparents.sire_dam_sire.id),
-            sire_dam_dam: toBirdData(cfg.greatGrandparents.sire_dam_dam.id),
-            dam_sire_sire: toBirdData(cfg.greatGrandparents.dam_sire_sire.id),
-            dam_sire_dam: toBirdData(cfg.greatGrandparents.dam_sire_dam.id),
-            dam_dam_sire: toBirdData(cfg.greatGrandparents.dam_dam_sire.id),
-            dam_dam_dam: toBirdData(cfg.greatGrandparents.dam_dam_dam.id),
-            // 祖父母
-            sire_sire: toBirdData(cfg.grandparents.sire_sire.id),
-            sire_dam: toBirdData(cfg.grandparents.sire_dam.id),
-            dam_sire: toBirdData(cfg.grandparents.dam_sire.id),
-            dam_dam: toBirdData(cfg.grandparents.dam_dam.id),
-            // 父母
-            sire: toBirdData(cfg.parents.sire.id),
-            dam: toBirdData(cfg.parents.dam.id),
-            // 子30羽
-            offspring: cfg.offspring.map(c => toBirdData(c.id)).filter(b => b !== null),
+            // 曽祖父母（8始祖）
+            sire_sire_sire: toBirdData('founder_1'),  // Sirius
+            sire_sire_dam: toBirdData('founder_2'),   // Vega
+            sire_dam_sire: toBirdData('founder_3'),   // Altair
+            sire_dam_dam: toBirdData('founder_4'),    // Deneb
+            dam_sire_sire: toBirdData('founder_5'),   // Rigel
+            dam_sire_dam: toBirdData('founder_6'),    // Capella
+            dam_dam_sire: toBirdData('founder_7'),    // Pollux
+            dam_dam_dam: toBirdData('founder_8'),     // Spica
+            // 祖父母（4羽）
+            sire_sire: toBirdData('gen1_nova'),
+            sire_dam: toBirdData('gen1_luna'),
+            dam_sire: toBirdData('gen1_atlas'),
+            dam_dam: toBirdData('gen1_lyra'),
+            // 父母（2羽）
+            sire: toBirdData('gen2_orion'),
+            dam: toBirdData('gen2_aurora'),
+            // 子（10羽）
+            offspring: [
+                'gen3_01', 'gen3_02', 'gen3_03', 'gen3_04', 'gen3_05',
+                'gen3_06', 'gen3_07', 'gen3_08', 'gen3_09', 'gen3_10'
+            ].map(id => toBirdData(id)).filter(b => b !== null),
         };
     },
 
