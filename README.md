@@ -70,6 +70,124 @@ gene-forge/
 
 ---
 
+## 🏗️ Complete SSOT Architecture
+
+Gene-Forge employs a **Complete Single Source of Truth (SSOT)** architecture, where all genetic data originates exclusively from `genetics.php`. JavaScript files contain zero hardcoded genetic information — they dynamically consume data injected from PHP.
+
+### Core Principle
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      genetics.php (SSOT)                        │
+│  ┌──────────────┐ ┌───────────────────┐ ┌───────────────────┐  │
+│  │     LOCI     │ │ COLOR_DEFINITIONS │ │ GENOTYPE_OPTIONS  │  │
+│  │  (14 loci)   │ │   (310+ colors)   │ │  (UI selections)  │  │
+│  └──────┬───────┘ └─────────┬─────────┘ └─────────┬─────────┘  │
+│         │                   │                     │             │
+│  ┌──────┴───────────────────┴─────────────────────┴──────────┐  │
+│  │                   UI_GENOTYPE_LOCI                        │  │
+│  │               (UI key mapping config)                     │  │
+│  └──────────────────────────┬────────────────────────────────┘  │
+└─────────────────────────────┼───────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     index.php (Injector)                        │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │ <script>                                                   │ │
+│  │   const LOCI_MASTER = <?= json_encode(...) ?>;            │ │
+│  │   const COLOR_MASTER = <?= json_encode(...) ?>;           │ │
+│  │   const GENOTYPE_OPTIONS = <?= json_encode(...) ?>;       │ │
+│  │   const UI_GENOTYPE_LOCI = <?= json_encode(...) ?>;       │ │
+│  │ </script>                                                  │ │
+│  └────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────┬───────────────────────────────────┘
+                              │
+        ┌─────────────────────┼─────────────────────┐
+        ▼                     ▼                     ▼
+┌───────────────┐    ┌───────────────┐    ┌───────────────┐
+│   family.js   │    │    app.js     │    │  planner.js   │
+│ COLOR_MASTER  │    │ GENOTYPE_OPT  │    │ COLOR_MASTER  │
+│ GENOTYPE_OPT  │    │ UI_GENO_LOCI  │    │ LOCI_MASTER   │
+└───────────────┘    └───────────────┘    └───────────────┘
+```
+
+### genetics.php Constants Structure
+
+| Constant | Purpose | Structure |
+|----------|---------|-----------|
+| `LOCI` | 14 genetic loci definitions | `['parblue' => ['type' => 'AR_MULTI', 'alleles' => [...]], ...]` |
+| `COLOR_DEFINITIONS` | 310+ phenotype colors | `['green' => ['ja' => '...', 'en' => '...', 'genotype' => [...]], ...]` |
+| `GENOTYPE_OPTIONS` | Genotype selection UI options | Autosomal: `['options' => [[val, label], ...]]`<br>Sex-linked: `['male' => [...], 'female' => [...]]` |
+| `UI_GENOTYPE_LOCI` | UI form field configuration | `[['key' => 'op', 'source' => 'opaline', 'label' => 'Opaline'], ...]` |
+
+### JavaScript File Dependencies
+
+| JS File | Consumed Constants | Usage |
+|---------|-------------------|-------|
+| `family.js` | `COLOR_MASTER`, `GENOTYPE_OPTIONS`, `UI_GENOTYPE_LOCI` | Family tree UI, bird input modal, color selection |
+| `app.js` | `GENOTYPE_OPTIONS`, `UI_GENOTYPE_LOCI` | Specimen registration form, genotype dropdowns |
+| `planner.js` | `COLOR_MASTER`, `LOCI_MASTER` | Breeding path calculation, target phenotype selection |
+| `pedigree.js` | `COLOR_MASTER` | Pedigree chart color display |
+| `guardian.js` | `LOCI_MASTER` | Health evaluation, inbreeding calculation |
+| `breeding.js` | `COLOR_MASTER`, `LOCI_MASTER` | Breeding validation, offspring prediction display |
+
+### Key Mapping (UI_GENOTYPE_LOCI)
+
+The `UI_GENOTYPE_LOCI` constant maps short form keys (used in forms/storage) to full locus names in `GENOTYPE_OPTIONS`:
+
+| UI Key | Source Key | Display Label |
+|--------|------------|---------------|
+| `parblue` | `parblue` | Parblue |
+| `ino` | `ino` | INO |
+| `op` | `opaline` | Opaline |
+| `cin` | `cinnamon` | Cinnamon |
+| `dark` | `dark` | Dark |
+| `vio` | `violet` | Violet |
+| `fl` | `fallow_pale` | Fallow |
+| `dil` | `dilute` | Dilute |
+| `pi` | `pied_rec` | Pied |
+
+### Benefits of Complete SSOT
+
+1. **Single Point of Modification**: Change genetic data in one place (`genetics.php`), automatically propagates to all UI
+2. **Zero Duplication**: No hardcoded genetic values in JavaScript files
+3. **Consistency Guarantee**: Impossible for PHP calculations and JS UI to have mismatched data
+4. **Maintainability**: When porting to other species, modify only `genetics.php`
+5. **Type Safety**: PHP constants provide compile-time validation
+
+### Modification Guidelines
+
+When adding/modifying genetic data:
+
+```php
+// 1. Add locus definition
+AgapornisLoci::LOCI['new_locus'] = [
+    'type' => 'AR',
+    'alleles' => ['wild' => '+', 'mutant' => 'mut'],
+];
+
+// 2. Add color definitions
+AgapornisLoci::COLOR_DEFINITIONS['new_color'] = [
+    'ja' => '新色', 'en' => 'New Color',
+    'genotype' => ['new_locus' => 'mutmut'],
+];
+
+// 3. Add UI options
+AgapornisLoci::GENOTYPE_OPTIONS['new_locus'] = [
+    'options' => [['++', 'Wild'], ['+mut', 'Split'], ['mutmut', 'Mutant']],
+];
+
+// 4. Add to UI config (if needed in forms)
+AgapornisLoci::UI_GENOTYPE_LOCI[] = [
+    'key' => 'nl', 'source' => 'new_locus', 'label' => 'New Locus'
+];
+```
+
+**Never** add genetic data directly to JavaScript files.
+
+---
+
 ## 🚀 Quick Start
 
 ### Requirements
