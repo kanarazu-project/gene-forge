@@ -385,6 +385,7 @@ const FamilyMap = {
             else { sexSelect.style.display = 'none'; sexDisplay.style.display = 'block'; sexDisplay.textContent = defaultSex === 'male' ? `♂ ${isJa ? 'オス（固定）' : 'Male (fixed)'}` : `♀ ${isJa ? 'メス（固定）' : 'Female (fixed)'}`; }
         }
         this.updateModalGenotypeOptions();
+        this.updateModalPedigreeFields();
         if (bird) {
             if (form.elements['bird_name']) form.elements['bird_name'].value = bird.name || '';
             if (form.elements['bird_baseColor']) form.elements['bird_baseColor'].value = bird.phenotype?.baseColor || 'green';
@@ -393,6 +394,9 @@ const FamilyMap = {
             const geno = bird.genotype || {};
             // v7.0: SSOT準拠キー + 旧キー後方互換
             ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'dilute', 'pied_rec'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
+            // v7.0: 血統フィールドの値を設定
+            const ped = bird.pedigree || {};
+            ['sire', 'dam', 'sire_sire', 'sire_dam', 'dam_sire', 'dam_dam', 'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam', 'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'].forEach(key => { const el = form.elements['ped_' + key]; if (el) el.value = ped[key] || ''; });
         } else {
             if (form.elements['bird_name']) form.elements['bird_name'].value = '';
             if (form.elements['bird_baseColor']) form.elements['bird_baseColor'].value = 'green';
@@ -436,6 +440,7 @@ const FamilyMap = {
             <div class="form-group"><label>${isJa ? '名前（任意）' : 'Name (optional)'}</label><input type="text" name="bird_name" class="form-input" placeholder="${isJa ? '例: 太郎' : 'e.g. Taro'}"></div></div>
             <h4 class="section-title">👁️ ${isJa ? '観察情報（表現型）' : 'Observed (Phenotype)'}</h4><div class="form-grid"><div class="form-group"><label>${isJa ? '基本色（観察した羽の色）' : 'Base Color'}</label>${baseColorHTML}</div><div class="form-group"><label>${isJa ? '眼の色' : 'Eye Color'}</label>${eyeColorHTML}</div><div class="form-group"><label>${isJa ? 'ダーク因子（色の濃さ）' : 'Dark Factor'}</label>${darknessHTML}</div></div>
             <h4 class="section-title">🧬 ${isJa ? '遺伝子型（判明している場合）' : 'Genotype (if known)'}</h4><div class="form-grid genotype-grid" id="familyGenotypeFields"></div>
+            <details class="pedigree-section"><summary class="section-title clickable">📋 ${isJa ? '血統情報（14枠）' : 'Pedigree (14 slots)'}</summary><div class="pedigree-grid" id="familyPedigreeFields"></div></details>
             <div class="btn-group"><button type="submit" class="btn btn-primary">✓ ${isJa ? '保存' : 'Save'}</button><button type="button" class="btn btn-outline" onclick="FamilyMap.closeInputModal()">${isJa ? 'キャンセル' : 'Cancel'}</button></div></form></div>`;
         return modal;
     },
@@ -462,6 +467,60 @@ const FamilyMap = {
         container.innerHTML = loci.map(locus => `<div class="form-group"><label class="form-label">${locus.label}</label><select name="geno_${locus.key}" class="form-select">${locus.options.map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}</select></div>`).join('');
     },
 
+    /**
+     * 血統フィールドを更新（14枠の祖先ID選択）
+     */
+    updateModalPedigreeFields() {
+        const modal = document.getElementById('birdInputModal');
+        if (!modal) return;
+        const container = modal.querySelector('#familyPedigreeFields');
+        if (!container) return;
+        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+
+        // BirdDBから選択肢を生成
+        const birds = typeof BirdDB !== 'undefined' ? BirdDB.getAllBirds() : [];
+        const none = isJa ? '-- 未設定 --' : '-- None --';
+
+        const makeBirdOption = (b) => {
+            const colorLabel = typeof BirdDB !== 'undefined' ? BirdDB.getColorLabel(b.phenotype?.baseColor) : b.phenotype?.baseColor;
+            const sexIcon = b.sex === 'male' ? '♂' : '♀';
+            return `${b.name || b.id} (${sexIcon} ${colorLabel})`;
+        };
+
+        const maleOptions = birds.filter(b => b.sex === 'male');
+        const femaleOptions = birds.filter(b => b.sex === 'female');
+
+        const createSelect = (name, options) => {
+            let html = `<select name="ped_${name}" class="form-select form-select-sm"><option value="">${none}</option>`;
+            options.forEach(b => { html += `<option value="${b.id}">${makeBirdOption(b)}</option>`; });
+            html += '</select>';
+            return html;
+        };
+
+        // 14枠の定義（関係ラベル付き）
+        const pedigreeSlots = [
+            { key: 'sire', label: isJa ? '父 ♂' : 'Sire ♂', sex: 'male' },
+            { key: 'dam', label: isJa ? '母 ♀' : 'Dam ♀', sex: 'female' },
+            { key: 'sire_sire', label: isJa ? '父方祖父 ♂' : 'Paternal G.Sire ♂', sex: 'male' },
+            { key: 'sire_dam', label: isJa ? '父方祖母 ♀' : 'Paternal G.Dam ♀', sex: 'female' },
+            { key: 'dam_sire', label: isJa ? '母方祖父 ♂' : 'Maternal G.Sire ♂', sex: 'male' },
+            { key: 'dam_dam', label: isJa ? '母方祖母 ♀' : 'Maternal G.Dam ♀', sex: 'female' },
+            { key: 'sire_sire_sire', label: isJa ? '父父父 ♂' : 'Pat. GG.Sire ♂', sex: 'male' },
+            { key: 'sire_sire_dam', label: isJa ? '父父母 ♀' : 'Pat. GG.Dam ♀', sex: 'female' },
+            { key: 'sire_dam_sire', label: isJa ? '父母父 ♂' : 'Pat. GM.Sire ♂', sex: 'male' },
+            { key: 'sire_dam_dam', label: isJa ? '父母母 ♀' : 'Pat. GM.Dam ♀', sex: 'female' },
+            { key: 'dam_sire_sire', label: isJa ? '母父父 ♂' : 'Mat. GG.Sire ♂', sex: 'male' },
+            { key: 'dam_sire_dam', label: isJa ? '母父母 ♀' : 'Mat. GG.Dam ♀', sex: 'female' },
+            { key: 'dam_dam_sire', label: isJa ? '母母父 ♂' : 'Mat. GM.Sire ♂', sex: 'male' },
+            { key: 'dam_dam_dam', label: isJa ? '母母母 ♀' : 'Mat. GM.Dam ♀', sex: 'female' },
+        ];
+
+        container.innerHTML = pedigreeSlots.map(slot => {
+            const options = slot.sex === 'male' ? maleOptions : femaleOptions;
+            return `<div class="form-group form-group-sm"><label class="form-label form-label-sm">${slot.label}</label>${createSelect(slot.key, options)}</div>`;
+        }).join('');
+    },
+
     closeInputModal() { const modal = document.getElementById('birdInputModal'); if (modal) modal.classList.remove('active'); },
 
     saveBirdInput(event) {
@@ -479,7 +538,13 @@ const FamilyMap = {
         const phenotype = { baseColor: form.elements['bird_baseColor'].value, darkness: form.elements['bird_darkness'].value, eyeColor: form.elements['bird_eyeColor'].value };
         const geneticError = this.checkGeneticConsistency(position, phenotype, genotype);
         if (geneticError) { alert(geneticError); return; }
-        const bird = { sex: sex, name: inputName, phenotype: phenotype, genotype: genotype, tentativeGeno: {} };
+        // v7.0: 血統データを取得（14枠）
+        const pedigree = {};
+        ['sire', 'dam', 'sire_sire', 'sire_dam', 'dam_sire', 'dam_dam', 'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam', 'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'].forEach(key => { const el = form.elements['ped_' + key]; pedigree[key] = (el && el.value) ? el.value : null; });
+        // v7.0: 血統整合性チェック（遺伝的に不可能な親子関係を検出）
+        const pedigreeError = this.checkPedigreeConsistency(phenotype, genotype, pedigree);
+        if (pedigreeError) { alert(pedigreeError); return; }
+        const bird = { sex: sex, name: inputName, phenotype: phenotype, genotype: genotype, pedigree: pedigree, tentativeGeno: {} };
         if (position === 'sire' || position === 'dam') {
             const otherParent = position === 'sire' ? this.data.dam : this.data.sire;
             if (otherParent) {
@@ -744,6 +809,76 @@ const FamilyMap = {
         const results = new Set();
         for (const fa of fAlleles) { for (const ma of mAlleles) { const pair = [fa, ma].sort().join(''); if (pair === '++') results.add('++'); else if (pair === '+aq') results.add('+aq'); else if (pair === 'aqaq') results.add('aqaq'); else if (pair === '+tq') results.add('+tq'); else if (pair === 'aqtq') results.add('tqaq'); else if (pair === 'tqtq') results.add('tqtq'); } }
         return Array.from(results);
+    },
+
+    /**
+     * v7.0: 血統整合性チェック
+     * 親子関係が遺伝的に可能かどうかを検証
+     */
+    checkPedigreeConsistency(childPhenotype, childGenotype, pedigree) {
+        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        if (typeof BirdDB === 'undefined') return null;
+
+        const sireId = pedigree.sire;
+        const damId = pedigree.dam;
+        if (!sireId && !damId) return null; // 親が未設定なら検証不要
+
+        const sire = sireId ? BirdDB.getBird(sireId) : null;
+        const dam = damId ? BirdDB.getBird(damId) : null;
+
+        // 両親が揃っている場合のみ遺伝整合性をチェック
+        if (sire && dam) {
+            const getParblue = (bird) => {
+                if (bird.genotype?.parblue) return bird.genotype.parblue;
+                const c = bird.phenotype?.baseColor || 'green';
+                if (['aqua', 'aqua_dark', 'aqua_olive', 'creamino'].includes(c)) return 'aqaq';
+                if (['turquoise', 'turquoise_dark', 'turquoise_olive', 'pure_white'].includes(c)) return 'tqtq';
+                if (['seagreen', 'seagreen_dark', 'seagreen_olive', 'creamino_seagreen'].includes(c)) return 'tqaq';
+                return '++';
+            };
+
+            const getIno = (bird, sex) => {
+                if (bird.genotype?.ino) return bird.genotype.ino;
+                const c = bird.phenotype?.baseColor || 'green';
+                if (['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(c))
+                    return sex === 'female' ? 'inoW' : 'inoino';
+                if (c.includes('pallid')) return sex === 'female' ? 'pldW' : 'pldpld';
+                return sex === 'female' ? '+W' : '++';
+            };
+
+            const fParblue = getParblue(sire), mParblue = getParblue(dam);
+            const childParblue = childGenotype?.parblue || getParblue({ phenotype: childPhenotype });
+            const possibleParblue = this.getPossibleParblueAlleles(fParblue, mParblue);
+
+            // パーブルー系の整合性チェック
+            if (childParblue === 'aqaq' && !possibleParblue.includes('aqaq') && !possibleParblue.includes('+aq')) {
+                return isJa ? '⚠️ この親の組み合わせからアクア系（aqaq）は生まれません。血統を確認してください。'
+                           : '⚠️ Aqua (aqaq) cannot be produced from this parent combination. Please check pedigree.';
+            }
+            if (childParblue === 'tqtq' && !possibleParblue.includes('tqtq') && !possibleParblue.includes('+tq')) {
+                return isJa ? '⚠️ この親の組み合わせからターコイズ系（tqtq）は生まれません。血統を確認してください。'
+                           : '⚠️ Turquoise (tqtq) cannot be produced from this parent combination. Please check pedigree.';
+            }
+            if (childParblue === '++' && !possibleParblue.includes('++') && !possibleParblue.includes('+aq') && !possibleParblue.includes('+tq')) {
+                return isJa ? '⚠️ この親の組み合わせからグリーン系（++）は生まれません。血統を確認してください。'
+                           : '⚠️ Green (++) cannot be produced from this parent combination. Please check pedigree.';
+            }
+
+            // INO系の整合性チェック（伴性遺伝）
+            const fIno = getIno(sire, 'male'), mIno = getIno(dam, 'female');
+            const childC = childPhenotype?.baseColor || 'green';
+            const childIsIno = ['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(childC);
+
+            if (childIsIno) {
+                const fatherHasIno = fIno.includes('ino');
+                if (!fatherHasIno) {
+                    return isJa ? '⚠️ INO系（ルチノー等）の子が生まれるには父がino遺伝子を持っている必要があります。血統を確認してください。'
+                               : '⚠️ INO offspring requires father to carry ino gene. Please check pedigree.';
+                }
+            }
+        }
+
+        return null;
     },
 
     analyzeInbreeding() {

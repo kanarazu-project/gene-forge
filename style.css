@@ -698,6 +698,64 @@ textarea {
     border-bottom: 1px solid var(--border-subtle);
 }
 
+.section-title.clickable {
+    cursor: pointer;
+    user-select: none;
+}
+
+.section-title.clickable:hover {
+    color: var(--magenta-glow);
+}
+
+/* v7.0: 血統入力セクション */
+.pedigree-section {
+    margin: var(--space-md) 0;
+}
+
+.pedigree-section summary {
+    list-style: none;
+}
+
+.pedigree-section summary::-webkit-details-marker {
+    display: none;
+}
+
+.pedigree-section summary::before {
+    content: '▶ ';
+    font-size: 0.75rem;
+}
+
+.pedigree-section[open] summary::before {
+    content: '▼ ';
+}
+
+.pedigree-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-sm);
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+}
+
+.form-group-sm {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.form-label-sm {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-tertiary);
+}
+
+.form-select-sm {
+    padding: 0.4rem 0.6rem;
+    font-size: 0.75rem;
+}
+
 /* ========================================
    SEARCH BAR
    ======================================== */
