@@ -327,9 +327,92 @@ function updateParentSelectors() {
     }
 }
 
+/**
+ * v7.0: 親子の遺伝整合性チェック
+ * 子の表現型が親の組み合わせから生まれ得るかを検証
+ */
+function checkPedigreeConsistency(childBaseColor, childGenotype, sire, dam) {
+    const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+
+    // 親の遺伝情報を取得
+    const getParblue = (bird) => {
+        if (bird.genotype?.parblue) return bird.genotype.parblue;
+        const c = bird.phenotype?.baseColor || bird.phenotype || 'green';
+        if (['aqua', 'aqua_dark', 'aqua_olive', 'creamino'].includes(c)) return 'aqaq';
+        if (['turquoise', 'turquoise_dark', 'turquoise_olive', 'pure_white'].includes(c)) return 'tqtq';
+        if (['seagreen', 'seagreen_dark', 'seagreen_olive', 'creamino_seagreen'].includes(c)) return 'tqaq';
+        return '++';
+    };
+
+    const getIno = (bird, sex) => {
+        if (bird.genotype?.ino) return bird.genotype.ino;
+        const c = bird.phenotype?.baseColor || bird.phenotype || 'green';
+        if (['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(c))
+            return sex === 'female' ? 'inoW' : 'inoino';
+        if (String(c).includes('pallid')) return sex === 'female' ? 'pldW' : 'pldpld';
+        return sex === 'female' ? '+W' : '++';
+    };
+
+    const getPossibleParblue = (fParblue, mParblue) => {
+        const getAlleles = (geno) => {
+            if (geno === '++') return ['+', '+'];
+            if (geno === '+aq' || geno === 'aq+') return ['+', 'aq'];
+            if (geno === 'aqaq') return ['aq', 'aq'];
+            if (geno === '+tq' || geno === 'tq+') return ['+', 'tq'];
+            if (geno === 'tqtq') return ['tq', 'tq'];
+            if (geno === 'tqaq' || geno === 'aqtq') return ['tq', 'aq'];
+            return ['+', '+'];
+        };
+        const fAlleles = getAlleles(fParblue), mAlleles = getAlleles(mParblue);
+        const results = new Set();
+        for (const fa of fAlleles) {
+            for (const ma of mAlleles) {
+                const pair = [fa, ma].sort().join('');
+                if (pair === '++') results.add('++');
+                else if (pair === '+aq') results.add('+aq');
+                else if (pair === 'aqaq') results.add('aqaq');
+                else if (pair === '+tq') results.add('+tq');
+                else if (pair === 'aqtq') results.add('tqaq');
+                else if (pair === 'tqtq') results.add('tqtq');
+            }
+        }
+        return Array.from(results);
+    };
+
+    const fParblue = getParblue(sire), mParblue = getParblue(dam);
+    const fIno = getIno(sire, 'male');
+    const possibleParblue = getPossibleParblue(fParblue, mParblue);
+
+    // 子のパーブルー系を判定
+    const childParblue = childGenotype?.parblue || getParblue({ phenotype: { baseColor: childBaseColor } });
+
+    // パーブルー系チェック
+    if (childParblue === 'aqaq' && !possibleParblue.includes('aqaq') && !possibleParblue.includes('+aq')) {
+        return isJa ? '❌ この親の組み合わせからアクア系（aqaq）は生まれません。血統を確認してください。'
+                    : '❌ Aqua (aqaq) cannot be produced from this parent combination.';
+    }
+    if (childParblue === 'tqtq' && !possibleParblue.includes('tqtq') && !possibleParblue.includes('+tq')) {
+        return isJa ? '❌ この親の組み合わせからターコイズ系（tqtq）は生まれません。血統を確認してください。'
+                    : '❌ Turquoise (tqtq) cannot be produced from this parent combination.';
+    }
+    if (childParblue === '++' && !possibleParblue.includes('++') && !possibleParblue.includes('+aq') && !possibleParblue.includes('+tq')) {
+        return isJa ? '❌ この親の組み合わせからグリーン系（++）は生まれません。血統を確認してください。'
+                    : '❌ Green (++) cannot be produced from this parent combination.';
+    }
+
+    // INO系チェック（伴性遺伝）
+    const childIsIno = ['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(childBaseColor);
+    if (childIsIno && !fIno.includes('ino')) {
+        return isJa ? '❌ INO系（ルチノー等）は父がino遺伝子を持っていないと生まれません。血統を確認してください。'
+                    : '❌ INO offspring requires father to carry ino gene.';
+    }
+
+    return null; // エラーなし
+}
+
 function saveBird(event) {
     event.preventDefault();
-    
+
     const name = document.getElementById('birdName').value.trim();
     const sex = document.getElementById('birdSex').value;
     
@@ -358,6 +441,21 @@ function saveBird(event) {
     // 後方互換: sire/damオブジェクトも維持
     const sireId = pedigree.sire;
     const damId = pedigree.dam;
+
+    // v7.0: 親子の遺伝整合性チェック（両親が設定されている場合）
+    if (sireId && damId) {
+        const sire = BirdDB.getBird(sireId);
+        const dam = BirdDB.getBird(damId);
+
+        if (sire && dam) {
+            const childBaseColor = document.querySelector('[name="bird_baseColor"]')?.value || 'green';
+            const error = checkPedigreeConsistency(childBaseColor, genotype, sire, dam);
+            if (error) {
+                alert(error);
+                return;
+            }
+        }
+    }
 
     const birdData = {
         name,
