@@ -564,89 +564,8 @@ const FamilyMap = {
         }
         if (position.startsWith('offspring_')) { const idx = parseInt(position.split('_')[1]); if (!this.data.offspring) this.data.offspring = []; this.data.offspring[idx] = bird; }
         else this.data[position] = bird;
-        // v7.0: 親が配置されたら子の遺伝整合性をチェックし、不可能な子を自動排除
-        if (position === 'sire' || position === 'dam') {
-            this.validateAndPruneOffspring();
-        }
         this.closeInputModal();
         this.renderUI();
-    },
-
-    /**
-     * v7.0: 子の遺伝整合性を検証し、不可能な子を自動排除
-     */
-    validateAndPruneOffspring() {
-        const sire = this.data.sire;
-        const dam = this.data.dam;
-        if (!sire || !dam || !this.data.offspring || this.data.offspring.length === 0) return;
-
-        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-        const removedNames = [];
-
-        // 親の遺伝情報を取得
-        const getParblue = (bird) => {
-            if (bird.genotype?.parblue) return bird.genotype.parblue;
-            const c = bird.phenotype?.baseColor || 'green';
-            if (['aqua', 'aqua_dark', 'aqua_olive', 'creamino'].includes(c)) return 'aqaq';
-            if (['turquoise', 'turquoise_dark', 'turquoise_olive', 'pure_white'].includes(c)) return 'tqtq';
-            if (['seagreen', 'seagreen_dark', 'seagreen_olive', 'creamino_seagreen'].includes(c)) return 'tqaq';
-            return '++';
-        };
-
-        const getIno = (bird, sex) => {
-            if (bird.genotype?.ino) return bird.genotype.ino;
-            const c = bird.phenotype?.baseColor || 'green';
-            if (['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(c))
-                return sex === 'female' ? 'inoW' : 'inoino';
-            if (c.includes('pallid')) return sex === 'female' ? 'pldW' : 'pldpld';
-            return sex === 'female' ? '+W' : '++';
-        };
-
-        const fParblue = getParblue(sire), mParblue = getParblue(dam);
-        const fIno = getIno(sire, 'male');
-        const possibleParblue = this.getPossibleParblueAlleles(fParblue, mParblue);
-
-        // 各子をチェック
-        this.data.offspring = this.data.offspring.filter((child, idx) => {
-            if (!child || !child.phenotype) return true; // 空の子はスキップ
-
-            const childC = child.phenotype.baseColor || 'green';
-            const childParblue = child.genotype?.parblue || getParblue(child);
-            const childName = child.name || `${isJa ? '子' : 'Child'}${idx + 1}`;
-
-            // パーブルー系チェック
-            let impossible = false;
-            if (childParblue === 'aqaq' && !possibleParblue.includes('aqaq') && !possibleParblue.includes('+aq')) {
-                impossible = true;
-            }
-            if (childParblue === 'tqtq' && !possibleParblue.includes('tqtq') && !possibleParblue.includes('+tq')) {
-                impossible = true;
-            }
-            if (childParblue === '++' && !possibleParblue.includes('++') && !possibleParblue.includes('+aq') && !possibleParblue.includes('+tq')) {
-                impossible = true;
-            }
-
-            // INO系チェック（伴性遺伝）
-            const childIsIno = ['lutino', 'creamino', 'pure_white', 'creamino_seagreen'].includes(childC);
-            if (childIsIno) {
-                const fatherHasIno = fIno.includes('ino');
-                if (!fatherHasIno) impossible = true;
-            }
-
-            if (impossible) {
-                removedNames.push(childName);
-                return false; // 排除
-            }
-            return true; // 維持
-        });
-
-        // 排除された子を通知
-        if (removedNames.length > 0) {
-            const msg = isJa
-                ? `⚠️ 遺伝的にあり得ない子を排除しました:\n${removedNames.join(', ')}`
-                : `⚠️ Removed genetically impossible offspring:\n${removedNames.join(', ')}`;
-            alert(msg);
-        }
     },
 
     addOffspring() {
@@ -698,8 +617,6 @@ const FamilyMap = {
                 const birdData = { id: selected.id, dbId: selected.id, name: selected.name || '', sex: selected.sex, phenotype: typeof selected.phenotype === 'string' ? { baseColor: selected.phenotype } : (selected.observed || selected.phenotype || { baseColor: 'green' }), genotype: selected.genotype || {}, pedigree: selected.pedigree || {}, fromDB: true };
                 if (position.startsWith('offspring_')) { const offIdx = parseInt(position.split('_')[1]); if (!self.data.offspring) self.data.offspring = []; self.data.offspring[offIdx] = birdData; }
                 else self.data[position] = birdData;
-                // v7.0: 親配置時は子の遺伝整合性チェック
-                if (position === 'sire' || position === 'dam') { self.validateAndPruneOffspring(); }
                 overlay.remove();
                 self.renderUI();
             });
