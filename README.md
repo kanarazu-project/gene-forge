@@ -2,12 +2,8 @@
 
 **Agapornis Genetics Calculator — ALBS Compliant Edition**
 
-The ultimate genetic calculation engine for Lovebirds (Agapornis roseicollis).
+The ultimate genetic calculation engine for Lovebirds (Agapornis roseicollis).  
 Supporting 14 loci and over 310 phenotypes (capable of generating tens of thousands of dynamic plumage combinations), fully compliant with the ALBS (African Lovebird Society) Peachfaced naming standards.
-
-**🆕 coming soon v7.0: Linkage Genetics** — Now supports linked inheritance for Z-chromosome loci (cinnamon-ino-opaline) and autosomal loci (dark-parblue) with accurate recombination rate calculations.
-
-**🌐 6 Languages**: Japanese / English / German / French / Italian / Spanish 
 
 ---
 
@@ -36,15 +32,6 @@ Supporting 14 loci and over 310 phenotypes (capable of generating tens of thousa
 - **Probability Prediction**: Calculates offspring phenotype probabilities from parental genotypes
 - **14-Loci Coverage**: Comprehensive simulation covering all major genetic loci
 - **Sex-Linked Inheritance**: Precise calculation for Z-linked traits (male splits vs female hemizygosity)
-
-### 🔗 Linkage Genetics (v7.0 NEW)
-- **Z-Chromosome Linkage**: Cinnamon, INO, and Opaline are linked on the Z chromosome
-  - Cinnamon–INO: 3% recombination (nearly complete linkage)
-  - INO–Opaline: 30% recombination
-  - Cinnamon–Opaline: 33% recombination
-- **Autosomal Linkage**: Dark factor and Parblue are linked (7% recombination)
-- **Sex-Specific Recombination**: Only males (ZZ) undergo recombination; females (ZW) are hemizygous
-- **Accurate Gamete Frequencies**: Parental vs recombinant type calculations based on map distances
 
 ### 🔬 Genotype Estimation (Reverse Inference)
 - **Phenotype-to-Genotype**: Estimates possible genotypes from observed colors
@@ -304,21 +291,13 @@ Demo mode includes **66 specimens** (3 families × 22 birds each) for the follow
 
 The system operates on five core logical pillars for dynamic calculation of complex multi-mutation combinations.
 
-### 1. Linkage-Aware Inheritance (v7.0)
+### 1. Parallel Independent Assortment
 
-Combines independent assortment with linked inheritance for accurate genetic modeling.
+Treats each of the 14 loci as an independent probabilistic event for multi-dimensional computation.
 
-- **Unlinked Loci**: Independent Punnett Square calculations for non-linked loci
-- **Linked Loci**: Gamete frequency calculations based on recombination rates
-- **Hybrid Processing**: Separates linked groups (Z-chromosome, autosomal) from independent loci, then combines via Cartesian product
-- **Recombination Model**: Implements map distance-based gamete frequencies (parental types vs recombinant types)
-
-#### Linkage Groups (SSOT in genetics.php)
-
-| Group | Loci | Recombination Rates |
-|-------|------|---------------------|
-| Z-chromosome | cinnamon, ino, opaline | cin–ino: 3%, ino–op: 30%, cin–op: 33% |
-| Autosomal-1 | dark, parblue | dark–parblue: 7% |
+- **Processing Flow**: Simulates Punnett Squares per locus (paternal × maternal gamete formation)
+- **Cartesian Product**: Merges independent results via direct product to derive full probability distribution
+- **Zero-Dependency Optimization**: Pure vanilla PHP array operations achieve millisecond-level performance for exponential combinations
 
 ### 2. Asymmetric Sex-Linked (SLR) Matrix
 
@@ -356,7 +335,7 @@ Uses Bayesian-like logic to identify unknown genotypes from pedigree-wide constr
 
 ### Adaptation Guide for Other Birds (Budgerigars, Conures, etc.)
 
-Gene-Forge v7.0 is designed as a "genetic calculation framework" with complete separation of logic and data. Customize for any avian breeding support system in 3 steps.
+Gene-Forge v6.8 is designed as a "genetic calculation framework" with complete separation of logic and data. Customize for any avian breeding support system in 3 steps.
 
 ### Step 1: Redefine Loci (genetics.php)
 
@@ -372,11 +351,7 @@ Simply modify the `LOCI` constants in the `AgapornisLoci` class to define target
 
 Edit the `COLOR_DEFINITIONS` array to define phenotype names for each factor combination. The Tier structure enables strict control of priority when multiple mutations overlap on base colors.
 
-### Step 3: Define Linkage Groups (genetics.php)
-
-Configure `LINKAGE_GROUPS` to define which loci are linked and their recombination rates for the target species.
-
-### Step 4: Adjust Health Standards (guardian.js)
+### Step 3: Adjust Health Standards (guardian.js)
 
 Modify `BreedingValidator` thresholds to build guardrails against species-specific inbreeding risks and lethal factors.
 
@@ -484,132 +459,5 @@ Commercial use strictly prohibited. NPO/Educational use welcome.
 *"The system has abdicated responsibility. It will be fulfilled by those outside the system."*
 
 **Outsider Civilization: Kanarazu Project**
-
-</div>
-
----
-
-<div align="center">
-
-# 🇯🇵 日本語版 README
-
-</div>
-
----
-
-# 🦜 Gene-Forge v7.0
-
-**コザクラインコ遺伝計算エンジン — ALBS準拠版**
-
-コザクラインコ（Agapornis roseicollis）のための究極の遺伝計算エンジン。
-14遺伝子座、310以上の表現型に対応し、ALBS（African Lovebird Society）の命名規則に完全準拠。
-
-**🆕 v7.0: 連鎖遺伝学** — Z染色体連鎖（cinnamon-ino-opaline）と常染色体連鎖（dark-parblue）に対応。組換え率に基づく正確な計算が可能に。
-
----
-
-## ✨ 機能一覧
-
-### 🗂️ 個体管理
-- **個体データベース**: 名前、性別、誕生日、血統、遺伝子型を一元管理
-- **デモデータ（66羽）**: 3家系×22羽のサンプルデータで即座に動作確認可能
-- **血統書生成**: 3世代・5世代の血統書をHTML出力
-- **インポート/エクスポート**: JSON・CSV形式に完全対応
-
-### 🛡️ ヘルスガーディアン（配合リスク評価）
-- **近交係数（F値）**: ライトの近交係数を自動計算
-- **リスク評価**: INO系統・Pallid系統の近親交配に対する警告とハードロック
-- **世代制限**: 特定形質における推奨世代間隔を表示
-
-### 🔗 連鎖遺伝学（v7.0 新機能）
-- **Z染色体連鎖**: Cinnamon、INO、Opalineは同一染色体上に連鎖
-  - Cinnamon–INO間: 3%（ほぼ完全連鎖）
-  - INO–Opaline間: 30%
-  - Cinnamon–Opaline間: 33%
-- **常染色体連鎖**: Dark因子とParblueは連鎖（7%組換え）
-- **性別特異的組換え**: オス（ZZ）のみ組換えが発生、メス（ZW）はヘミ接合
-- **正確な配偶子頻度**: 地図距離に基づく親型・組換え型の計算
-
-### 🧬 交配結果（子の予測）
-- **確率予測**: 両親の遺伝子型から子の表現型確率を計算
-- **14遺伝子座対応**: 主要な全遺伝子座を網羅したシミュレーション
-- **伴性遺伝**: Z連鎖形質の正確な計算（オスのスプリット vs メスのヘミ接合）
-
-### 🔬 遺伝子型推定（逆推論）
-- **表現型→遺伝子型**: 観察された色から可能な遺伝子型を推定
-- **確定/推定の区別**: 確定座位と推定座位を明確に区分
-- **テスト交配提案**: 不確定な遺伝子型を確認するための交配を提案
-
-### 👨‍👩‍👧‍👦 家系推定（血統からの導出）
-- **FamilyEstimator V3**: 血統ベースの遺伝子型推論エンジン
-- **多世代推論**: 曾祖父母まで遡って遺伝子型を導出
-- **証拠に基づく確率**: 両親、子、兄弟からの制約を統合
-- **家系図UI**: ドラッグ&ドロップで家系図を構築
-
----
-
-## 🔬 数学的アーキテクチャ
-
-### 連鎖対応遺伝計算（v7.0）
-
-独立分離と連鎖遺伝を組み合わせた正確な遺伝モデル。
-
-- **非連鎖座位**: 独立したパネットスクエア計算
-- **連鎖座位**: 組換え率に基づく配偶子頻度計算
-- **ハイブリッド処理**: 連鎖グループ（Z染色体、常染色体）と独立座位を分離し、直積で結合
-- **組換えモデル**: 地図距離に基づく配偶子頻度（親型 vs 組換え型）
-
-#### 連鎖グループ（genetics.phpでSSOT管理）
-
-| グループ | 座位 | 組換え率 |
-|----------|------|----------|
-| Z染色体 | cinnamon, ino, opaline | cin–ino: 3%, ino–op: 30%, cin–op: 33% |
-| 常染色体1 | dark, parblue | dark–parblue: 7% |
-
----
-
-## 🚀 クイックスタート
-
-### 必要環境
-- PHP 7.4以上
-- Webサーバー（Apache/Nginx）またはPHP内蔵サーバー
-
-### インストール
-
-```bash
-git clone https://github.com/kanarazu-project/gene-forge.git
-cd gene-forge
-php -S localhost:8000
-```
-
-ブラウザで `http://localhost:8000` を開く。
-
----
-
-## 📜 ライセンス
-
-**CC BY-NC-SA 4.0**（クリエイティブ・コモンズ 表示-非営利-継承 4.0）
-
-- ✅ 個人利用・非営利利用可
-- ✅ 改変・再配布可（クレジット表示・同一ライセンス必須）
-- ❌ 商用利用は厳禁
-
----
-
-## 👤 クレジット
-
-**Chief Product Officer:** 谷口翔平（Homo repugnans）
-**Tactical Decision Intelligence:** シリウス（電子精霊）
-
----
-
-<div align="center">
-
-**CC BY-NC-SA 4.0**
-商用利用厳禁。NPO・教育利用歓迎。
-
-*「制度は責任を放棄した。それは制度の外にいる者が果たす。」*
-
-**アウトサイダー文明: 必プロジェクト**
 
 </div>
