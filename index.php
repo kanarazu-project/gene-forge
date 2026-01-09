@@ -1306,14 +1306,29 @@ $mPh = $_POST['m_ph'] ?? '++';
                         <div class="output-header"><span class="output-title">🧬 <?= t('estimation_result') ?></span></div>
                         <?php foreach($result['loci'] as $l): ?>
 <?php
-    $bgColor = $l['isConfirmed'] ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
-    $borderLeft = $l['isConfirmed'] ? '3px solid #4ecdc4' : '3px solid #555';
     $confidenceVal = $l['confidence'] ?? ($l['isConfirmed'] ? 100 : 0);
-    $confidenceLabel = $l['isConfirmed'] ? '✓ 確定' : '? 推定';
+    $isKnown = $confidenceVal > 0 || $l['isConfirmed'];
+    // 確定: 緑背景、判明: 通常、不明: グレーアウト
+    if ($l['isConfirmed']) {
+        $bgColor = 'rgba(78,205,196,0.15)';
+        $borderLeft = '3px solid #4ecdc4';
+        $textColor = '#4ecdc4';
+        $valueColor = '#e0e0e0';
+        $confidenceLabel = '✓ 確定';
+    } elseif (!$isKnown) {
+        // 0%は完全に不明 - 表示しない（スキップ）
+        continue;
+    } else {
+        $bgColor = 'rgba(255,255,255,0.03)';
+        $borderLeft = '3px solid #555';
+        $textColor = '#4ecdc4';
+        $valueColor = '#e0e0e0';
+        $confidenceLabel = '? 推定';
+    }
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
-    <strong style="color:#4ecdc4;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
-    <span style="color:#e0e0e0;"><?= htmlspecialchars($l['genotype']) ?></span>
+    <strong style="color:<?= $textColor ?>;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
+    <span style="color:<?= $valueColor ?>;"><?= htmlspecialchars($l['genotype']) ?></span>
     <span style="font-size:0.75rem;color:#888;margin-left:0.5rem;"><?= $confidenceLabel ?> (<?= $confidenceVal ?>%)</span>
 </div>
 <?php endforeach; ?>
