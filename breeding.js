@@ -20,7 +20,7 @@
  */
 
 const BreedingEngine = {
-    VERSION: '7.0',
+    VERSION: '7.0.0',
 
     // v7.0: 連鎖計算を有効化するフラグ
     useLinkage: true,

@@ -904,10 +904,11 @@ const GeneticsEngine = {
         if (typeof LINKAGE_GROUPS !== 'undefined') {
             return LINKAGE_GROUPS;
         }
-        // フォールバック定義
+        // フォールバック定義（PHP LINKAGE_GROUPS と同構造）
         return {
             Z_chromosome: {
                 loci: ['cinnamon', 'ino', 'opaline'],
+                locus_order: ['cinnamon', 'ino', 'opaline'],
                 recombination: {
                     cinnamon_ino: 0.03,
                     ino_opaline: 0.30,
@@ -916,6 +917,7 @@ const GeneticsEngine = {
             },
             autosomal_1: {
                 loci: ['dark', 'parblue'],
+                locus_order: ['dark', 'parblue'],
                 recombination: {
                     dark_parblue: 0.07,
                 },
