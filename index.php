@@ -1305,15 +1305,16 @@ $mPh = $_POST['m_ph'] ?? '++';
                     <div class="output-panel" style="margin-top:1rem;">
                         <div class="output-header"><span class="output-title">🧬 <?= t('estimation_result') ?></span></div>
                         <?php foreach($result['loci'] as $l): ?>
-<?php 
+<?php
     $bgColor = $l['isConfirmed'] ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
     $borderLeft = $l['isConfirmed'] ? '3px solid #4ecdc4' : '3px solid #555';
+    $confidenceVal = $l['confidence'] ?? ($l['isConfirmed'] ? 100 : 0);
     $confidenceLabel = $l['isConfirmed'] ? '✓ 確定' : '? 推定';
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
     <strong style="color:#4ecdc4;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
     <span style="color:#e0e0e0;"><?= htmlspecialchars($l['genotype']) ?></span>
-    <span style="font-size:0.75rem;color:#888;margin-left:0.5rem;"><?= $confidenceLabel ?></span>
+    <span style="font-size:0.75rem;color:#888;margin-left:0.5rem;"><?= $confidenceLabel ?> (<?= $confidenceVal ?>%)</span>
 </div>
 <?php endforeach; ?>
 
