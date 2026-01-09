@@ -248,40 +248,41 @@ const BirdDB = {
             'Yolanda', 'Zara', 'Amy', 'Beth', 'Cara', 'Dina', 'Eva', 'Gwen'
         ];
         
+        // v7.0: ALBS標準名を全言語共通で使用
         const colors = [
-            { key: 'green', name: 'グリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd' },
-            { key: 'darkgreen', name: 'ダークグリーン', eye: 'black', parblue: '++', ino: '++', dark: 'Dd' },
-            { key: 'olive', name: 'オリーブ', eye: 'black', parblue: '++', ino: '++', dark: 'DD' },
-            { key: 'aqua', name: 'アクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd' },
-            { key: 'aqua_dark', name: 'アクアダーク', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'Dd' },
-            { key: 'aqua_dd', name: 'アクアDD', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'DD' },
-            { key: 'turquoise', name: 'ターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd' },
-            { key: 'turquoise_dark', name: 'ターコイズダーク', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'Dd' },
-            { key: 'seagreen', name: 'シーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd' },
-            { key: 'seagreen_dark', name: 'シーグリーンダーク', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'Dd' },
-            { key: 'lutino', name: 'ルチノー', eye: 'red', parblue: '++', ino: 'inoino', dark: 'dd' },
-            { key: 'creamino', name: 'クリーミノ', eye: 'red', parblue: 'aqaq', ino: 'inoino', dark: 'dd' },
-            { key: 'pure_white', name: 'ピュアホワイト', eye: 'red', parblue: 'tqtq', ino: 'inoino', dark: 'dd' },
-            { key: 'creamino_seagreen', name: 'クリーミノシーグリーン', eye: 'red', parblue: 'tqaq', ino: 'inoino', dark: 'dd' },
-            { key: 'pallid_green', name: 'パリッドグリーン', eye: 'black', parblue: '++', ino: 'pldpld', dark: 'dd' },
-            { key: 'pallid_aqua', name: 'パリッドアクア', eye: 'black', parblue: 'aqaq', ino: 'pldpld', dark: 'dd' },
-            { key: 'pallid_turquoise', name: 'パリッドターコイズ', eye: 'black', parblue: 'tqtq', ino: 'pldpld', dark: 'dd' },
-            { key: 'pallid_seagreen', name: 'パリッドシーグリーン', eye: 'black', parblue: 'tqaq', ino: 'pldpld', dark: 'dd' },
+            { key: 'green', name: 'Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd' },
+            { key: 'darkgreen', name: 'Dark Green', eye: 'black', parblue: '++', ino: '++', dark: 'Dd' },
+            { key: 'olive', name: 'Olive', eye: 'black', parblue: '++', ino: '++', dark: 'DD' },
+            { key: 'aqua', name: 'Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd' },
+            { key: 'aqua_dark', name: 'Aqua Dark', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'Dd' },
+            { key: 'aqua_dd', name: 'Aqua DD', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'DD' },
+            { key: 'turquoise', name: 'Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd' },
+            { key: 'turquoise_dark', name: 'Turquoise Dark', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'Dd' },
+            { key: 'seagreen', name: 'Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd' },
+            { key: 'seagreen_dark', name: 'Sea Green Dark', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'Dd' },
+            { key: 'lutino', name: 'Lutino', eye: 'red', parblue: '++', ino: 'inoino', dark: 'dd' },
+            { key: 'creamino', name: 'Creamino', eye: 'red', parblue: 'aqaq', ino: 'inoino', dark: 'dd' },
+            { key: 'pure_white', name: 'Pure White', eye: 'red', parblue: 'tqtq', ino: 'inoino', dark: 'dd' },
+            { key: 'creamino_seagreen', name: 'Creamino Sea Green', eye: 'red', parblue: 'tqaq', ino: 'inoino', dark: 'dd' },
+            { key: 'pallid_green', name: 'Pallid Green', eye: 'black', parblue: '++', ino: 'pldpld', dark: 'dd' },
+            { key: 'pallid_aqua', name: 'Pallid Aqua', eye: 'black', parblue: 'aqaq', ino: 'pldpld', dark: 'dd' },
+            { key: 'pallid_turquoise', name: 'Pallid Turquoise', eye: 'black', parblue: 'tqtq', ino: 'pldpld', dark: 'dd' },
+            { key: 'pallid_seagreen', name: 'Pallid Sea Green', eye: 'black', parblue: 'tqaq', ino: 'pldpld', dark: 'dd' },
             // v7.0: SSOT準拠キー (cinnamon, opaline, fallow_pale, pied_rec)
-            { key: 'cinnamon_green', name: 'シナモングリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'cinnamon_aqua', name: 'シナモンアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'cinnamon_turquoise', name: 'シナモンターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'cinnamon_seagreen', name: 'シナモンシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', cinnamon: true },
-            { key: 'opaline_green', name: 'オパーリングリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', opaline: true },
-            { key: 'opaline_aqua', name: 'オパーリンアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', opaline: true },
-            { key: 'opaline_turquoise', name: 'オパーリンターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', opaline: true },
-            { key: 'opaline_seagreen', name: 'オパーリンシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', opaline: true },
-            { key: 'fallow_green', name: 'フォローグリーン', eye: 'red', parblue: '++', ino: '++', dark: 'dd', fallow_pale: true },
-            { key: 'fallow_aqua', name: 'フォローアクア', eye: 'red', parblue: 'aqaq', ino: '++', dark: 'dd', fallow_pale: true },
-            { key: 'pied_green', name: 'パイドグリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_aqua', name: 'パイドアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_turquoise', name: 'パイドターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', pied_rec: true },
-            { key: 'pied_seagreen', name: 'パイドシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'cinnamon_green', name: 'Cinnamon Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'cinnamon_aqua', name: 'Cinnamon Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'cinnamon_turquoise', name: 'Cinnamon Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'cinnamon_seagreen', name: 'Cinnamon Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'opaline_green', name: 'Opaline Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', opaline: true },
+            { key: 'opaline_aqua', name: 'Opaline Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', opaline: true },
+            { key: 'opaline_turquoise', name: 'Opaline Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', opaline: true },
+            { key: 'opaline_seagreen', name: 'Opaline Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', opaline: true },
+            { key: 'fallow_green', name: 'Fallow Green', eye: 'red', parblue: '++', ino: '++', dark: 'dd', fallow_pale: true },
+            { key: 'fallow_aqua', name: 'Fallow Aqua', eye: 'red', parblue: 'aqaq', ino: '++', dark: 'dd', fallow_pale: true },
+            { key: 'pied_green', name: 'Pied Green', eye: 'black', parblue: '++', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_aqua', name: 'Pied Aqua', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_turquoise', name: 'Pied Turquoise', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_seagreen', name: 'Pied Sea Green', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', pied_rec: true },
         ];
         
         let idCounter = 1;
@@ -329,7 +330,7 @@ const BirdDB = {
                         phase: 'independent',
                         phenotype: color.name,
                         inbreedingGen: 0,
-                        notes: `デモ用サンプル個体 (${color.name})`,
+                        notes: `Demo specimen (${color.name})`,
                         createdAt: now,
                         updatedAt: now
                     });
@@ -502,7 +503,7 @@ const BirdDB = {
         };
         
         return {
-            name: 'デモ家系図（希少色ファミリー）',
+            name: 'Demo Pedigree (Rare Color Family)',
             savedAt: new Date().toISOString(),
             // 曽祖父母
             sire_sire_sire: toBirdData(cfg.greatGrandparents.sire_sire_sire.id),
@@ -838,56 +839,58 @@ const BirdDB = {
         return match ? match[1] : 'ja';
     },
 
-    // 特性ラベルを取得（パーツ用）
+    // 特性ラベルを取得（パーツ用）- ALBS標準名を使用
     _getTraitLabel(key, lang) {
+        // v7.0: ALBS標準名を全言語共通で使用
         const traits = {
-            pallid: lang === 'ja' ? 'パリッド' : 'Pallid',
-            opaline: lang === 'ja' ? 'オパーリン' : 'Opaline',
-            cinnamon: lang === 'ja' ? 'シナモン' : 'Cinnamon',
-            fallow: lang === 'ja' ? 'フォロー' : 'Fallow',
-            pied: lang === 'ja' ? 'パイド' : 'Pied',
-            lutino: lang === 'ja' ? 'ルチノー' : 'Lutino',
-            creamino: lang === 'ja' ? 'クリーミノ' : 'Creamino',
-            pure_white: lang === 'ja' ? 'ピュアホワイト' : 'Pure White',
-            creamino_seagreen: lang === 'ja' ? 'クリーミノシーグリーン' : 'Creamino Sea Green',
+            pallid: 'Pallid',
+            opaline: 'Opaline',
+            cinnamon: 'Cinnamon',
+            fallow: 'Fallow',
+            pied: 'Pied',
+            lutino: 'Lutino',
+            creamino: 'Creamino',
+            pure_white: 'Pure White',
+            creamino_seagreen: 'Creamino Sea Green',
         };
         return traits[key] || key;
     },
 
-    getColorLabel(colorKey, lang = 'ja') {
+    // v7.0: ALBS標準名を全言語共通で使用
+    getColorLabel(colorKey, lang = 'en') {
         const labels = {
-            green: lang === 'ja' ? 'グリーン' : 'Green',
-            darkgreen: lang === 'ja' ? 'ダークグリーン' : 'Dark Green',
-            olive: lang === 'ja' ? 'オリーブ' : 'Olive',
-            aqua: lang === 'ja' ? 'アクア' : 'Aqua',
-            aqua_dark: lang === 'ja' ? 'アクアダーク' : 'Aqua Dark',
-            aqua_dd: lang === 'ja' ? 'アクアDD' : 'Aqua DD',
-            turquoise: lang === 'ja' ? 'ターコイズ' : 'Turquoise',
-            turquoise_dark: lang === 'ja' ? 'ターコイズダーク' : 'Turquoise Dark',
-            seagreen: lang === 'ja' ? 'シーグリーン' : 'Sea Green',
-            seagreen_dark: lang === 'ja' ? 'シーグリーンダーク' : 'Sea Green Dark',
-            lutino: lang === 'ja' ? 'ルチノー' : 'Lutino',
-            creamino: lang === 'ja' ? 'クリーミノ' : 'Creamino',
-            pure_white: lang === 'ja' ? 'ピュアホワイト' : 'Pure White',
-            creamino_seagreen: lang === 'ja' ? 'クリーミノシーグリーン' : 'Creamino Sea Green',
-            pallid_green: lang === 'ja' ? 'パリッドグリーン' : 'Pallid Green',
-            pallid_aqua: lang === 'ja' ? 'パリッドアクア' : 'Pallid Aqua',
-            pallid_turquoise: lang === 'ja' ? 'パリッドターコイズ' : 'Pallid Turquoise',
-            pallid_seagreen: lang === 'ja' ? 'パリッドシーグリーン' : 'Pallid Sea Green',
-            cinnamon_green: lang === 'ja' ? 'シナモングリーン' : 'Cinnamon Green',
-            cinnamon_aqua: lang === 'ja' ? 'シナモンアクア' : 'Cinnamon Aqua',
-            cinnamon_turquoise: lang === 'ja' ? 'シナモンターコイズ' : 'Cinnamon Turquoise',
-            cinnamon_seagreen: lang === 'ja' ? 'シナモンシーグリーン' : 'Cinnamon Sea Green',
-            opaline_green: lang === 'ja' ? 'オパーリングリーン' : 'Opaline Green',
-            opaline_aqua: lang === 'ja' ? 'オパーリンアクア' : 'Opaline Aqua',
-            opaline_turquoise: lang === 'ja' ? 'オパーリンターコイズ' : 'Opaline Turquoise',
-            opaline_seagreen: lang === 'ja' ? 'オパーリンシーグリーン' : 'Opaline Sea Green',
-            fallow_green: lang === 'ja' ? 'フォローグリーン' : 'Fallow Green',
-            fallow_aqua: lang === 'ja' ? 'フォローアクア' : 'Fallow Aqua',
-            pied_green: lang === 'ja' ? 'パイドグリーン' : 'Pied Green',
-            pied_aqua: lang === 'ja' ? 'パイドアクア' : 'Pied Aqua',
-            pied_turquoise: lang === 'ja' ? 'パイドターコイズ' : 'Pied Turquoise',
-            pied_seagreen: lang === 'ja' ? 'パイドシーグリーン' : 'Pied Sea Green',
+            green: 'Green',
+            darkgreen: 'Dark Green',
+            olive: 'Olive',
+            aqua: 'Aqua',
+            aqua_dark: 'Aqua Dark',
+            aqua_dd: 'Aqua DD',
+            turquoise: 'Turquoise',
+            turquoise_dark: 'Turquoise Dark',
+            seagreen: 'Sea Green',
+            seagreen_dark: 'Sea Green Dark',
+            lutino: 'Lutino',
+            creamino: 'Creamino',
+            pure_white: 'Pure White',
+            creamino_seagreen: 'Creamino Sea Green',
+            pallid_green: 'Pallid Green',
+            pallid_aqua: 'Pallid Aqua',
+            pallid_turquoise: 'Pallid Turquoise',
+            pallid_seagreen: 'Pallid Sea Green',
+            cinnamon_green: 'Cinnamon Green',
+            cinnamon_aqua: 'Cinnamon Aqua',
+            cinnamon_turquoise: 'Cinnamon Turquoise',
+            cinnamon_seagreen: 'Cinnamon Sea Green',
+            opaline_green: 'Opaline Green',
+            opaline_aqua: 'Opaline Aqua',
+            opaline_turquoise: 'Opaline Turquoise',
+            opaline_seagreen: 'Opaline Sea Green',
+            fallow_green: 'Fallow Green',
+            fallow_aqua: 'Fallow Aqua',
+            pied_green: 'Pied Green',
+            pied_aqua: 'Pied Aqua',
+            pied_turquoise: 'Pied Turquoise',
+            pied_seagreen: 'Pied Sea Green',
         };
         return labels[colorKey] || colorKey || '?';
     },
@@ -966,8 +969,8 @@ const BirdDB = {
         });
 
         let warningLevel;
-        if (ic >= 0.25) warningLevel = { level: 'danger', message: '危険: 近交係数25%以上' };
-        else if (ic >= 0.125) warningLevel = { level: 'warning', message: '警告: 近交係数12.5%以上' };
+        if (ic >= 0.25) warningLevel = { level: 'danger', message: 'Danger: Inbreeding coefficient ≥25%' };
+        else if (ic >= 0.125) warningLevel = { level: 'warning', message: 'Warning: Inbreeding coefficient ≥12.5%' };
         else warningLevel = { level: 'safe', message: null };
 
         return { coefficient: ic, warningLevel };
@@ -1004,7 +1007,7 @@ const BirdDB = {
         try {
             const imported = JSON.parse(jsonString);
             if (!imported.birds || !Array.isArray(imported.birds)) {
-                return { success: false, error: '無効なデータ形式です' };
+                return { success: false, error: 'Invalid data format' };
             }
             const currentData = this.load() || { birds: [], breedingResults: [], version: this.VERSION };
             imported.birds = imported.birds.map(bird => this.migrateBird(bird));
