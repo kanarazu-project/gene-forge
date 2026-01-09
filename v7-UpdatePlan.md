@@ -13,6 +13,102 @@ v7.0では、現在の独立分離仮定を**連鎖遺伝モデル**に置き換
 
 ---
 
+## 影響範囲（双方向 + 経路探索）
+
+連鎖遺伝と相は、以下の **4つの計算エンジン全て** に影響する:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                  v7 Linkage: 影響範囲                            │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  [1] GeneticsCalculator      [2] FamilyEstimatorV3              │
+│      親→子 計算                   子→親 推論                     │
+│      ─────────────               ─────────────                  │
+│      親の相から配偶子確率を計算    子の分布から親の相を逆推論     │
+│                                                                  │
+│  [3] PathFinder              [4] Planner                        │
+│      目標への経路探索              最適ペア選定                   │
+│      ─────────────               ─────────────                  │
+│      相を考慮した世代数計算        手持ち個体の相を評価           │
+│                                                                  │
+│  ┌─────────────────────────────────────────────────────────────┐│
+│  │              共通: GametesGenerator                          ││
+│  │                                                              ││
+│  │  入力: ハプロタイプ構成 + 相(Phase) + 組み換え率              ││
+│  │  出力: 配偶子確率分布                                         ││
+│  └─────────────────────────────────────────────────────────────┘│
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### [1] 親→子 (GeneticsCalculator)
+
+親の相から子の表現型確率を計算。
+
+```
+Cis [cin-ino]/[+  +  ] × Normal
+→ Lacewing子: 48.5% (cin-ino一緒に遺伝)
+
+Trans [cin +]/[+ ino] × Normal
+→ Lacewing子: 1.5% (組み換えでしか揃わない)
+```
+
+### [2] 子→親 (FamilyEstimatorV3)
+
+子の表現型分布から親の相を逆推論。
+
+```
+子10羽中:
+  - Lacewing 5羽 (50%)
+  - Cinnamon 0羽
+  - INO 0羽
+→ 親はCis配置の可能性が高い (Lacewingが多すぎる)
+
+子10羽中:
+  - Lacewing 0羽
+  - Cinnamon 5羽 (50%)
+  - INO 5羽 (50%)
+→ 親はTrans配置の可能性が高い
+```
+
+### [3] 経路探索 (PathFinder)
+
+目標表現型への最短経路を相を考慮して計算。
+
+```
+目標: Lacewing (シナモンイノ)
+
+ルートA: Cis個体が手に入る場合
+  → Green/cin-ino (Cis) × Cin♀ = 1世代でLacewing♀ (48.5%)
+
+ルートB: Trans個体しかいない場合
+  → Green/cin,ino (Trans) × Cin♀ = 1世代でLacewing♀ (1.5%)
+  → 統計的に確実に得るには複数世代必要
+```
+
+### [4] 最適ペア選定 (Planner)
+
+手持ち個体の相を評価し、最適なペアを推奨。
+
+```
+手持ち:
+  ♂A: Green/cin-ino (Cis)   ← 優先使用
+  ♂B: Green/cin,ino (Trans) ← 効率悪い
+  ♀C: Cinnamon
+
+目標: Lacewing
+
+推奨: ♂A × ♀C
+  - 1世代で48.5%の確率でLacewing♀
+  - 期待羽数: 2.1羽で1羽のLacewing
+
+非推奨: ♂B × ♀C
+  - 1世代で1.5%の確率でしかLacewing♀
+  - 期待羽数: 67羽で1羽のLacewing
+```
+
+---
+
 ## 出典
 
 **Lovebirds Compendium: Genus Agapornis**
@@ -249,29 +345,55 @@ cin-ino-op の3座位が絡む場合、2重組み換えも考慮。
 
 ## 実装フェーズ
 
-### Phase 1: データ構造移行
+### Phase 1: データ構造移行（SSOT）
 - [ ] genetics.php に LINKAGE_GROUPS 定数追加
-- [ ] birds.js のデータ構造を新形式に移行
+- [ ] genetics.php に RECOMBINATION_RATES 定数追加
+- [ ] birds.js のデータ構造を新形式に移行（Z_linked, autosomal_1）
 - [ ] 既存データのマイグレーション関数作成
 
-### Phase 2: 計算ロジック実装
+### Phase 2: 共通エンジン実装
+- [ ] GametesGenerator クラス新規作成
+  - [ ] generateFromHaplotype() - ハプロタイプから配偶子確率分布
+  - [ ] applyRecombination() - 組み換え率適用
+  - [ ] handleDoubleRecombination() - 二重組み換え処理
+- [ ] 配偶子生成の単体テスト
+
+### Phase 3: 親→子 計算 (GeneticsCalculator)
 - [ ] calcLinkedSLR_Male() 新規作成（3座位同時処理）
 - [ ] calcLinkedSLR_Female() 新規作成
 - [ ] calcLinkedAutosomal() 新規作成（dark-parblue）
 - [ ] calculateOffspring() の改修
+- [ ] 計算結果の検証（文献値との照合）
 
-### Phase 3: UI実装
+### Phase 4: 子→親 推論 (FamilyEstimatorV3)
+- [ ] 相の推論ロジック追加
+- [ ] 子の表現型分布からの相の逆推論
+- [ ] 表現型からの自動判定（Lacewing→Cis確定等）
+- [ ] 信頼度計算の更新
+
+### Phase 5: 経路探索 (PathFinder)
+- [ ] 相を考慮した経路コスト計算
+- [ ] Cis/Trans別の世代数推定
+- [ ] 「Cis個体入手」を中間ステップとして提案
+- [ ] 期待羽数（何羽で目標が得られるか）の計算
+
+### Phase 6: 最適ペア選定 (Planner)
+- [ ] 手持ち個体の相を評価
+- [ ] 相に基づくペアリングスコア計算
+- [ ] 「Cis個体を優先使用」の推奨ロジック
+- [ ] 不明な相の場合の両方向計算
+
+### Phase 7: UI実装
 - [ ] index.php に相の入力UI追加
-- [ ] 手動指定モードの実装
-- [ ] 家系推論モードの実装
+- [ ] 手動指定モード（Z1/Z2のドロップダウン）
+- [ ] 家系推論モード（ボタンで推論結果を反映）
+- [ ] 相の表示（Cis/Trans のビジュアル表現）
 
-### Phase 4: 推論エンジン拡張
-- [ ] FamilyEstimatorV3 に相の推論ロジック追加
-- [ ] 表現型からの自動判定ロジック
-
-### Phase 5: テストとリリース
-- [ ] テストケース作成・実行
+### Phase 8: テストとリリース
+- [ ] 全4エンジンの統合テスト
+- [ ] 文献値との照合（Lovebirds Compendium）
 - [ ] ドキュメント更新
+- [ ] CLAUDE.md 更新
 - [ ] リリース
 
 ---
@@ -337,13 +459,21 @@ Lovebirds Compendium p.230-231 の例に準拠。
 
 ## ステータス
 
-- [x] 組み換え率の文献調査
+### 設計フェーズ ✅
+- [x] 組み換え率の文献調査（Lovebirds Compendium p.228-231）
 - [x] 相（Phase）の概念設計
-- [x] データ構造設計
-- [x] UI設計
-- [x] 計算ロジック設計
-- [ ] Phase 1: データ構造移行
-- [ ] Phase 2: 計算ロジック実装
-- [ ] Phase 3: UI実装
-- [ ] Phase 4: 推論エンジン拡張
-- [ ] Phase 5: テストとリリース
+- [x] データ構造設計（ハプロタイプベース）
+- [x] UI設計（手動指定 + 自動推論）
+- [x] 計算ロジック設計（GametesGenerator）
+- [x] 影響範囲の特定（4エンジン: Calculator, Estimator, PathFinder, Planner）
+- [x] v6.8 整合性検証（全31テストパス）
+
+### 実装フェーズ 🔲
+- [ ] Phase 1: データ構造移行（SSOT）
+- [ ] Phase 2: 共通エンジン実装（GametesGenerator）
+- [ ] Phase 3: 親→子 計算（GeneticsCalculator）
+- [ ] Phase 4: 子→親 推論（FamilyEstimatorV3）
+- [ ] Phase 5: 経路探索（PathFinder）
+- [ ] Phase 6: 最適ペア選定（Planner）
+- [ ] Phase 7: UI実装
+- [ ] Phase 8: テストとリリース
