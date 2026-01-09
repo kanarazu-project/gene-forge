@@ -207,8 +207,21 @@ function openBirdForm(birdId = null) {
             document.getElementById('birdSex').value = bird.sex;
             document.getElementById('birdBirthDate').value = bird.birthDate || '';
             document.getElementById('birdLineage').value = bird.lineage || '';
-            document.getElementById('birdPhase').value = bird.phase || 'independent';
+            const phaseEl = document.getElementById('birdPhase');
+            if (phaseEl) phaseEl.value = bird.phase || 'independent';
+            const inbreedingGenEl = document.getElementById('birdInbreedingGen');
+            if (inbreedingGenEl) inbreedingGenEl.value = bird.inbreedingGen || 0;
             document.getElementById('birdNotes').value = bird.notes || '';
+
+            // v7.0: 観察データを読み込み
+            if (bird.observed) {
+                const bcSelect = document.querySelector('[name="bird_baseColor"]');
+                const ecSelect = document.querySelector('[name="bird_eyeColor"]');
+                const dkSelect = document.querySelector('[name="bird_darkness"]');
+                if (bcSelect) bcSelect.value = bird.observed.baseColor || 'green';
+                if (ecSelect) ecSelect.value = bird.observed.eyeColor || 'black';
+                if (dkSelect) dkSelect.value = bird.observed.darkness || 'none';
+            }
 
             // v7.0: 14枠血統データを読み込み
             const pedigreeKeys = ['sire', 'dam', 'sire_sire', 'sire_dam', 'dam_sire', 'dam_dam',

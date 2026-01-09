@@ -1506,35 +1506,7 @@ function refreshBirdList() {
 
 function filterBirds() { refreshBirdList(); }
 
-// 編集・削除・血統書関数
-function editBird(id) {
-    if (typeof BirdDB === 'undefined') return;
-    var bird = BirdDB.getBird(id);
-    if (!bird) { alert(T.bird_not_found || 'Bird not found'); return; }
-    
-    document.getElementById('birdModalTitle').textContent = T.edit || 'Edit';
-    document.getElementById('birdName').value = bird.name || '';
-    document.getElementById('birdCode').value = bird.code || '';
-    document.getElementById('birdSex').value = bird.sex || 'male';
-    document.getElementById('birdBirthDate').value = bird.birthDate || '';
-    document.getElementById('birdLineage').value = bird.lineage || '';
-    document.getElementById('birdInbreedingGen').value = bird.inbreedingGen || 0;
-    document.getElementById('birdNotes').value = bird.notes || '';
-    document.getElementById('birdSire').value = bird.sireId || '';
-    document.getElementById('birdDam').value = bird.damId || '';
-    
-    if (bird.observed) {
-        var bcSelect = document.querySelector('[name="bird_baseColor"]');
-        var ecSelect = document.querySelector('[name="bird_eyeColor"]');
-        var dkSelect = document.querySelector('[name="bird_darkness"]');
-        if (bcSelect) bcSelect.value = bird.observed.baseColor || 'green';
-        if (ecSelect) ecSelect.value = bird.observed.eyeColor || 'black';
-        if (dkSelect) dkSelect.value = bird.observed.darkness || 'none';
-    }
-    
-    document.getElementById('birdForm').dataset.editId = id;
-    document.getElementById('birdModal').classList.add('active');
-}
+// 編集・削除・血統書関数 (editBird/openBirdForm/closeBirdFormはapp.jsで定義)
 
 function deleteBird(id) {
     if (typeof BirdDB === 'undefined') return;
@@ -1562,18 +1534,6 @@ function showPedigree(id) {
 function closePedigreeModal() {
     document.getElementById('pedigreeModal').classList.remove('active');
 }
-function openBirdForm() {
-    document.getElementById('birdModalTitle').textContent = T.add_bird || 'Add Bird';
-    document.getElementById('birdForm').reset();
-    document.getElementById('birdForm').dataset.editId = '';
-    document.getElementById('birdModal').classList.add('active');
-}
-
-function closeBirdForm() {
-    document.getElementById('birdModal').classList.remove('active');
-    document.getElementById('birdForm').dataset.editId = '';
-}
-
 
 </script>
 
