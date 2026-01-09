@@ -432,6 +432,8 @@ if ($action === 'calculate') {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
+const GENOTYPE_OPTIONS = <?= json_encode(AgapornisLoci::GENOTYPE_OPTIONS) ?>;
+const UI_GENOTYPE_LOCI = <?= json_encode(AgapornisLoci::UI_GENOTYPE_LOCI) ?>;
 </script>
 </head>
 

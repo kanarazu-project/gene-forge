@@ -237,35 +237,37 @@ function closeBirdForm() {
 function generateGenotypeFields() {
     const container = document.getElementById('genotypeFields');
     if (!container) return;
-    
+
     const sex = document.getElementById('birdSex')?.value || 'male';
-    
-    const loci = [
-        { key: 'parblue', label: 'Parblue', options: { '++': 'B⁺/B⁺', '+b': 'B⁺/b', '+tq': 'B⁺/b^tq', 'bb': 'b/b', 'tqtq': 'b^tq/b^tq', 'tqb': 'b^tq/b' }},
-        { key: 'ino', label: 'INO', options: sex === 'male' 
-            ? { '++': 'Z⁺/Z⁺', '+pld': 'Z⁺/Z^pld', '+ino': 'Z⁺/Z^ino', 'pldpld': 'Z^pld/Z^pld', 'inoino': 'Z^ino/Z^ino', 'pldino': 'Z^pld/Z^ino' }
-            : { '+W': 'Z⁺/W', 'pldW': 'Z^pld/W', 'inoW': 'Z^ino/W' }
-        },
-        { key: 'op', label: 'Opaline', options: sex === 'male'
-            ? { '++': 'Z⁺/Z⁺', '+op': 'Z⁺/Z^op', 'opop': 'Z^op/Z^op' }
-            : { '+W': 'Z⁺/W', 'opW': 'Z^op/W' }
-        },
-        { key: 'cin', label: 'Cinnamon', options: sex === 'male'
-            ? { '++': 'Z⁺/Z⁺', '+cin': 'Z⁺/Z^cin', 'cincin': 'Z^cin/Z^cin' }
-            : { '+W': 'Z⁺/W', 'cinW': 'Z^cin/W' }
-        },
-        { key: 'dark', label: 'Dark', options: { 'dd': 'd/d', 'Dd': 'D/d (SF)', 'DD': 'D/D (DF)' }},
-        { key: 'vio', label: 'Violet', options: { 'vv': 'v/v', 'Vv': 'V/v (SF)', 'VV': 'V/V (DF)' }},
-        { key: 'fl', label: 'Fallow', options: { '++': 'Fl⁺/Fl⁺', '+fl': 'Fl⁺/fl', 'flfl': 'fl/fl' }},
-        { key: 'dil', label: 'Dilute', options: { '++': 'Dil⁺/Dil⁺', '+dil': 'Dil⁺/dil', 'dildil': 'dil/dil' }},
-        { key: 'pi', label: 'Pied', options: { '++': 'Pi⁺/Pi⁺', '+pi': 'Pi⁺/pi', 'pipi': 'pi/pi' }}
-    ];
-    
+
+    // SSOT: Use global constants from genetics.php
+    if (typeof GENOTYPE_OPTIONS === 'undefined' || typeof UI_GENOTYPE_LOCI === 'undefined') {
+        console.warn('[App] GENOTYPE_OPTIONS or UI_GENOTYPE_LOCI not defined');
+        return;
+    }
+
+    const loci = UI_GENOTYPE_LOCI.map(config => {
+        const source = GENOTYPE_OPTIONS[config.source];
+        let options;
+        if (source.male && source.female) {
+            // Sex-linked locus
+            options = sex === 'male' ? source.male : source.female;
+        } else {
+            // Autosomal locus
+            options = source.options;
+        }
+        return {
+            key: config.key,
+            label: config.label,
+            options: options
+        };
+    });
+
     container.innerHTML = loci.map(locus => `
         <div class="form-group">
             <label class="form-label">${locus.label}</label>
             <select id="geno_${locus.key}">
-                ${Object.entries(locus.options).map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}
+                ${locus.options.map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}
             </select>
         </div>
     `).join('');

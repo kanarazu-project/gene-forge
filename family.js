@@ -492,17 +492,32 @@ const FamilyMap = {
         const container = modal.querySelector('#familyGenotypeFields');
         if (!container) return;
         const sex = modal.querySelector('[name="bird_sex"]')?.value || 'male';
-        const loci = [
-            { key: 'parblue', label: 'Parblue', options: [['', '-- 不明 --'], ['++', 'B⁺/B⁺'], ['+aq', 'B⁺/b^aq'], ['+tq', 'B⁺/b^tq'], ['aqaq', 'b^aq/b^aq'], ['tqtq', 'b^tq/b^tq'], ['tqaq', 'b^tq/b^aq']]},
-            { key: 'ino', label: 'INO', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+pld', 'Z⁺/Z^pld'], ['+ino', 'Z⁺/Z^ino'], ['pldpld', 'Z^pld/Z^pld'], ['inoino', 'Z^ino/Z^ino'], ['pldino', 'Z^pld/Z^ino']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['pldW', 'Z^pld/W'], ['inoW', 'Z^ino/W']]},
-            { key: 'op', label: 'Opaline', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+op', 'Z⁺/Z^op'], ['opop', 'Z^op/Z^op']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['opW', 'Z^op/W']]},
-            { key: 'cin', label: 'Cinnamon', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+cin', 'Z⁺/Z^cin'], ['cincin', 'Z^cin/Z^cin']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['cinW', 'Z^cin/W']]},
-            { key: 'dark', label: 'Dark', options: [['', '-- 不明 --'], ['dd', 'd/d'], ['Dd', 'D/d (SF)'], ['DD', 'D/D (DF)']]},
-            { key: 'vio', label: 'Violet', options: [['', '-- 不明 --'], ['vv', 'v/v'], ['Vv', 'V/v (SF)'], ['VV', 'V/V (DF)']]},
-            { key: 'fl', label: 'Fallow', options: [['', '-- 不明 --'], ['++', 'Fl⁺/Fl⁺'], ['+fl', 'Fl⁺/fl'], ['flfl', 'fl/fl']]},
-            { key: 'dil', label: 'Dilute', options: [['', '-- 不明 --'], ['++', 'Dil⁺/Dil⁺'], ['+dil', 'Dil⁺/dil'], ['dildil', 'dil/dil']]},
-            { key: 'pi', label: 'Pied', options: [['', '-- 不明 --'], ['++', 'Pi⁺/Pi⁺'], ['+pi', 'Pi⁺/pi'], ['pipi', 'pi/pi']]}
-        ];
+        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        const unknownOption = ['', isJa ? '-- 不明 --' : '-- Unknown --'];
+
+        // SSOT: Use global constants from genetics.php
+        if (typeof GENOTYPE_OPTIONS === 'undefined' || typeof UI_GENOTYPE_LOCI === 'undefined') {
+            console.warn('[FamilyMap] GENOTYPE_OPTIONS or UI_GENOTYPE_LOCI not defined');
+            return;
+        }
+
+        const loci = UI_GENOTYPE_LOCI.map(config => {
+            const source = GENOTYPE_OPTIONS[config.source];
+            let options;
+            if (source.male && source.female) {
+                // Sex-linked locus
+                options = sex === 'male' ? source.male : source.female;
+            } else {
+                // Autosomal locus
+                options = source.options;
+            }
+            return {
+                key: config.key,
+                label: config.label,
+                options: [unknownOption, ...options]
+            };
+        });
+
         container.innerHTML = loci.map(locus => `<div class="form-group"><label class="form-label">${locus.label}</label><select name="geno_${locus.key}" class="form-select">${locus.options.map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}</select></div>`).join('');
     },
 

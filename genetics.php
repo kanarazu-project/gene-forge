@@ -25,6 +25,158 @@ final class AgapornisLoci
         'opaline' => ['name'=>['ja'=>'オパーリン','en'=>'Opaline'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'op'=>1]],
         'cinnamon' => ['name'=>['ja'=>'シナモン','en'=>'Cinnamon'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'cin'=>1]],
     ];
+
+    /**
+     * GENOTYPE_OPTIONS - UI用遺伝型選択オプション（SSOT）
+     *
+     * 構造:
+     * - 常染色体座位: 'options' => [[値, ラベル], ...]
+     * - 伴性座位: 'male' => [...], 'female' => [...]
+     *
+     * family.js, app.js で使用
+     */
+    public const GENOTYPE_OPTIONS = [
+        // === 常染色体座位 ===
+        'parblue' => [
+            'options' => [
+                ['++', 'B⁺/B⁺'],
+                ['+aq', 'B⁺/b^aq'],
+                ['+tq', 'B⁺/b^tq'],
+                ['aqaq', 'b^aq/b^aq'],
+                ['tqtq', 'b^tq/b^tq'],
+                ['tqaq', 'b^tq/b^aq'],
+            ],
+        ],
+        'dark' => [
+            'options' => [
+                ['dd', 'd/d'],
+                ['Dd', 'D/d (SF)'],
+                ['DD', 'D/D (DF)'],
+            ],
+        ],
+        'violet' => [
+            'options' => [
+                ['vv', 'v/v'],
+                ['Vv', 'V/v (SF)'],
+                ['VV', 'V/V (DF)'],
+            ],
+        ],
+        'fallow_pale' => [
+            'options' => [
+                ['++', 'Flp⁺/Flp⁺'],
+                ['+flp', 'Flp⁺/flp'],
+                ['flpflp', 'flp/flp'],
+            ],
+        ],
+        'fallow_bronze' => [
+            'options' => [
+                ['++', 'Flb⁺/Flb⁺'],
+                ['+flb', 'Flb⁺/flb'],
+                ['flbflb', 'flb/flb'],
+            ],
+        ],
+        'pied_dom' => [
+            'options' => [
+                ['++', '+/+'],
+                ['Pi+', 'Pi/+'],
+                ['PiPi', 'Pi/Pi'],
+            ],
+        ],
+        'pied_rec' => [
+            'options' => [
+                ['++', 'Pi⁺/Pi⁺'],
+                ['+pi', 'Pi⁺/pi'],
+                ['pipi', 'pi/pi'],
+            ],
+        ],
+        'dilute' => [
+            'options' => [
+                ['++', 'Dil⁺/Dil⁺'],
+                ['+dil', 'Dil⁺/dil'],
+                ['dildil', 'dil/dil'],
+            ],
+        ],
+        'edged' => [
+            'options' => [
+                ['++', 'Ed⁺/Ed⁺'],
+                ['+ed', 'Ed⁺/ed'],
+                ['eded', 'ed/ed'],
+            ],
+        ],
+        'orangeface' => [
+            'options' => [
+                ['++', 'Of⁺/Of⁺'],
+                ['+of', 'Of⁺/of'],
+                ['ofof', 'of/of'],
+            ],
+        ],
+        'pale_headed' => [
+            'options' => [
+                ['++', 'Ph⁺/Ph⁺'],
+                ['+ph', 'Ph⁺/ph'],
+                ['phph', 'ph/ph'],
+            ],
+        ],
+        // === 伴性座位（性別で異なる） ===
+        'ino' => [
+            'male' => [
+                ['++', 'Z⁺/Z⁺'],
+                ['+pld', 'Z⁺/Z^pld'],
+                ['+ino', 'Z⁺/Z^ino'],
+                ['pldpld', 'Z^pld/Z^pld'],
+                ['inoino', 'Z^ino/Z^ino'],
+                ['pldino', 'Z^pld/Z^ino'],
+            ],
+            'female' => [
+                ['+W', 'Z⁺/W'],
+                ['pldW', 'Z^pld/W'],
+                ['inoW', 'Z^ino/W'],
+            ],
+        ],
+        'opaline' => [
+            'male' => [
+                ['++', 'Z⁺/Z⁺'],
+                ['+op', 'Z⁺/Z^op'],
+                ['opop', 'Z^op/Z^op'],
+            ],
+            'female' => [
+                ['+W', 'Z⁺/W'],
+                ['opW', 'Z^op/W'],
+            ],
+        ],
+        'cinnamon' => [
+            'male' => [
+                ['++', 'Z⁺/Z⁺'],
+                ['+cin', 'Z⁺/Z^cin'],
+                ['cincin', 'Z^cin/Z^cin'],
+            ],
+            'female' => [
+                ['+W', 'Z⁺/W'],
+                ['cinW', 'Z^cin/W'],
+            ],
+        ],
+    ];
+
+    /**
+     * UI_GENOTYPE_LOCI - UI用遺伝型フォームの座位設定（SSOT）
+     *
+     * family.js と app.js で共通使用
+     * key: フォームフィールド名/データ保存キー
+     * source: GENOTYPE_OPTIONS のキー
+     * label: 表示ラベル
+     */
+    public const UI_GENOTYPE_LOCI = [
+        ['key' => 'parblue', 'source' => 'parblue', 'label' => 'Parblue'],
+        ['key' => 'ino', 'source' => 'ino', 'label' => 'INO'],
+        ['key' => 'op', 'source' => 'opaline', 'label' => 'Opaline'],
+        ['key' => 'cin', 'source' => 'cinnamon', 'label' => 'Cinnamon'],
+        ['key' => 'dark', 'source' => 'dark', 'label' => 'Dark'],
+        ['key' => 'vio', 'source' => 'violet', 'label' => 'Violet'],
+        ['key' => 'fl', 'source' => 'fallow_pale', 'label' => 'Fallow'],
+        ['key' => 'dil', 'source' => 'dilute', 'label' => 'Dilute'],
+        ['key' => 'pi', 'source' => 'pied_rec', 'label' => 'Pied'],
+    ];
+
     public const COLOR_DEFINITIONS = [
         // 基底色（12色）
         'green'=>['ja'=>'グリーン','en'=>'Green','albs'=>'Green','genotype'=>['parblue'=>'++','dark'=>'dd'],'eye'=>'black','category'=>'green'],
