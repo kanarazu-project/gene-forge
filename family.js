@@ -390,7 +390,8 @@ const FamilyMap = {
             if (form.elements['bird_darkness']) form.elements['bird_darkness'].value = bird.phenotype?.darkness || 'none';
             if (form.elements['bird_eyeColor']) form.elements['bird_eyeColor'].value = bird.phenotype?.eyeColor || 'black';
             const geno = bird.genotype || {};
-            ['parblue', 'ino', 'op', 'cin', 'dark', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
+            // v7.0: SSOT準拠キー + 旧キー後方互換
+            ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'dilute', 'pied_rec'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
         } else {
             if (form.elements['bird_name']) form.elements['bird_name'].value = '';
             if (form.elements['bird_baseColor']) form.elements['bird_baseColor'].value = 'green';
@@ -444,16 +445,17 @@ const FamilyMap = {
         const container = modal.querySelector('#familyGenotypeFields');
         if (!container) return;
         const sex = modal.querySelector('[name="bird_sex"]')?.value || 'male';
+        // v7.0: SSOT準拠キー
         const loci = [
             { key: 'parblue', label: 'Parblue', options: [['', '-- 不明 --'], ['++', 'B⁺/B⁺'], ['+aq', 'B⁺/b^aq'], ['+tq', 'B⁺/b^tq'], ['aqaq', 'b^aq/b^aq'], ['tqtq', 'b^tq/b^tq'], ['tqaq', 'b^tq/b^aq']]},
             { key: 'ino', label: 'INO', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+pld', 'Z⁺/Z^pld'], ['+ino', 'Z⁺/Z^ino'], ['pldpld', 'Z^pld/Z^pld'], ['inoino', 'Z^ino/Z^ino'], ['pldino', 'Z^pld/Z^ino']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['pldW', 'Z^pld/W'], ['inoW', 'Z^ino/W']]},
-            { key: 'op', label: 'Opaline', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+op', 'Z⁺/Z^op'], ['opop', 'Z^op/Z^op']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['opW', 'Z^op/W']]},
-            { key: 'cin', label: 'Cinnamon', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+cin', 'Z⁺/Z^cin'], ['cincin', 'Z^cin/Z^cin']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['cinW', 'Z^cin/W']]},
+            { key: 'opaline', label: 'Opaline', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+op', 'Z⁺/Z^op'], ['opop', 'Z^op/Z^op']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['opW', 'Z^op/W']]},
+            { key: 'cinnamon', label: 'Cinnamon', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+cin', 'Z⁺/Z^cin'], ['cincin', 'Z^cin/Z^cin']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['cinW', 'Z^cin/W']]},
             { key: 'dark', label: 'Dark', options: [['', '-- 不明 --'], ['dd', 'd/d'], ['Dd', 'D/d (SF)'], ['DD', 'D/D (DF)']]},
-            { key: 'vio', label: 'Violet', options: [['', '-- 不明 --'], ['vv', 'v/v'], ['Vv', 'V/v (SF)'], ['VV', 'V/V (DF)']]},
-            { key: 'fl', label: 'Fallow', options: [['', '-- 不明 --'], ['++', 'Fl⁺/Fl⁺'], ['+fl', 'Fl⁺/fl'], ['flfl', 'fl/fl']]},
-            { key: 'dil', label: 'Dilute', options: [['', '-- 不明 --'], ['++', 'Dil⁺/Dil⁺'], ['+dil', 'Dil⁺/dil'], ['dildil', 'dil/dil']]},
-            { key: 'pi', label: 'Pied', options: [['', '-- 不明 --'], ['++', 'Pi⁺/Pi⁺'], ['+pi', 'Pi⁺/pi'], ['pipi', 'pi/pi']]}
+            { key: 'violet', label: 'Violet', options: [['', '-- 不明 --'], ['vv', 'v/v'], ['Vv', 'V/v (SF)'], ['VV', 'V/V (DF)']]},
+            { key: 'fallow_pale', label: 'Fallow', options: [['', '-- 不明 --'], ['++', 'Fl⁺/Fl⁺'], ['+flp', 'Fl⁺/flp'], ['flpflp', 'flp/flp']]},
+            { key: 'dilute', label: 'Dilute', options: [['', '-- 不明 --'], ['++', 'Dil⁺/Dil⁺'], ['+dil', 'Dil⁺/dil'], ['dildil', 'dil/dil']]},
+            { key: 'pied_rec', label: 'Pied', options: [['', '-- 不明 --'], ['++', 'Pi⁺/Pi⁺'], ['+pi', 'Pi⁺/pi'], ['pipi', 'pi/pi']]}
         ];
         container.innerHTML = loci.map(locus => `<div class="form-group"><label class="form-label">${locus.label}</label><select name="geno_${locus.key}" class="form-select">${locus.options.map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}</select></div>`).join('');
     },
@@ -470,7 +472,8 @@ const FamilyMap = {
         else sex = this.getDefaultSex(position);
         const inputName = form.elements['bird_name'].value.trim();
         const genotype = {};
-        ['parblue', 'ino', 'op', 'cin', 'dark', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
+        // v7.0: SSOT準拠キー
+        ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'dilute', 'pied_rec'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
         const phenotype = { baseColor: form.elements['bird_baseColor'].value, darkness: form.elements['bird_darkness'].value, eyeColor: form.elements['bird_eyeColor'].value };
         const geneticError = this.checkGeneticConsistency(position, phenotype, genotype);
         if (geneticError) { alert(geneticError); return; }
@@ -689,16 +692,23 @@ const FamilyMap = {
 
     formatGenotypeShort(geno) {
         if (!geno || typeof geno !== 'object') return '';
+        // v7.0: SSOT準拠キー + 旧キー後方互換
         const parts = [];
         if (geno.parblue && geno.parblue !== '++') parts.push(`pb:${geno.parblue}`);
         if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(`ino:${geno.ino}`);
         if (geno.dark && geno.dark !== 'dd') parts.push(`D:${geno.dark}`);
-        if (geno.vio && geno.vio !== 'vv') parts.push(`vi:${geno.vio}`);
-        if (geno.op && geno.op !== '++' && geno.op !== '+W') parts.push(`op:${geno.op}`);
-        if (geno.cin && geno.cin !== '++' && geno.cin !== '+W') parts.push(`cin:${geno.cin}`);
-        if (geno.fl && geno.fl !== '++') parts.push(`fl:${geno.fl}`);
-        if (geno.dil && geno.dil !== '++') parts.push(`dil:${geno.dil}`);
-        if (geno.pi && geno.pi !== '++') parts.push(`pi:${geno.pi}`);
+        const vio = geno.violet || geno.vio;
+        if (vio && vio !== 'vv') parts.push(`vi:${vio}`);
+        const op = geno.opaline || geno.op;
+        if (op && op !== '++' && op !== '+W') parts.push(`op:${op}`);
+        const cin = geno.cinnamon || geno.cin;
+        if (cin && cin !== '++' && cin !== '+W') parts.push(`cin:${cin}`);
+        const fl = geno.fallow_pale || geno.fl;
+        if (fl && fl !== '++') parts.push(`fl:${fl}`);
+        const dil = geno.dilute || geno.dil;
+        if (dil && dil !== '++') parts.push(`dil:${dil}`);
+        const pi = geno.pied_rec || geno.pi;
+        if (pi && pi !== '++') parts.push(`pi:${pi}`);
         return parts.join(' ');
     },
 

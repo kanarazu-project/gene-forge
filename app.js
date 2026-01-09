@@ -246,19 +246,20 @@ function generateGenotypeFields() {
             ? { '++': 'Z⁺/Z⁺', '+pld': 'Z⁺/Z^pld', '+ino': 'Z⁺/Z^ino', 'pldpld': 'Z^pld/Z^pld', 'inoino': 'Z^ino/Z^ino', 'pldino': 'Z^pld/Z^ino' }
             : { '+W': 'Z⁺/W', 'pldW': 'Z^pld/W', 'inoW': 'Z^ino/W' }
         },
-        { key: 'op', label: 'Opaline', options: sex === 'male'
+        // v7.0: SSOT準拠キー
+        { key: 'opaline', label: 'Opaline', options: sex === 'male'
             ? { '++': 'Z⁺/Z⁺', '+op': 'Z⁺/Z^op', 'opop': 'Z^op/Z^op' }
             : { '+W': 'Z⁺/W', 'opW': 'Z^op/W' }
         },
-        { key: 'cin', label: 'Cinnamon', options: sex === 'male'
+        { key: 'cinnamon', label: 'Cinnamon', options: sex === 'male'
             ? { '++': 'Z⁺/Z⁺', '+cin': 'Z⁺/Z^cin', 'cincin': 'Z^cin/Z^cin' }
             : { '+W': 'Z⁺/W', 'cinW': 'Z^cin/W' }
         },
         { key: 'dark', label: 'Dark', options: { 'dd': 'd/d', 'Dd': 'D/d (SF)', 'DD': 'D/D (DF)' }},
-        { key: 'vio', label: 'Violet', options: { 'vv': 'v/v', 'Vv': 'V/v (SF)', 'VV': 'V/V (DF)' }},
-        { key: 'fl', label: 'Fallow', options: { '++': 'Fl⁺/Fl⁺', '+fl': 'Fl⁺/fl', 'flfl': 'fl/fl' }},
-        { key: 'dil', label: 'Dilute', options: { '++': 'Dil⁺/Dil⁺', '+dil': 'Dil⁺/dil', 'dildil': 'dil/dil' }},
-        { key: 'pi', label: 'Pied', options: { '++': 'Pi⁺/Pi⁺', '+pi': 'Pi⁺/pi', 'pipi': 'pi/pi' }}
+        { key: 'violet', label: 'Violet', options: { 'vv': 'v/v', 'Vv': 'V/v (SF)', 'VV': 'V/V (DF)' }},
+        { key: 'fallow_pale', label: 'Fallow', options: { '++': 'Fl⁺/Fl⁺', '+flp': 'Fl⁺/flp', 'flpflp': 'flp/flp' }},
+        { key: 'dilute', label: 'Dilute', options: { '++': 'Dil⁺/Dil⁺', '+dil': 'Dil⁺/dil', 'dildil': 'dil/dil' }},
+        { key: 'pied_rec', label: 'Pied', options: { '++': 'Pi⁺/Pi⁺', '+pi': 'Pi⁺/pi', 'pipi': 'pi/pi' }}
     ];
     
     container.innerHTML = loci.map(locus => `
@@ -311,8 +312,9 @@ function saveBird(event) {
         return;
     }
     
+    // v7.0: SSOT準拠キー
     const genotype = {};
-    ['parblue', 'ino', 'op', 'cin', 'dark', 'vio', 'fl', 'dil', 'pi'].forEach(key => {
+    ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'dilute', 'pied_rec'].forEach(key => {
         const el = document.getElementById('geno_' + key);
         if (el) genotype[key] = el.value;
     });

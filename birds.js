@@ -1,5 +1,5 @@
 /**
- * Agapornis Gene-Forge v6.7.5
+ * Agapornis Gene-Forge v7.0.0
  * 個体データベース管理（localStorage）
  * 
  * v6.7.5 変更点:
@@ -17,7 +17,7 @@ const BirdDB = {
     STORAGE_KEY_USER: 'geneforge_birds_user',
     STORAGE_KEY_DEMO: 'geneforge_birds_demo',
     MODE_KEY: 'geneforge_mode',
-    VERSION: '6.7.5',
+    VERSION: '7.0.0',
     
     _currentMode: 'user',
     _initialized: false,
@@ -267,20 +267,21 @@ const BirdDB = {
             { key: 'pallid_aqua', name: 'パリッドアクア', eye: 'black', parblue: 'aqaq', ino: 'pldpld', dark: 'dd' },
             { key: 'pallid_turquoise', name: 'パリッドターコイズ', eye: 'black', parblue: 'tqtq', ino: 'pldpld', dark: 'dd' },
             { key: 'pallid_seagreen', name: 'パリッドシーグリーン', eye: 'black', parblue: 'tqaq', ino: 'pldpld', dark: 'dd' },
-            { key: 'cinnamon_green', name: 'シナモングリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', cin: true },
-            { key: 'cinnamon_aqua', name: 'シナモンアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', cin: true },
-            { key: 'cinnamon_turquoise', name: 'シナモンターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', cin: true },
-            { key: 'cinnamon_seagreen', name: 'シナモンシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', cin: true },
-            { key: 'opaline_green', name: 'オパーリングリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', op: true },
-            { key: 'opaline_aqua', name: 'オパーリンアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', op: true },
-            { key: 'opaline_turquoise', name: 'オパーリンターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', op: true },
-            { key: 'opaline_seagreen', name: 'オパーリンシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', op: true },
-            { key: 'fallow_green', name: 'フォローグリーン', eye: 'red', parblue: '++', ino: '++', dark: 'dd', fl: true },
-            { key: 'fallow_aqua', name: 'フォローアクア', eye: 'red', parblue: 'aqaq', ino: '++', dark: 'dd', fl: true },
-            { key: 'pied_green', name: 'パイドグリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', pi: true },
-            { key: 'pied_aqua', name: 'パイドアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', pi: true },
-            { key: 'pied_turquoise', name: 'パイドターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', pi: true },
-            { key: 'pied_seagreen', name: 'パイドシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', pi: true },
+            // v7.0: SSOT準拠キー (cinnamon, opaline, fallow_pale, pied_rec)
+            { key: 'cinnamon_green', name: 'シナモングリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'cinnamon_aqua', name: 'シナモンアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'cinnamon_turquoise', name: 'シナモンターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'cinnamon_seagreen', name: 'シナモンシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', cinnamon: true },
+            { key: 'opaline_green', name: 'オパーリングリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', opaline: true },
+            { key: 'opaline_aqua', name: 'オパーリンアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', opaline: true },
+            { key: 'opaline_turquoise', name: 'オパーリンターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', opaline: true },
+            { key: 'opaline_seagreen', name: 'オパーリンシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', opaline: true },
+            { key: 'fallow_green', name: 'フォローグリーン', eye: 'red', parblue: '++', ino: '++', dark: 'dd', fallow_pale: true },
+            { key: 'fallow_aqua', name: 'フォローアクア', eye: 'red', parblue: 'aqaq', ino: '++', dark: 'dd', fallow_pale: true },
+            { key: 'pied_green', name: 'パイドグリーン', eye: 'black', parblue: '++', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_aqua', name: 'パイドアクア', eye: 'black', parblue: 'aqaq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_turquoise', name: 'パイドターコイズ', eye: 'black', parblue: 'tqtq', ino: '++', dark: 'dd', pied_rec: true },
+            { key: 'pied_seagreen', name: 'パイドシーグリーン', eye: 'black', parblue: 'tqaq', ino: '++', dark: 'dd', pied_rec: true },
         ];
         
         let idCounter = 1;
@@ -294,16 +295,17 @@ const BirdDB = {
                     const isMale = sex === 'male';
                     const birdName = isMale ? maleNames[maleIndex++] : femaleNames[femaleIndex++];
                     
+                    // v7.0: SSOT準拠キー
                     const geno = {
                         parblue: color.parblue,
                         ino: isMale ? color.ino : (color.ino === 'inoino' ? 'inoW' : (color.ino === 'pldpld' ? 'pldW' : '+W')),
-                        op: color.op ? (isMale ? 'opop' : 'opW') : (isMale ? '++' : '+W'),
-                        cin: color.cin ? (isMale ? 'cincin' : 'cinW') : (isMale ? '++' : '+W'),
+                        opaline: color.opaline ? (isMale ? 'opop' : 'opW') : (isMale ? '++' : '+W'),
+                        cinnamon: color.cinnamon ? (isMale ? 'cincin' : 'cinW') : (isMale ? '++' : '+W'),
                         dark: color.dark,
-                        vio: 'vv',
-                        fl: color.fl ? 'flfl' : '++',
-                        dil: '++',
-                        pi: color.pi ? 'pipi' : '++'
+                        violet: 'vv',
+                        fallow_pale: color.fallow_pale ? 'flpflp' : '++',
+                        dilute: '++',
+                        pied_rec: color.pied_rec ? 'pipi' : '++'
                     };
                     
                     const darkness = color.dark === 'DD' ? 'df' : (color.dark === 'Dd' ? 'sf' : 'none');
@@ -685,12 +687,13 @@ const BirdDB = {
             darkness: bird.darkness || 'none'
         };
 
+        // v7.0: SSOT準拠キー
         const defaultGenotype = {
             parblue: '++',
             ino: bird.sex === 'female' ? '+W' : '++',
-            op: bird.sex === 'female' ? '+W' : '++',
-            cin: bird.sex === 'female' ? '+W' : '++',
-            dark: 'dd', vio: 'vv', fl: '++', dil: '++', pi: '++'
+            opaline: bird.sex === 'female' ? '+W' : '++',
+            cinnamon: bird.sex === 'female' ? '+W' : '++',
+            dark: 'dd', violet: 'vv', fallow_pale: '++', dilute: '++', pied_rec: '++'
         };
 
         const pedigree = bird.pedigree || this.buildPedigreeFromParents(
@@ -798,8 +801,9 @@ const BirdDB = {
             else { parts.push('ルチノー'); baseColor = ''; }
         } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push('パリッド');
 
-        if (['opop', 'opW'].includes(geno.op)) parts.push('オパーリン');
-        if (['cincin', 'cinW'].includes(geno.cin)) parts.push('シナモン');
+        // v7.0: SSOT準拠キー + 旧キー後方互換
+        if (['opop', 'opW'].includes(geno.opaline) || ['opop', 'opW'].includes(geno.op)) parts.push('オパーリン');
+        if (['cincin', 'cinW'].includes(geno.cinnamon) || ['cincin', 'cinW'].includes(geno.cin)) parts.push('シナモン');
 
         if (geno.dark === 'DD') {
             if (baseColor === 'グリーン') baseColor = 'オリーブ';
@@ -809,8 +813,9 @@ const BirdDB = {
             else if (baseColor === 'アクア') baseColor = 'アクアダーク';
         }
 
-        if (geno.fl === 'flfl') parts.push('フォロー');
-        if (geno.pi === 'pipi') parts.push('パイド');
+        // v7.0: SSOT準拠キー + 旧キー後方互換
+        if (['flpflp', 'flfl'].includes(geno.fallow_pale) || geno.fl === 'flfl') parts.push('フォロー');
+        if (geno.pied_rec === 'pipi' || geno.pi === 'pipi') parts.push('パイド');
 
         let result = parts.length > 0 ? parts.join(' ') + ' ' + baseColor : baseColor;
         return result.trim();

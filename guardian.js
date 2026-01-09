@@ -355,7 +355,8 @@ const HealthGuardian = {
 
     _hasINOGenes(geno) { return (geno.ino || '').includes('ino'); },
     _hasPallidGenes(geno) { return (geno.ino || '').includes('pld'); },
-    _hasFallowGenes(geno) { const fl = geno.fl || ''; return fl.includes('fl') && fl !== '++'; },
+    // v7.0: SSOT準拠キー + 旧キー後方互換
+    _hasFallowGenes(geno) { const fl = geno.fallow_pale || geno.fl || ''; return (fl.includes('fl') || fl.includes('flp')) && fl !== '++'; },
     _hasDarkDF(geno) { return geno.dark === 'DD'; },
     
     /**
@@ -402,11 +403,12 @@ const HealthGuardian = {
         const check = (val, pats) => pats.some(p => val && val.includes(p) && val.includes('+'));
         if (checkParblue(geno.parblue)) count++;
         if (check(geno.ino, ['pld', 'ino'])) count++;
-        if (check(geno.op, ['op'])) count++;
-        if (check(geno.cin, ['cin'])) count++;
-        if (check(geno.fl, ['fl'])) count++;
-        if (check(geno.dil, ['dil'])) count++;
-        if (check(geno.pi, ['pi'])) count++;
+        // v7.0: SSOT準拠キー + 旧キー後方互換
+        if (check(geno.opaline || geno.op, ['op'])) count++;
+        if (check(geno.cinnamon || geno.cin, ['cin'])) count++;
+        if (check(geno.fallow_pale || geno.fl, ['fl', 'flp'])) count++;
+        if (check(geno.dilute || geno.dil, ['dil'])) count++;
+        if (check(geno.pied_rec || geno.pi, ['pi'])) count++;
         return count;
     },
     _calculateOverallRisk(blocks, warnings, risks) {

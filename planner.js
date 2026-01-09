@@ -1,5 +1,5 @@
 /**
- * Agapornis Gene-Forge v6.7.5
+ * Agapornis Gene-Forge v7.0.0
  * 目標逆算計画エンジン (Target Breeding Planner)
  * 
  * v6.7.5変更点:
@@ -56,38 +56,38 @@ const BreedingPlanner = {
         pallid_turquoise: { required: { parblue: ['tqtq'] }, slr: { ino: ['pldpld', 'pldW'] }, minGen: 3, difficulty: 'high', inbreedingLimit: 2 },
         pallid_seagreen: { required: { parblue: ['tqaq'] }, slr: { ino: ['pldpld', 'pldW'] }, minGen: 3, difficulty: 'high', inbreedingLimit: 2 },
         
-        // シナモン系（茶色メラニン）4色
-        cinnamon_green: { required: { parblue: ['++'] }, slr: { cin: ['cincin', 'cinW'] }, minGen: 2, difficulty: 'mid' },
-        cinnamon_aqua: { required: { parblue: ['aqaq'] }, slr: { cin: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid' },
-        cinnamon_turquoise: { required: { parblue: ['tqtq'] }, slr: { cin: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid' },
-        cinnamon_seagreen: { required: { parblue: ['tqaq'] }, slr: { cin: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid' },
+        // シナモン系（茶色メラニン）4色 - v7.0: SSOT準拠キー
+        cinnamon_green: { required: { parblue: ['++'] }, slr: { cinnamon: ['cincin', 'cinW'] }, minGen: 2, difficulty: 'mid' },
+        cinnamon_aqua: { required: { parblue: ['aqaq'] }, slr: { cinnamon: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid' },
+        cinnamon_turquoise: { required: { parblue: ['tqtq'] }, slr: { cinnamon: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid' },
+        cinnamon_seagreen: { required: { parblue: ['tqaq'] }, slr: { cinnamon: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid' },
+
+        // オパーリン系（模様変化）4色 - v7.0: SSOT準拠キー
+        opaline_green: { required: { parblue: ['++'] }, slr: { opaline: ['opop', 'opW'] }, minGen: 2, difficulty: 'mid' },
+        opaline_aqua: { required: { parblue: ['aqaq'] }, slr: { opaline: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid' },
+        opaline_turquoise: { required: { parblue: ['tqtq'] }, slr: { opaline: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid' },
+        opaline_seagreen: { required: { parblue: ['tqaq'] }, slr: { opaline: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid' },
+
+        // フォロー系（赤目）2色 - v7.0: SSOT準拠キー
+        fallow_green: { required: { parblue: ['++'], fallow_pale: ['flpflp'] }, slr: {}, minGen: 2, difficulty: 'mid', inbreedingLimit: 2 },
+        fallow_aqua: { required: { parblue: ['aqaq'], fallow_pale: ['flpflp'] }, slr: {}, minGen: 3, difficulty: 'mid', inbreedingLimit: 2 },
+
+        // パイド系（まだら模様）4色 - v7.0: SSOT準拠キー
+        pied_green: { required: { parblue: ['++'], pied_rec: ['pipi'] }, slr: {}, minGen: 2, difficulty: 'mid' },
+        pied_aqua: { required: { parblue: ['aqaq'], pied_rec: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid' },
+        pied_turquoise: { required: { parblue: ['tqtq'], pied_rec: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid' },
+        pied_seagreen: { required: { parblue: ['tqaq'], pied_rec: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid' },
         
-        // オパーリン系（模様変化）4色
-        opaline_green: { required: { parblue: ['++'] }, slr: { op: ['opop', 'opW'] }, minGen: 2, difficulty: 'mid' },
-        opaline_aqua: { required: { parblue: ['aqaq'] }, slr: { op: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid' },
-        opaline_turquoise: { required: { parblue: ['tqtq'] }, slr: { op: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid' },
-        opaline_seagreen: { required: { parblue: ['tqaq'] }, slr: { op: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid' },
-        
-        // フォロー系（赤目）2色
-        fallow_green: { required: { parblue: ['++'], fl: ['flfl'] }, slr: {}, minGen: 2, difficulty: 'mid', inbreedingLimit: 2 },
-        fallow_aqua: { required: { parblue: ['aqaq'], fl: ['flfl'] }, slr: {}, minGen: 3, difficulty: 'mid', inbreedingLimit: 2 },
-        
-        // パイド系（まだら模様）4色
-        pied_green: { required: { parblue: ['++'], pi: ['pipi'] }, slr: {}, minGen: 2, difficulty: 'mid' },
-        pied_aqua: { required: { parblue: ['aqaq'], pi: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid' },
-        pied_turquoise: { required: { parblue: ['tqtq'], pi: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid' },
-        pied_seagreen: { required: { parblue: ['tqaq'], pi: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid' },
-        
-        // レガシー互換（旧版からの移行用）
+        // レガシー互換（旧版からの移行用）- v7.0: SSOT準拠キー
         blue: { required: { parblue: ['aqaq'], dark: ['dd'] }, slr: {}, minGen: 1, difficulty: 'low', legacy: true },
         cobalt: { required: { parblue: ['aqaq'], dark: ['Dd'] }, slr: {}, minGen: 2, difficulty: 'mid', legacy: true },
         mauve: { required: { parblue: ['aqaq'], dark: ['DD'] }, slr: {}, minGen: 3, difficulty: 'mid', legacy: true },
         albino: { required: { parblue: ['tqtq'] }, slr: { ino: ['inoino', 'inoW'] }, minGen: 3, difficulty: 'high', inbreedingLimit: 2, legacy: true },
         pallid_blue: { required: { parblue: ['aqaq'] }, slr: { ino: ['pldpld', 'pldW'] }, minGen: 3, difficulty: 'high', inbreedingLimit: 2, legacy: true },
-        cinnamon_blue: { required: { parblue: ['aqaq'] }, slr: { cin: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid', legacy: true },
-        opaline_blue: { required: { parblue: ['aqaq'] }, slr: { op: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid', legacy: true },
-        fallow_blue: { required: { parblue: ['aqaq'], fl: ['flfl'] }, slr: {}, minGen: 3, difficulty: 'mid', inbreedingLimit: 2, legacy: true },
-        pied_blue: { required: { parblue: ['aqaq'], pi: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid', legacy: true }
+        cinnamon_blue: { required: { parblue: ['aqaq'] }, slr: { cinnamon: ['cincin', 'cinW'] }, minGen: 3, difficulty: 'mid', legacy: true },
+        opaline_blue: { required: { parblue: ['aqaq'] }, slr: { opaline: ['opop', 'opW'] }, minGen: 3, difficulty: 'mid', legacy: true },
+        fallow_blue: { required: { parblue: ['aqaq'], fallow_pale: ['flpflp'] }, slr: {}, minGen: 3, difficulty: 'mid', inbreedingLimit: 2, legacy: true },
+        pied_blue: { required: { parblue: ['aqaq'], pied_rec: ['pipi'] }, slr: {}, minGen: 3, difficulty: 'mid', legacy: true }
     },
     
     /**
