@@ -25,6 +25,57 @@ final class AgapornisLoci
         'opaline' => ['name'=>['ja'=>'オパーリン','en'=>'Opaline'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'op'=>1]],
         'cinnamon' => ['name'=>['ja'=>'シナモン','en'=>'Cinnamon'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'cin'=>1]],
     ];
+
+    /**
+     * v7.0: 連鎖遺伝グループ定義
+     *
+     * Z染色体上の伴性遺伝子座は物理的に近接しており、独立分離しない。
+     * 組換え率はラブバード固有の値（セキセイとは異なる）。
+     *
+     * 物理配置:
+     * ───[cinnamon]────[ino]─────────────────────────[opaline]───
+     *       ←─ 3% ─→   ←────────── 30% ──────────→
+     *       ←──────────────── 33% ────────────────→
+     */
+    public const LINKAGE_GROUPS = [
+        'Z_chromosome' => [
+            'loci' => ['cinnamon', 'ino', 'opaline'],
+            'locus_order' => ['cinnamon', 'ino', 'opaline'],  // 物理的順序
+            'recombination' => [
+                'cinnamon_ino' => 0.03,      // 3% - ほぼ完全連鎖
+                'ino_opaline' => 0.30,       // 30%
+                'cinnamon_opaline' => 0.33,  // 33%
+            ],
+        ],
+        'autosomal_1' => [
+            'loci' => ['dark', 'parblue'],
+            'locus_order' => ['dark', 'parblue'],
+            'recombination' => [
+                'dark_parblue' => 0.07,      // 7%
+            ],
+        ],
+    ];
+
+    /**
+     * v7.0: ハプロタイプ表記のための定数
+     *
+     * オス(ZZ)は2本のZ染色体を持ち、各染色体上のアレル配置（相）が重要。
+     * メス(ZW)はZ染色体1本のみなので相の概念なし。
+     */
+    public const HAPLOTYPE_NOTATION = [
+        'Z_chromosome' => [
+            'wildtype' => ['+', '+', '+'],  // [cinnamon, ino, opaline]
+            'example_cis_cin_ino' => [
+                'Z1' => ['cin', 'ino', '+'],  // Cis: cin-ino同一染色体
+                'Z2' => ['+', '+', '+'],
+            ],
+            'example_trans_cin_ino' => [
+                'Z1' => ['cin', '+', '+'],    // Trans: cin-ino別染色体
+                'Z2' => ['+', 'ino', '+'],
+            ],
+        ],
+    ];
+
     public const COLOR_DEFINITIONS = [
         // 基底色（12色）
         'green'=>['ja'=>'グリーン','en'=>'Green','albs'=>'Green','genotype'=>['parblue'=>'++','dark'=>'dd'],'eye'=>'black','category'=>'green'],
