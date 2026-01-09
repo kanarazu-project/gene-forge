@@ -1419,6 +1419,7 @@ function showTab(id){
 </script>
 <script src="family.js?v=674"></script>
 <script src="app.js?v=<?= time() ?>"></script>
+<script src="debug.js?v=700"></script>
 <script>if(typeof initLang==='function')initLang(T);</script>
 <script>
     // 健康評価タブ用セレクタ初期化（BirdDB準備完了を待つ）
