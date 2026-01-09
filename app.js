@@ -209,10 +209,22 @@ function openBirdForm(birdId = null) {
             document.getElementById('birdLineage').value = bird.lineage || '';
             document.getElementById('birdPhase').value = bird.phase || 'independent';
             document.getElementById('birdNotes').value = bird.notes || '';
-            
-            if (bird.sire?.id) document.getElementById('birdSire').value = bird.sire.id;
-            if (bird.dam?.id) document.getElementById('birdDam').value = bird.dam.id;
-            
+
+            // v7.0: 14枠血統データを読み込み
+            const pedigreeKeys = ['sire', 'dam', 'sire_sire', 'sire_dam', 'dam_sire', 'dam_dam',
+                'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam',
+                'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'];
+            pedigreeKeys.forEach(key => {
+                const el = document.getElementById('ped_' + key);
+                if (el) {
+                    // pedigreeオブジェクトまたは旧sire/damオブジェクトから取得
+                    let value = bird.pedigree?.[key] || null;
+                    if (!value && key === 'sire' && bird.sire?.id) value = bird.sire.id;
+                    if (!value && key === 'dam' && bird.dam?.id) value = bird.dam.id;
+                    el.value = value || '';
+                }
+            });
+
             if (bird.genotype) {
                 Object.keys(bird.genotype).forEach(key => {
                     const el = document.getElementById('geno_' + key);
@@ -280,20 +292,34 @@ function updateParentSelectors() {
     const birds = BirdDB.getAllBirds();
     const males = birds.filter(b => b.sex === 'male');
     const females = birds.filter(b => b.sex === 'female');
-    
-    const sireSelect = document.getElementById('birdSire');
-    const damSelect = document.getElementById('birdDam');
-    
-    if (sireSelect) {
-        sireSelect.innerHTML = `<option value="">${t('unknown_or_external')}</option>` + 
-            males.map(b => `<option value="${b.id}">${escapeHtml(b.name)} (${escapeHtml(b.code)})</option>`).join('');
-    }
-    
-    if (damSelect) {
-        damSelect.innerHTML = `<option value="">${t('unknown_or_external')}</option>` + 
-            females.map(b => `<option value="${b.id}">${escapeHtml(b.name)} (${escapeHtml(b.code)})</option>`).join('');
-    }
-    
+
+    // v7.0: 14枠血統セレクタを更新
+    const pedigreeFields = [
+        { id: 'ped_sire', sex: 'male' },
+        { id: 'ped_dam', sex: 'female' },
+        { id: 'ped_sire_sire', sex: 'male' },
+        { id: 'ped_sire_dam', sex: 'female' },
+        { id: 'ped_dam_sire', sex: 'male' },
+        { id: 'ped_dam_dam', sex: 'female' },
+        { id: 'ped_sire_sire_sire', sex: 'male' },
+        { id: 'ped_sire_sire_dam', sex: 'female' },
+        { id: 'ped_sire_dam_sire', sex: 'male' },
+        { id: 'ped_sire_dam_dam', sex: 'female' },
+        { id: 'ped_dam_sire_sire', sex: 'male' },
+        { id: 'ped_dam_sire_dam', sex: 'female' },
+        { id: 'ped_dam_dam_sire', sex: 'male' },
+        { id: 'ped_dam_dam_dam', sex: 'female' }
+    ];
+
+    pedigreeFields.forEach(field => {
+        const select = document.getElementById(field.id);
+        if (select) {
+            const options = field.sex === 'male' ? males : females;
+            select.innerHTML = `<option value="">${t('unknown_or_external')}</option>` +
+                options.map(b => `<option value="${b.id}">${escapeHtml(b.name || b.id)} (${escapeHtml(b.code || '')})</option>`).join('');
+        }
+    });
+
     const stats = BirdDB.getStats();
     const lineageList = document.getElementById('lineageList');
     if (lineageList) {
@@ -319,9 +345,20 @@ function saveBird(event) {
         if (el) genotype[key] = el.value;
     });
     
-    const sireId = document.getElementById('birdSire').value;
-    const damId = document.getElementById('birdDam').value;
-    
+    // v7.0: 14枠血統データを取得
+    const pedigreeKeys = ['sire', 'dam', 'sire_sire', 'sire_dam', 'dam_sire', 'dam_dam',
+        'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam',
+        'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'];
+    const pedigree = {};
+    pedigreeKeys.forEach(key => {
+        const el = document.getElementById('ped_' + key);
+        pedigree[key] = (el && el.value) ? el.value : null;
+    });
+
+    // 後方互換: sire/damオブジェクトも維持
+    const sireId = pedigree.sire;
+    const damId = pedigree.dam;
+
     const birdData = {
         name,
         code: document.getElementById('birdCode').value.trim(),
@@ -329,6 +366,7 @@ function saveBird(event) {
         birthDate: document.getElementById('birdBirthDate').value,
         lineage: document.getElementById('birdLineage').value.trim(),
         genotype,
+        pedigree,
         phase: document.getElementById('birdPhase').value,
         notes: document.getElementById('birdNotes').value.trim(),
         sire: sireId ? { id: sireId, ...BirdDB.getBird(sireId) } : null,

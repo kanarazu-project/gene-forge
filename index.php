@@ -618,17 +618,70 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
                                 </div>
                             </div>
                             
-                            <h4 class="section-title"><?= t('parent_info') ?></h4>
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label class="form-label"><?= t('sire') ?></label>
-                                    <select id="birdSire"><option value=""><?= t('unknown_or_external') ?></option></select>
+                            <details class="pedigree-section">
+                                <summary class="section-title clickable">📋 <?= t('pedigree_14slots') ?? '血統情報（14枠）' ?></summary>
+                                <div class="pedigree-grid" id="birdPedigreeFields">
+                                    <!-- 父母 (2) -->
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= t('sire') ?> ♂</label>
+                                        <select id="ped_sire" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= t('dam') ?> ♀</label>
+                                        <select id="ped_dam" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <!-- 祖父母 (4) -->
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '父方祖父' : 'Pat. G.Sire' ?> ♂</label>
+                                        <select id="ped_sire_sire" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '父方祖母' : 'Pat. G.Dam' ?> ♀</label>
+                                        <select id="ped_sire_dam" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '母方祖父' : 'Mat. G.Sire' ?> ♂</label>
+                                        <select id="ped_dam_sire" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '母方祖母' : 'Mat. G.Dam' ?> ♀</label>
+                                        <select id="ped_dam_dam" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <!-- 曽祖父母 (8) -->
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '父父父' : 'Pat.GG.Sire' ?> ♂</label>
+                                        <select id="ped_sire_sire_sire" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '父父母' : 'Pat.GG.Dam' ?> ♀</label>
+                                        <select id="ped_sire_sire_dam" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '父母父' : 'Pat.GM.Sire' ?> ♂</label>
+                                        <select id="ped_sire_dam_sire" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '父母母' : 'Pat.GM.Dam' ?> ♀</label>
+                                        <select id="ped_sire_dam_dam" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '母父父' : 'Mat.GG.Sire' ?> ♂</label>
+                                        <select id="ped_dam_sire_sire" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '母父母' : 'Mat.GG.Dam' ?> ♀</label>
+                                        <select id="ped_dam_sire_dam" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '母母父' : 'Mat.GM.Sire' ?> ♂</label>
+                                        <select id="ped_dam_dam_sire" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
+                                    <div class="form-group form-group-sm">
+                                        <label class="form-label form-label-sm"><?= $lang === 'ja' ? '母母母' : 'Mat.GM.Dam' ?> ♀</label>
+                                        <select id="ped_dam_dam_dam" class="form-select form-select-sm"><option value=""><?= t('unknown_or_external') ?></option></select>
+                                    </div>
                                 </div>
-                                <div class="form-group">
-                                    <label class="form-label"><?= t('dam') ?></label>
-                                    <select id="birdDam"><option value=""><?= t('unknown_or_external') ?></option></select>
-                                </div>
-                            </div>
+                            </details>
                             <h4 class="section-title"><?= t('genotype_info') ?></h4>
                             <div class="form-grid genotype-grid" id="genotypeFields"></div>
                             <div class="form-group">
