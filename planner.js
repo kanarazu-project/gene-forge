@@ -104,9 +104,75 @@ const BreedingPlanner = {
         return colorKey;
     },
     
+    /**
+     * v7.0: COLOR_MASTERのgenotypeから要件を動的生成
+     * TARGET_REQUIREMENTSに定義がない色に対応
+     */
+    deriveRequirementsFromGenotype(targetKey) {
+        if (typeof COLOR_MASTER === 'undefined') return null;
+        const colorDef = COLOR_MASTER[targetKey];
+        if (!colorDef || !colorDef.genotype) return null;
+
+        const geno = colorDef.genotype;
+        const required = {};
+        const slr = {};
+        let minGen = 0;
+        let inbreedingLimit = null;
+
+        // 常染色体遺伝子座
+        const autosomalLoci = ['parblue', 'dark', 'violet', 'pied_dom', 'pied_rec', 'dilute', 'edged', 'orangeface', 'pale_headed', 'fallow_pale', 'fallow_bronze'];
+        // 伴性遺伝子座
+        const sexLinkedLoci = ['ino', 'opaline', 'cinnamon'];
+
+        autosomalLoci.forEach(locus => {
+            const val = geno[locus];
+            if (val && val !== '++' && val !== 'dd' && val !== 'vv') {
+                required[locus] = [val];
+                minGen = Math.max(minGen, val.includes('D') ? 1 : 2);
+            }
+        });
+
+        sexLinkedLoci.forEach(locus => {
+            const val = geno[locus];
+            if (val && val !== '++' && val !== '+W') {
+                slr[locus] = [val];
+                minGen = Math.max(minGen, 2);
+                // INO/パリッド系は近親制限
+                if (locus === 'ino' && (val.includes('ino') || val.includes('pld'))) {
+                    inbreedingLimit = 2;
+                }
+            }
+        });
+
+        // darkの処理
+        if (geno.dark === 'Dd') {
+            required.dark = ['Dd'];
+            minGen = Math.max(minGen, 1);
+        } else if (geno.dark === 'DD') {
+            required.dark = ['DD'];
+            minGen = Math.max(minGen, 2);
+        }
+
+        return {
+            required,
+            slr,
+            minGen,
+            difficulty: minGen <= 1 ? 'low' : minGen <= 2 ? 'mid' : 'high',
+            inbreedingLimit,
+            derived: true  // 動的生成フラグ
+        };
+    },
+
     plan(targetKey) {
-        const target = this.TARGET_REQUIREMENTS[targetKey];
-        if (!target) return { error: '未対応の目標形質です' };
+        let target = this.TARGET_REQUIREMENTS[targetKey];
+
+        // v7.0: TARGET_REQUIREMENTSにない場合、COLOR_MASTERから動的生成
+        if (!target) {
+            target = this.deriveRequirementsFromGenotype(targetKey);
+            if (!target) {
+                return { error: '未対応の目標形質です' };
+            }
+        }
         const birds = typeof BirdDB !== 'undefined' ? BirdDB.getAllBirds() : [];
         if (birds.length === 0) return { error: '個体が登録されていません', suggestion: '「個体管理」タブで手持ち個体を登録してください' };
         const males = birds.filter(b => b.sex === 'male'), females = birds.filter(b => b.sex === 'female');
