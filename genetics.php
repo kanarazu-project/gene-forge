@@ -3740,21 +3740,26 @@ class PathFinder
     public function findPath(string $targetKey): array
     {
         $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$targetKey] ?? null;
-        
+
         if (!$colorDef) {
             return ['error' => 'pf_unsupported_target', 'errorParam' => $targetKey];
         }
-        
+
         $genotype = $colorDef['genotype'] ?? [];
         $steps = $this->generateSteps($genotype);
         $warnings = $this->generateWarnings($genotype, $colorDef);
-        
+
+        // v7.0: 連鎖遺伝分析
+        $linkageAnalysis = $this->analyzeLinkageRequirements($genotype);
+
         return [
             'targetKey' => $targetKey,
             'genotype' => $genotype,
             'steps' => $steps,
             'warnings' => $warnings,
             'minGenerations' => count($steps),
+            // v7.0: 連鎖遺伝情報
+            'linkage' => $linkageAnalysis,
         ];
     }
     
@@ -3880,8 +3885,207 @@ class PathFinder
         if ($tier >= 2) {
             $warnings[] = ['key' => 'pf_warning_complex', 'params' => ['tier' => $tier]];
         }
-        
+
         return $warnings;
+    }
+
+    // ========================================
+    // v7.0: 連鎖遺伝分析
+    // ========================================
+
+    /**
+     * 目標表現型の連鎖座位要件を分析
+     */
+    private function analyzeLinkageRequirements(array $genotype): array
+    {
+        $zLinked = $this->analyzeZLinkedRequirements($genotype);
+        $autosomal1 = $this->analyzeAutosomal1Requirements($genotype);
+
+        return [
+            'Z_linked' => $zLinked,
+            'autosomal_1' => $autosomal1,
+        ];
+    }
+
+    /**
+     * Z染色体連鎖座位の要件分析
+     */
+    private function analyzeZLinkedRequirements(array $genotype): array
+    {
+        $required = [];
+
+        // cin (cinnamon)
+        $cinVal = $genotype['cinnamon'] ?? '++';
+        if (in_array($cinVal, ['cincin', 'cinW', '+cin'])) {
+            $required['cinnamon'] = 'cin';
+        }
+
+        // ino (ino/pld)
+        $inoVal = $genotype['ino'] ?? '++';
+        if (in_array($inoVal, ['inoino', 'inoW', '+ino'])) {
+            $required['ino'] = 'ino';
+        } elseif (in_array($inoVal, ['pldpld', 'pldW', '+pld'])) {
+            $required['ino'] = 'pld';
+        }
+
+        // opaline
+        $opVal = $genotype['opaline'] ?? '++';
+        if (in_array($opVal, ['opop', 'opW', '+op'])) {
+            $required['opaline'] = 'op';
+        }
+
+        // 連鎖の必要性を判定
+        $linkedCount = count($required);
+
+        if ($linkedCount < 2) {
+            return [
+                'requiredLoci' => $required,
+                'needsLinkage' => false,
+                'note' => '連鎖考慮不要（単一座位のみ）',
+            ];
+        }
+
+        // 組み換え率を取得
+        $recombInfo = $this->getZLinkedRecombinationInfo($required);
+
+        return [
+            'requiredLoci' => $required,
+            'needsLinkage' => true,
+            'recombination' => $recombInfo,
+            'cisAdvantage' => $this->calculateCisAdvantage($required),
+            'note' => 'Cis配置個体を優先使用すると効率的',
+        ];
+    }
+
+    /**
+     * Z連鎖の組み換え情報を取得
+     */
+    private function getZLinkedRecombinationInfo(array $required): array
+    {
+        $info = [];
+        $rates = AgapornisLoci::RECOMBINATION_RATES;
+
+        $loci = array_keys($required);
+
+        if (in_array('cinnamon', $loci) && in_array('ino', $loci)) {
+            $info['cinnamon-ino'] = [
+                'rate' => $rates['cinnamon-ino'] ?? 0.03,
+                'parentalProb' => 1 - ($rates['cinnamon-ino'] ?? 0.03),
+                'note' => '3%組み換え（強い連鎖）',
+            ];
+        }
+
+        if (in_array('ino', $loci) && in_array('opaline', $loci)) {
+            $info['ino-opaline'] = [
+                'rate' => $rates['ino-opaline'] ?? 0.30,
+                'parentalProb' => 1 - ($rates['ino-opaline'] ?? 0.30),
+                'note' => '30%組み換え（弱い連鎖）',
+            ];
+        }
+
+        if (in_array('cinnamon', $loci) && in_array('opaline', $loci)) {
+            $info['cinnamon-opaline'] = [
+                'rate' => $rates['cinnamon-opaline'] ?? 0.33,
+                'parentalProb' => 1 - ($rates['cinnamon-opaline'] ?? 0.33),
+                'note' => '33%組み換え（ほぼ独立分離）',
+            ];
+        }
+
+        return $info;
+    }
+
+    /**
+     * Cis配置の効率優位性を計算
+     *
+     * @return array Cis vs Trans の期待羽数比較
+     */
+    private function calculateCisAdvantage(array $required): array
+    {
+        $loci = array_keys($required);
+
+        // Lacewing (cin + ino) の場合
+        if (in_array('cinnamon', $loci) && in_array('ino', $loci) && !in_array('opaline', $loci)) {
+            $rate = AgapornisLoci::RECOMBINATION_RATES['cinnamon-ino'] ?? 0.03;
+            $cisProb = (1 - $rate) / 2 * 100;  // 片方のメス子 48.5%
+            $transProb = $rate / 2 * 100;       // 組み換え必要 1.5%
+
+            return [
+                'cisExpectedRatio' => $cisProb,
+                'transExpectedRatio' => $transProb,
+                'cisExpectedOffspring' => round(100 / $cisProb, 1),
+                'transExpectedOffspring' => round(100 / $transProb, 1),
+                'efficiencyRatio' => round((100 / $transProb) / (100 / $cisProb), 1),
+                'note' => sprintf(
+                    'Cis: %.1f%%確率（期待%.1f羽）, Trans: %.1f%%確率（期待%.0f羽）',
+                    $cisProb, 100 / $cisProb, $transProb, 100 / $transProb
+                ),
+            ];
+        }
+
+        // その他の組み合わせ（汎用計算）
+        // 最も強い連鎖ペアを使用
+        if (in_array('cinnamon', $loci) && in_array('ino', $loci)) {
+            $rate = 0.03;
+        } elseif (in_array('ino', $loci) && in_array('opaline', $loci)) {
+            $rate = 0.30;
+        } elseif (in_array('cinnamon', $loci) && in_array('opaline', $loci)) {
+            $rate = 0.33;
+        } else {
+            $rate = 0.50; // 独立分離
+        }
+
+        $cisProb = (1 - $rate) * 50;
+        $transProb = $rate * 50;
+
+        return [
+            'cisExpectedRatio' => $cisProb,
+            'transExpectedRatio' => $transProb,
+            'note' => 'Cis配置が効率的',
+        ];
+    }
+
+    /**
+     * 常染色体連鎖座位の要件分析
+     */
+    private function analyzeAutosomal1Requirements(array $genotype): array
+    {
+        $required = [];
+
+        // dark
+        $darkVal = $genotype['dark'] ?? 'dd';
+        if (in_array($darkVal, ['Dd', 'DD'])) {
+            $required['dark'] = 'D';
+        }
+
+        // parblue
+        $pbVal = $genotype['parblue'] ?? '++';
+        if (in_array($pbVal, ['aqaq', '+aq'])) {
+            $required['parblue'] = 'aq';
+        } elseif (in_array($pbVal, ['tqtq', '+tq'])) {
+            $required['parblue'] = 'tq';
+        } elseif ($pbVal === 'tqaq') {
+            $required['parblue'] = 'tq/aq';
+        }
+
+        $linkedCount = count($required);
+
+        if ($linkedCount < 2) {
+            return [
+                'requiredLoci' => $required,
+                'needsLinkage' => false,
+                'note' => '連鎖考慮不要',
+            ];
+        }
+
+        $rate = AgapornisLoci::RECOMBINATION_RATES['dark-parblue'] ?? 0.07;
+
+        return [
+            'requiredLoci' => $required,
+            'needsLinkage' => true,
+            'recombinationRate' => $rate,
+            'parentalProb' => 1 - $rate,
+            'note' => sprintf('dark-parblue: %.0f%%組み換え', $rate * 100),
+        ];
     }
 }
 
