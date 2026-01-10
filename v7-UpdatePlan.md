@@ -131,6 +131,7 @@ Trans [cin +]/[+ ino] × Normal
 ※ **Pallid(pld)** はino座位の複対立遺伝子のため、同じ組み換え率を適用:
 - pld-cinnamon: 3%
 - pld-opaline: 30%
+- cinnamon-opaline: 33%（ino/pldに関係なく固定）
 
 ### 常染色体
 
