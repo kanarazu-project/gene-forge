@@ -427,9 +427,9 @@ const HealthGuardian = {
 
     _hasINOGenes(geno) { return (geno.ino || '').includes('ino'); },
     _hasPallidGenes(geno) { return (geno.ino || '').includes('pld'); },
-    // v7.0: fallow_pale と fallow_bronze の両方をチェック
+    // SSOT: fallow_pale と fallow_bronze をチェック
     _hasFallowGenes(geno) {
-        const fp = geno.fallow_pale || geno.fl || '';  // 後方互換: geno.fl
+        const fp = geno.fallow_pale || '';
         const fb = geno.fallow_bronze || '';
         return (fp.includes('flp') && fp !== '++') || (fb.includes('flb') && fb !== '++');
     },
@@ -478,14 +478,15 @@ const HealthGuardian = {
         let count = 0;
         const checkParblue = (val) => val && (val.includes('aq') || val.includes('tq')) && val.includes('+');
         const check = (val, pats) => pats.some(p => val && val.includes(p) && val.includes('+'));
+        // SSOT: genetics.phpのLOCI定義に準拠
         if (checkParblue(geno.parblue)) count++;
         if (check(geno.ino, ['pld', 'ino'])) count++;
-        if (check(geno.opaline || geno.op, ['op'])) count++;  // v7.0: opaline, 後方互換: op
-        if (check(geno.cinnamon || geno.cin, ['cin'])) count++;  // v7.0: cinnamon, 後方互換: cin
-        if (check(geno.fallow_pale || geno.fl, ['flp', 'fl'])) count++;  // v7.0: fallow_pale
-        if (check(geno.fallow_bronze, ['flb'])) count++;  // v7.0: fallow_bronze
-        if (check(geno.dilute || geno.dil, ['dil'])) count++;  // v7.0: dilute
-        if (check(geno.pied_rec || geno.pi, ['pi'])) count++;  // v7.0: pied_rec
+        if (check(geno.opaline, ['op'])) count++;
+        if (check(geno.cinnamon, ['cin'])) count++;
+        if (check(geno.fallow_pale, ['flp'])) count++;
+        if (check(geno.fallow_bronze, ['flb'])) count++;
+        if (check(geno.dilute, ['dil'])) count++;
+        if (check(geno.pied_rec, ['pi'])) count++;
         return count;
     },
     _calculateOverallRisk(blocks, warnings, risks) {

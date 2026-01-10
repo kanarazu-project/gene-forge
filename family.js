@@ -438,8 +438,8 @@ const FamilyMap = {
             if (form.elements['bird_darkness']) form.elements['bird_darkness'].value = bird.phenotype?.darkness || 'none';
             if (form.elements['bird_eyeColor']) form.elements['bird_eyeColor'].value = bird.phenotype?.eyeColor || 'black';
             const geno = bird.genotype || {};
-            // v7.0: 新旧両方の座位名に対応
-            ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed', 'op', 'cin', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
+            // SSOT: genetics.phpのLOCI定義に準拠
+            ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
         } else {
             if (form.elements['bird_name']) form.elements['bird_name'].value = '';
             if (form.elements['bird_baseColor']) form.elements['bird_baseColor'].value = 'green';
@@ -534,8 +534,8 @@ const FamilyMap = {
         else sex = this.getDefaultSex(position);
         const inputName = form.elements['bird_name'].value.trim();
         const genotype = {};
-        // v7.0: 新旧両方の座位名に対応
-        ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed', 'op', 'cin', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
+        // SSOT: genetics.phpのLOCI定義に準拠
+        ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
         const phenotype = { baseColor: form.elements['bird_baseColor'].value, darkness: form.elements['bird_darkness'].value, eyeColor: form.elements['bird_eyeColor'].value };
         const geneticError = this.checkGeneticConsistency(position, phenotype, genotype);
         if (geneticError) { alert(geneticError); return; }
@@ -764,17 +764,17 @@ const FamilyMap = {
     formatGenotypeShort(geno) {
         if (!geno || typeof geno !== 'object') return '';
         const parts = [];
-        // v7.0: 新旧両方の座位名に対応
+        // SSOT: genetics.phpのLOCI定義に準拠
         if (geno.parblue && geno.parblue !== '++') parts.push(`pb:${geno.parblue}`);
         if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(`ino:${geno.ino}`);
         if (geno.dark && geno.dark !== 'dd') parts.push(`D:${geno.dark}`);
-        const vio = geno.violet || geno.vio; if (vio && vio !== 'vv') parts.push(`vi:${vio}`);
-        const op = geno.opaline || geno.op; if (op && op !== '++' && op !== '+W') parts.push(`op:${op}`);
-        const cin = geno.cinnamon || geno.cin; if (cin && cin !== '++' && cin !== '+W') parts.push(`cin:${cin}`);
-        const fl = geno.fallow_pale || geno.fl; if (fl && fl !== '++') parts.push(`fl:${fl}`);
+        if (geno.violet && geno.violet !== 'vv') parts.push(`vi:${geno.violet}`);
+        if (geno.opaline && geno.opaline !== '++' && geno.opaline !== '+W') parts.push(`op:${geno.opaline}`);
+        if (geno.cinnamon && geno.cinnamon !== '++' && geno.cinnamon !== '+W') parts.push(`cin:${geno.cinnamon}`);
+        if (geno.fallow_pale && geno.fallow_pale !== '++') parts.push(`fl:${geno.fallow_pale}`);
         if (geno.fallow_bronze && geno.fallow_bronze !== '++') parts.push(`flb:${geno.fallow_bronze}`);
-        const dil = geno.dilute || geno.dil; if (dil && dil !== '++') parts.push(`dil:${dil}`);
-        const pi = geno.pied_rec || geno.pi; if (pi && pi !== '++') parts.push(`pi:${pi}`);
+        if (geno.dilute && geno.dilute !== '++') parts.push(`dil:${geno.dilute}`);
+        if (geno.pied_rec && geno.pied_rec !== '++') parts.push(`pi:${geno.pied_rec}`);
         if (geno.pied_dom && geno.pied_dom !== '++') parts.push(`Pi:${geno.pied_dom}`);
         if (geno.edged && geno.edged !== '++') parts.push(`ed:${geno.edged}`);
         if (geno.pale_headed && geno.pale_headed !== '++') parts.push(`ph:${geno.pale_headed}`);

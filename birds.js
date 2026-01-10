@@ -932,12 +932,7 @@ const BirdDB = {
         const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
         if (observed?.baseColor) return this.getColorLabel(observed.baseColor, lang);
 
-        // v7.0: 新旧両方の座位名に対応
-        const op = geno.opaline || geno.op || '++';
-        const cin = geno.cinnamon || geno.cin || '++';
-        const fl = geno.fallow_pale || geno.fl || '++';
-        const pi = geno.pied_rec || geno.pi || '++';
-
+        // SSOT: genetics.phpのLOCI定義に準拠
         const parts = [];
         let baseColor = lang === 'ja' ? 'グリーン' : 'Green';
 
@@ -952,8 +947,8 @@ const BirdDB = {
             else { parts.push(lang === 'ja' ? 'ルチノー' : 'Lutino'); baseColor = ''; }
         } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push(lang === 'ja' ? 'パリッド' : 'Pallid');
 
-        if (['opop', 'opW'].includes(op)) parts.push(lang === 'ja' ? 'オパーリン' : 'Opaline');
-        if (['cincin', 'cinW'].includes(cin)) parts.push(lang === 'ja' ? 'シナモン' : 'Cinnamon');
+        if (['opop', 'opW'].includes(geno.opaline)) parts.push(lang === 'ja' ? 'オパーリン' : 'Opaline');
+        if (['cincin', 'cinW'].includes(geno.cinnamon)) parts.push(lang === 'ja' ? 'シナモン' : 'Cinnamon');
 
         if (geno.dark === 'DD') {
             if (baseColor.includes('グリーン') || baseColor === 'Green') baseColor = lang === 'ja' ? 'オリーブ' : 'Olive';
@@ -963,8 +958,8 @@ const BirdDB = {
             else if (baseColor.includes('アクア') || baseColor.includes('Aqua')) baseColor = lang === 'ja' ? 'アクアダーク' : 'Aqua Dark';
         }
 
-        if (['flpflp', 'flfl'].includes(fl)) parts.push(lang === 'ja' ? 'フォロー' : 'Fallow');
-        if (['pipi'].includes(pi)) parts.push(lang === 'ja' ? 'パイド' : 'Pied');
+        if (['flpflp', 'flfl'].includes(geno.fallow_pale)) parts.push(lang === 'ja' ? 'フォロー' : 'Fallow');
+        if (geno.pied_rec === 'pipi') parts.push(lang === 'ja' ? 'パイド' : 'Pied');
 
         let result = parts.length > 0 ? parts.join(' ') + ' ' + baseColor : baseColor;
         return result.trim();
