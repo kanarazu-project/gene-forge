@@ -120,7 +120,7 @@ if ($action === 'calculate') {
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>🦜 Gene-Forge v6.8</title>
+    <title>🦜 Gene-Forge v7.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=674">
     <style>
@@ -1125,123 +1125,7 @@ $mPh = $_POST['m_ph'] ?? '++';
                     
                     return false;
                 }
-                 /**
-                 * 観察情報から遺伝子型を推測
-                 * v6.7.3: aqua系対応、creamino=INO系修正
-                 */
-                function inferGenotypeFromObserved(observed, sex) {
-                    const geno = { parblue: '++', dark: 'dd', op: '++', cin: '++', pirec: '++' };
-                    const isMale = sex === 'male';
-                    geno.ino = isMale ? '++' : '+W';
-                    geno.op = isMale ? '++' : '+W';
-                    geno.cin = isMale ? '++' : '+W';
-                    
-                    const bc = observed.baseColor || '';
-                    
-                    // アクア系（v6.7.3: 旧ブルー系 → aqua系）
-                    if (bc.includes('aqua') || bc === 'blue' || bc === 'cobalt' || bc === 'mauve') {
-                        geno.parblue = 'aqaq';
-                    } else if (bc.includes('turquoise') && !bc.includes('seagreen')) {
-                        geno.parblue = 'tqtq';
-                    } else if (bc.includes('seagreen')) {
-                        geno.parblue = 'tqaq';
-                    }
-                    
-                    // INO系（v6.7.3: creamino, pure_white も INO）
-                    if (bc === 'lutino') {
-                        geno.ino = isMale ? 'inoino' : 'inoW';
-                    } else if (bc === 'creamino' || bc === 'creamino_seagreen') {
-                        // v6.7.3: クリーミノはINO系（赤目）
-                        geno.parblue = bc === 'creamino_seagreen' ? 'tqaq' : 'aqaq';
-                        geno.ino = isMale ? 'inoino' : 'inoW';
-                    } else if (bc === 'pure_white' || bc === 'albino') {
-                        // v6.7.3: ピュアホワイト = INO + Turquoise
-                        geno.parblue = 'tqtq';
-                        geno.ino = isMale ? 'inoino' : 'inoW';
-                    }
-                    
-                    // パリッド系（黒目）
-                    if (bc.includes('pallid')) {
-                        geno.ino = isMale ? 'pldpld' : 'pldW';
-                         if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // オパーリン
-                    if (bc.includes('opaline')) {
-                        geno.op = isMale ? 'opop' : 'opW';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // シナモン
-                    if (bc.includes('cinnamon')) {
-                        geno.cin = isMale ? 'cincin' : 'cinW';
-                         if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // フォロー
-                    if (bc.includes('fallow_pale') || (bc.includes('fallow') && !bc.includes('bronze'))) {
-                        geno.flp = 'flpflp';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    } else if (bc.includes('fallow_bronze') || bc.includes('bronze')) {
-                        geno.flb = 'flbflb';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
 
-                    
-                                        // パイド
-                    if (bc.includes('pied_rec') || (bc.includes('pied') && !bc.includes('dom'))) {
-                        geno.pirec = 'pipi';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    } else if (bc.includes('pied_dom') || bc.includes('dominant')) {
-                        geno.pidom = 'Pi+';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // ダーク因子
-                    if (observed.darkness === 'sf') geno.dark = 'Dd';
-                    else if (observed.darkness === 'df') geno.dark = 'DD';
-                    // Violet
-                    if (bc.includes('violet')) {
-                        geno.vio = 'Vv';
-                    }
-                    
-                    // Edged
-                    if (bc.includes('edged')) {
-                        geno.ed = 'eded';
-                    }
-                    
-                    // Orangeface / Yellowface
-                    if (bc.includes('orangeface') || bc.includes('yellowface')) {
-                        geno.of = 'ofof';
-                    }
-                    
-                    // Pale Headed
-                    if (bc.includes('paleheaded')) {
-                        geno.ph = 'phph';
-                    }
-                    
-                    // Dilute
-                    if (bc.includes('dilute')) {
-                        geno.dil = 'dildil';
-                    }
-                    
-                    return geno;
-                }
-                
                 // グローバル関数（BirdDB.setMode()から呼ばれる）
                 function refreshDBSelectors() {
                     populateDbSelect('f');
@@ -1346,7 +1230,7 @@ $mPh = $_POST['m_ph'] ?? '++';
 <?php 
     $bgColor = $l['isConfirmed'] ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
     $borderLeft = $l['isConfirmed'] ? '3px solid #4ecdc4' : '3px solid #555';
-    $confidenceLabel = $l['isConfirmed'] ? '✓ 確定' : '? 推定';
+    $confidenceLabel = $l['isConfirmed'] ? '✓ ' . t('confirmed') : '? ' . t('estimated');
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
     <strong style="color:#4ecdc4;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
