@@ -2267,6 +2267,200 @@ class GeneticsCalculator
         return $results;
     }
 
+    // ========================================
+    // v7.0: 連鎖遺伝計算メソッド
+    // ========================================
+
+    /**
+     * Z染色体連鎖座位の計算（v7.0）
+     *
+     * GametesGenerator を使用して組み換え率を考慮した計算を行う。
+     *
+     * @param array $sireZ1 父のZ1ハプロタイプ
+     * @param array $sireZ2 父のZ2ハプロタイプ
+     * @param array $damZ1 母のZ1ハプロタイプ
+     * @return array ['male' => [...], 'female' => [...]]
+     */
+    private function calcZLinkedV7(array $sireZ1, array $sireZ2, array $damZ1): array
+    {
+        // 父の配偶子生成（組み換えあり）
+        $sireGametes = GametesGenerator::generateZLinkedMale($sireZ1, $sireZ2);
+
+        // 母の配偶子生成（組み換えなし、Z:50% W:50%）
+        $damGametes = GametesGenerator::generateZLinkedFemale($damZ1);
+
+        // 子の遺伝型分布を計算
+        $offspring = GametesGenerator::combineGametes($sireGametes, $damGametes);
+
+        // オス（ZZ）とメス（ZW）に分離
+        $maleResults = [];
+        $femaleResults = [];
+
+        foreach ($offspring as $genoKey => $prob) {
+            if (strpos($genoKey, '/W') !== false) {
+                // メス（Z/W）
+                $femaleResults[$genoKey] = $prob;
+            } else {
+                // オス（Z/Z）
+                $maleResults[$genoKey] = $prob;
+            }
+        }
+
+        return [
+            'male' => $maleResults,
+            'female' => $femaleResults,
+        ];
+    }
+
+    /**
+     * 常染色体連鎖座位の計算（v7.0）
+     *
+     * dark-parblue の連鎖を考慮した計算。
+     *
+     * @param array $sireChr1 父の染色体1
+     * @param array $sireChr2 父の染色体2
+     * @param array $damChr1 母の染色体1
+     * @param array $damChr2 母の染色体2
+     * @return array 遺伝型 => 確率
+     */
+    private function calcAutosomal1V7(
+        array $sireChr1, array $sireChr2,
+        array $damChr1, array $damChr2
+    ): array {
+        $sireGametes = GametesGenerator::generateAutosomal1($sireChr1, $sireChr2);
+        $damGametes = GametesGenerator::generateAutosomal1($damChr1, $damChr2);
+
+        return GametesGenerator::combineGametes($sireGametes, $damGametes);
+    }
+
+    /**
+     * 入力データからZ_linkedハプロタイプを抽出（v7.0）
+     *
+     * @param array $input 入力データ
+     * @param string $prefix 'f_' or 'm_'
+     * @param string $sex 'male' or 'female'
+     * @return array ['Z1' => [...], 'Z2' => [...] or null]
+     */
+    private function extractZLinked(array $input, string $prefix, string $sex): array
+    {
+        // 新形式（Z_linked構造）がある場合
+        $zLinkedKey = $prefix . 'Z_linked';
+        if (isset($input[$zLinkedKey]) && is_array($input[$zLinkedKey])) {
+            return $input[$zLinkedKey];
+        }
+
+        // 旧形式からの変換
+        $inoVal = $input[$prefix . 'ino'] ?? ($sex === 'female' ? '+W' : '++');
+        $opVal = $input[$prefix . 'op'] ?? $input[$prefix . 'opaline'] ?? ($sex === 'female' ? '+W' : '++');
+        $cinVal = $input[$prefix . 'cin'] ?? $input[$prefix . 'cinnamon'] ?? ($sex === 'female' ? '+W' : '++');
+
+        return $this->parseOldFormatToZLinked($inoVal, $opVal, $cinVal, $sex);
+    }
+
+    /**
+     * 旧形式の遺伝型文字列からZ_linked構造に変換（v7.0）
+     */
+    private function parseOldFormatToZLinked(
+        string $inoVal, string $opVal, string $cinVal, string $sex
+    ): array {
+        $parseAllele = function(string $val, string $locus) use ($sex) {
+            // メス形式（末尾W）
+            if (substr($val, -1) === 'W') {
+                $allele = substr($val, 0, -1);
+                return ['a1' => $allele ?: '+', 'a2' => null];
+            }
+
+            // オス形式
+            $patterns = [
+                '++' => ['+', '+'],
+                'inoino' => ['ino', 'ino'],
+                'pldpld' => ['pld', 'pld'],
+                'pldino' => ['pld', 'ino'],
+                '+ino' => ['ino', '+'],
+                '+pld' => ['pld', '+'],
+                'opop' => ['op', 'op'],
+                '+op' => ['op', '+'],
+                'cincin' => ['cin', 'cin'],
+                '+cin' => ['cin', '+'],
+            ];
+
+            if (isset($patterns[$val])) {
+                return ['a1' => $patterns[$val][0], 'a2' => $patterns[$val][1]];
+            }
+
+            return ['a1' => '+', 'a2' => $sex === 'male' ? '+' : null];
+        };
+
+        $ino = $parseAllele($inoVal, 'ino');
+        $op = $parseAllele($opVal, 'opaline');
+        $cin = $parseAllele($cinVal, 'cinnamon');
+
+        if ($sex === 'male') {
+            return [
+                'Z1' => ['cinnamon' => $cin['a1'], 'ino' => $ino['a1'], 'opaline' => $op['a1']],
+                'Z2' => ['cinnamon' => $cin['a2'], 'ino' => $ino['a2'], 'opaline' => $op['a2']],
+            ];
+        } else {
+            return [
+                'Z1' => ['cinnamon' => $cin['a1'], 'ino' => $ino['a1'], 'opaline' => $op['a1']],
+                'Z2' => null,
+            ];
+        }
+    }
+
+    /**
+     * 入力データからautosomal_1ハプロタイプを抽出（v7.0）
+     */
+    private function extractAutosomal1(array $input, string $prefix): array
+    {
+        // 新形式
+        $autoKey = $prefix . 'autosomal_1';
+        if (isset($input[$autoKey]) && is_array($input[$autoKey])) {
+            return $input[$autoKey];
+        }
+
+        // 旧形式からの変換
+        $darkVal = $input[$prefix . 'dark'] ?? 'dd';
+        $parblueVal = $input[$prefix . 'parblue'] ?? '++';
+
+        return $this->parseOldFormatToAutosomal1($darkVal, $parblueVal);
+    }
+
+    /**
+     * 旧形式からautosomal_1構造に変換（v7.0）
+     */
+    private function parseOldFormatToAutosomal1(string $darkVal, string $parblueVal): array
+    {
+        $parseDark = function(string $val): array {
+            return match($val) {
+                'DD' => ['D', 'D'],
+                'Dd' => ['D', 'd'],
+                'dd' => ['d', 'd'],
+                default => ['d', 'd'],
+            };
+        };
+
+        $parseParblue = function(string $val): array {
+            return match($val) {
+                '++' => ['+', '+'],
+                '+aq' => ['aq', '+'],
+                '+tq' => ['tq', '+'],
+                'aqaq' => ['aq', 'aq'],
+                'tqtq' => ['tq', 'tq'],
+                'tqaq' => ['tq', 'aq'],
+                default => ['+', '+'],
+            };
+        };
+
+        $dark = $parseDark($darkVal);
+        $parblue = $parseParblue($parblueVal);
+
+        return [
+            'chr1' => ['dark' => $dark[0], 'parblue' => $parblue[0]],
+            'chr2' => ['dark' => $dark[1], 'parblue' => $parblue[1]],
+        ];
+    }
+
     /**
      * アレル解析（v6.8: 14座位対応）
      */
@@ -2588,10 +2782,25 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
     }
 
     /**
-     * 子孫計算（v6.8.1: 最適化版）
+     * 子孫計算（v7.0: 連鎖遺伝対応版）
+     *
+     * v7モードが有効な場合、連鎖座位の組み換え率を考慮した計算を行う。
+     * v7モードは以下の条件で有効化される:
+     * - 入力に 'use_linkage' => true が含まれる
+     * - 入力に 'f_Z_linked' または 'm_Z_linked' が含まれる
      */
     public function calculateOffspring(array $input): array
     {
+        // v7モード判定
+        $useV7 = ($input['use_linkage'] ?? false)
+            || isset($input['f_Z_linked'])
+            || isset($input['m_Z_linked']);
+
+        if ($useV7) {
+            return $this->calculateOffspringV7($input);
+        }
+
+        // v6.8互換モード
         $fMode = $input['f_mode'] ?? 'genotype';
         $mMode = $input['m_mode'] ?? 'genotype';
         
@@ -2744,6 +2953,370 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
         return ['phenotype' => $phenotypeResults, 'genotype' => $genotypeResults, 'results' => $genotypeResults];
     }
 
+    /**
+     * v7.0 子孫計算 - 連鎖遺伝対応版
+     *
+     * GametesGenerator を使用して連鎖座位の組み換え率を考慮した計算を行う。
+     */
+    private function calculateOffspringV7(array $input): array
+    {
+        // 入力データ前処理（v6.8互換）
+        $fMode = $input['f_mode'] ?? 'genotype';
+        $mMode = $input['m_mode'] ?? 'genotype';
+
+        if ($fMode === 'phenotype') {
+            $fGeno = $this->phenotypeToGenotype($input, 'f', 'male');
+            foreach ($fGeno as $k => $v) { $input['f_' . $k] = $v; }
+        }
+        if ($mMode === 'phenotype') {
+            $mGeno = $this->phenotypeToGenotype($input, 'm', 'female');
+            foreach ($mGeno as $k => $v) { $input['m_' . $k] = $v; }
+        }
+
+        if ($fMode === 'fromdb' && !empty($input['f_db_genotype'])) {
+            $j = json_decode($input['f_db_genotype'], true);
+            if ($j) {
+                foreach ($j as $k => $v) { $input['f_' . $k] = $v; }
+                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['f_'.$short] = $j[$long]; }
+            }
+        }
+        if ($mMode === 'fromdb' && !empty($input['m_db_genotype'])) {
+            $j = json_decode($input['m_db_genotype'], true);
+            if ($j) {
+                foreach ($j as $k => $v) { $input['m_' . $k] = $v; }
+                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['m_'.$short] = $j[$long]; }
+            }
+        }
+
+        // Z_linked ハプロタイプ抽出
+        $sireZLinked = $this->extractZLinked($input, 'f_', 'male');
+        $damZLinked = $this->extractZLinked($input, 'm_', 'female');
+
+        // autosomal_1 ハプロタイプ抽出
+        $sireAutosomal1 = $this->extractAutosomal1($input, 'f_');
+        $damAutosomal1 = $this->extractAutosomal1($input, 'm_');
+
+        // Z染色体連鎖座位の計算（組み換え率適用）
+        $zLinkedResults = $this->calcZLinkedV7(
+            $sireZLinked['Z1'],
+            $sireZLinked['Z2'],
+            $damZLinked['Z1']
+        );
+
+        // 常染色体連鎖座位の計算（組み換え率適用）
+        $autosomal1Results = $this->calcAutosomal1V7(
+            $sireAutosomal1['chr1'],
+            $sireAutosomal1['chr2'],
+            $damAutosomal1['chr1'],
+            $damAutosomal1['chr2']
+        );
+
+        // 独立座位の計算（従来通り）
+        $labels = [
+            'vio' => ['V' => 'V', 'v' => 'v'],
+            'flp' => ['+' => '+', 'flp' => 'flp'],
+            'flb' => ['+' => '+', 'flb' => 'flb'],
+            'pidom' => ['+' => '+', 'Pi' => 'Pi'],
+            'pirec' => ['+' => '+', 'pi' => 'pi'],
+            'dil' => ['+' => '+', 'dil' => 'dil'],
+            'ed' => ['+' => '+', 'ed' => 'ed'],
+            'of' => ['+' => '+', 'of' => 'of'],
+            'ph' => ['+' => '+', 'ph' => 'ph'],
+        ];
+
+        $independentLoci = [
+            'vio' => $this->calcAutosomal($input['f_vio'] ?? 'vv', $input['m_vio'] ?? 'vv', $labels['vio']),
+            'flp' => $this->calcAutosomal($input['f_flp'] ?? '++', $input['m_flp'] ?? '++', $labels['flp']),
+            'flb' => $this->calcAutosomal($input['f_flb'] ?? '++', $input['m_flb'] ?? '++', $labels['flb']),
+            'pidom' => $this->calcAutosomal($input['f_pidom'] ?? '++', $input['m_pidom'] ?? '++', $labels['pidom']),
+            'pirec' => $this->calcAutosomal($input['f_pirec'] ?? '++', $input['m_pirec'] ?? '++', $labels['pirec']),
+            'dil' => $this->calcAutosomal($input['f_dil'] ?? '++', $input['m_dil'] ?? '++', $labels['dil']),
+            'ed' => $this->calcAutosomal($input['f_ed'] ?? '++', $input['m_ed'] ?? '++', $labels['ed']),
+            'of' => $this->calcAutosomal($input['f_of'] ?? '++', $input['m_of'] ?? '++', $labels['of']),
+            'ph' => $this->calcAutosomal($input['f_ph'] ?? '++', $input['m_ph'] ?? '++', $labels['ph']),
+        ];
+
+        // 結果を組み合わせる
+        $PROB_THRESHOLD = 0.0001;
+        $maleResults = $this->enumerateCombinationsV7(
+            $autosomal1Results,
+            $zLinkedResults['male'],
+            $independentLoci,
+            'male',
+            $PROB_THRESHOLD
+        );
+        $femaleResults = $this->enumerateCombinationsV7(
+            $autosomal1Results,
+            $zLinkedResults['female'],
+            $independentLoci,
+            'female',
+            $PROB_THRESHOLD
+        );
+
+        $allResults = array_merge($maleResults, $femaleResults);
+
+        // 結果を集約
+        $phenotypeAggregated = [];
+        $genotypeAggregated = [];
+
+        foreach ($allResults as $r) {
+            $prob = $r['prob'];
+            $sex = $r['sex'];
+            $geno = $r['geno'];
+
+            $genotype = $this->convertToGenotypeArrayV7($geno, $sex);
+            $colorInfo = AgapornisLoci::resolveColor($genotype);
+            $colorName = $colorInfo['ja'] ?? 'Unknown';
+
+            $splits = $this->extractSplitsV7($geno, $sex);
+            $splitStr = !empty($splits) ? ' /' . implode(',', $splits) : '';
+
+            $phenoKey = $colorName . '|' . $sex;
+            if (!isset($phenotypeAggregated[$phenoKey])) {
+                $phenotypeAggregated[$phenoKey] = [
+                    'phenotype' => $colorName,
+                    'sex' => $sex,
+                    'probability' => 0,
+                    'splits' => [],
+                    'colorKey' => $colorInfo['key'] ?? 'unknown',
+                    'eyeColor' => $colorInfo['eye'] ?? 'black',
+                ];
+            }
+            $phenotypeAggregated[$phenoKey]['probability'] += $prob;
+            if (!empty($splits)) {
+                foreach ($splits as $s) {
+                    if (!in_array($s, $phenotypeAggregated[$phenoKey]['splits'])) {
+                        $phenotypeAggregated[$phenoKey]['splits'][] = $s;
+                    }
+                }
+            }
+
+            $genoKey = json_encode($geno) . '|' . $sex;
+            if (!isset($genotypeAggregated[$genoKey])) {
+                $genotypeAggregated[$genoKey] = [
+                    'genotype' => $geno,
+                    'sex' => $sex,
+                    'probability' => 0,
+                    'phenotype' => $colorName,
+                ];
+            }
+            $genotypeAggregated[$genoKey]['probability'] += $prob;
+        }
+
+        // 確率でソート
+        uasort($phenotypeAggregated, fn($a, $b) => $b['probability'] <=> $a['probability']);
+        uasort($genotypeAggregated, fn($a, $b) => $b['probability'] <=> $a['probability']);
+
+        $phenotypeResults = array_values($phenotypeAggregated);
+        $genotypeResults = array_values($genotypeAggregated);
+
+        return [
+            'phenotype' => $phenotypeResults,
+            'genotype' => $genotypeResults,
+            'results' => $genotypeResults,
+            'linkage_mode' => true,
+        ];
+    }
+
+    /**
+     * v7.0: 連鎖座位を含む組み合わせ列挙
+     */
+    private function enumerateCombinationsV7(
+        array $autosomal1Results,
+        array $zLinkedResults,
+        array $independentLoci,
+        string $sex,
+        float $threshold
+    ): array {
+        $results = [];
+
+        // autosomal_1 と Z_linked の組み合わせを先に計算
+        $linkedCombinations = [];
+        foreach ($autosomal1Results as $autoKey => $autoProb) {
+            foreach ($zLinkedResults as $zKey => $zProb) {
+                $prob = $autoProb * $zProb;
+                if ($prob < $threshold * 0.01) continue;
+                $linkedCombinations[] = [
+                    'autosomal_1' => $autoKey,
+                    'Z_linked' => $zKey,
+                    'prob' => $prob,
+                ];
+            }
+        }
+
+        // 独立座位との組み合わせ
+        $allIndependent = [];
+        foreach ($independentLoci as $key => $data) {
+            $allIndependent[] = ['key' => $key, 'data' => $data];
+        }
+
+        foreach ($linkedCombinations as $linked) {
+            $this->enumerateIndependentRecursive(
+                $allIndependent,
+                0,
+                [
+                    'autosomal_1' => $linked['autosomal_1'],
+                    'Z_linked' => $linked['Z_linked'],
+                ],
+                $linked['prob'],
+                $threshold,
+                $sex,
+                $results
+            );
+        }
+
+        return $results;
+    }
+
+    /**
+     * v7.0: 独立座位の再帰的列挙
+     */
+    private function enumerateIndependentRecursive(
+        array $loci,
+        int $index,
+        array $currentGeno,
+        float $currentProb,
+        float $threshold,
+        string $sex,
+        array &$results
+    ): void {
+        if ($index >= count($loci)) {
+            if ($currentProb >= $threshold) {
+                $results[] = ['sex' => $sex, 'prob' => $currentProb, 'geno' => $currentGeno];
+            }
+            return;
+        }
+
+        $locus = $loci[$index];
+        $key = $locus['key'];
+        $data = $locus['data'];
+
+        foreach ($data as $geno => $prob) {
+            $newProb = $currentProb * $prob;
+            if ($newProb < $threshold * 0.01) continue;
+            $newGeno = $currentGeno;
+            $newGeno[$key] = $geno;
+            $this->enumerateIndependentRecursive($loci, $index + 1, $newGeno, $newProb, $threshold, $sex, $results);
+        }
+    }
+
+    /**
+     * v7.0: 遺伝型をresolveColor用の配列に変換
+     */
+    private function convertToGenotypeArrayV7(array $geno, string $sex): array
+    {
+        $result = [];
+
+        // autosomal_1 をパース (dark|parblue/dark|parblue 形式)
+        if (isset($geno['autosomal_1'])) {
+            $parts = explode('/', $geno['autosomal_1']);
+            $chr1 = GametesGenerator::keyToHaplotype($parts[0] ?? '');
+            $chr2 = GametesGenerator::keyToHaplotype($parts[1] ?? $parts[0] ?? '');
+
+            // dark
+            $d1 = $chr1['dark'] ?? 'd';
+            $d2 = $chr2['dark'] ?? 'd';
+            $darkPair = [$d1, $d2];
+            sort($darkPair);
+            $result['dark'] = implode('', $darkPair);
+
+            // parblue
+            $p1 = $chr1['parblue'] ?? '+';
+            $p2 = $chr2['parblue'] ?? '+';
+            $parbluePair = [$p1, $p2];
+            sort($parbluePair);
+            $result['parblue'] = implode('', $parbluePair);
+        }
+
+        // Z_linked をパース
+        if (isset($geno['Z_linked'])) {
+            if (strpos($geno['Z_linked'], '/W') !== false) {
+                // メス (Z/W)
+                $zKey = str_replace('/W', '', $geno['Z_linked']);
+                $z = GametesGenerator::keyToHaplotype($zKey);
+                $result['cinnamon'] = ($z['cinnamon'] ?? '+') . 'W';
+                $result['ino'] = ($z['ino'] ?? '+') . 'W';
+                $result['opaline'] = ($z['opaline'] ?? '+') . 'W';
+            } else {
+                // オス (Z/Z)
+                $parts = explode('/', $geno['Z_linked']);
+                $z1 = GametesGenerator::keyToHaplotype($parts[0] ?? '');
+                $z2 = GametesGenerator::keyToHaplotype($parts[1] ?? $parts[0] ?? '');
+
+                $result['cinnamon'] = ($z1['cinnamon'] ?? '+') . ($z2['cinnamon'] ?? '+');
+                $result['ino'] = ($z1['ino'] ?? '+') . ($z2['ino'] ?? '+');
+                $result['opaline'] = ($z1['opaline'] ?? '+') . ($z2['opaline'] ?? '+');
+            }
+        }
+
+        // 独立座位
+        foreach (['vio', 'flp', 'flb', 'pidom', 'pirec', 'dil', 'ed', 'of', 'ph'] as $key) {
+            if (isset($geno[$key])) {
+                $mapKey = match($key) {
+                    'vio' => 'violet',
+                    'flp' => 'fallow_pale',
+                    'flb' => 'fallow_bronze',
+                    'pidom' => 'pied_dom',
+                    'pirec' => 'pied_rec',
+                    'dil' => 'dilute',
+                    'ed' => 'edged',
+                    'of' => 'orangeface',
+                    'ph' => 'pale_headed',
+                    default => $key,
+                };
+                $result[$mapKey] = str_replace('/', '', $geno[$key]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * v7.0: スプリット情報の抽出
+     */
+    private function extractSplitsV7(array $geno, string $sex): array
+    {
+        $splits = [];
+
+        // Z_linked からスプリット抽出
+        if (isset($geno['Z_linked']) && $sex === 'male') {
+            if (strpos($geno['Z_linked'], '/W') === false) {
+                $parts = explode('/', $geno['Z_linked']);
+                if (count($parts) === 2) {
+                    $z1 = GametesGenerator::keyToHaplotype($parts[0]);
+                    $z2 = GametesGenerator::keyToHaplotype($parts[1]);
+
+                    foreach (['cinnamon' => 'cin', 'ino' => 'ino', 'opaline' => 'op'] as $locus => $short) {
+                        $a1 = $z1[$locus] ?? '+';
+                        $a2 = $z2[$locus] ?? '+';
+                        if (($a1 !== '+' && $a2 === '+') || ($a1 === '+' && $a2 !== '+')) {
+                            $mutant = $a1 !== '+' ? $a1 : $a2;
+                            $splits[] = $mutant;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 独立座位からスプリット抽出
+        foreach ($geno as $key => $value) {
+            if (in_array($key, ['autosomal_1', 'Z_linked'])) continue;
+            if (strpos($value, '/') !== false) {
+                $parts = explode('/', $value);
+                if (count($parts) === 2 && $parts[0] !== $parts[1]) {
+                    // ヘテロ接合
+                    $mutant = $parts[0] !== '+' ? $parts[0] : $parts[1];
+                    if ($mutant !== '+') {
+                        $splits[] = $mutant;
+                    }
+                }
+            }
+        }
+
+        return array_unique($splits);
+    }
 
     private function enumerateCombinations(array $autosomalLoci, array $sexLinkedLoci, string $sex, float $threshold): array
     {
