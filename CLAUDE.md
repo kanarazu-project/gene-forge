@@ -118,6 +118,65 @@ Guardian.evaluate(sire, dam)  // Inbreeding risk assessment
 
 ---
 
+## v7.0 Linkage Genetics
+
+### Overview
+
+v7.0 introduces **linkage genetics** with recombination rates for linked loci:
+
+| Locus Pair | Recombination Rate | Inheritance |
+|------------|-------------------|-------------|
+| cinnamon-ino | 3% | Z-linked |
+| ino-opaline | 30% | Z-linked |
+| cinnamon-opaline | 33% | Z-linked |
+| dark-parblue | 7% | Autosomal |
+
+### Key Concepts
+
+- **Phase (Cis/Trans)**: Whether linked mutations are on the same chromosome (Cis) or different chromosomes (Trans)
+- **Cis advantage**: Cis individuals produce target phenotypes more efficiently
+  - Lacewing from Cis parent: 48.5% probability
+  - Lacewing from Trans parent: 1.5% probability
+
+### New Classes & Methods
+
+```php
+// Gamete generation with recombination
+GametesGenerator::generateZLinkedMale($Z1, $Z2)
+GametesGenerator::generateZLinkedFemale($Z1)
+GametesGenerator::generateAutosomal1($chr1, $chr2)
+
+// Phase inference
+FamilyEstimatorV3::inferLinkagePhase()
+
+// Linkage-aware route planning
+PathFinder::analyzeLinkageRequirements($genotype)
+```
+
+```javascript
+// Breeding planner phase evaluation
+BreedingPlanner.evaluateLinkagePhase(bird, targetKey)
+BreedingPlanner.calculateLinkageBonus(male, female, targetKey)
+```
+
+### Data Structures
+
+**v7 Haplotype Format:**
+```javascript
+{
+  Z_linked: {
+    Z1: { cinnamon: 'cin', ino: 'ino', opaline: '+' },  // Cis cin-ino
+    Z2: { cinnamon: '+', ino: '+', opaline: '+' }       // Wild type
+  },
+  autosomal_1: {
+    chr1: { dark: 'D', parblue: 'aq' },
+    chr2: { dark: 'd', parblue: '+' }
+  }
+}
+```
+
+---
+
 ## Development Setup
 
 ### Requirements
@@ -263,15 +322,21 @@ Family tree inference endpoint for external applications.
 
 ---
 
-## Future Development (v7.0)
+## v7.0 Implementation Status ✅
 
-See `v7-UpdatePlan.md` for linkage genetics implementation:
+Linkage genetics is fully implemented. See `v7-UpdatePlan.md` for details.
 
-- **cinnamon-ino**: 3% recombination (nearly complete linkage)
-- **ino-opaline**: 30% recombination
-- **dark-parblue**: 7% recombination (autosomal)
+**Implemented Features:**
+- GametesGenerator with recombination rate support
+- calculateOffspringV7 with linked loci calculations
+- Phase (Cis/Trans) inference in FamilyEstimatorV3
+- Linkage-aware PathFinder and BreedingPlanner
+- UI for linkage mode and phase selection
 
-This will replace independent assortment with linked inheritance calculations.
+**Future Enhancements:**
+- Lacewing color definitions in COLOR_DEFINITIONS
+- More detailed phase visualization in UI
+- Linkage-aware demo mode specimens
 
 ---
 
