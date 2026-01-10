@@ -17,8 +17,10 @@ Supporting 14 loci and over 310 phenotypes (capable of generating tens of thousa
 | Languages Supported | 6 (ja/en/de/fr/it/es) |
 | Genetic Loci | 14 |
 | Phenotype Definitions | 310+ |
-| Estimated Dev Cost (US) | $300,000 - $500,000 |
+| Estimated Dev Cost | $150k - $500k+ (varies by context*) |
 | License | CC BY-NC-SA 4.0 (Non-commercial) |
+
+\* See "Development Cost Context" below
 
 ---
 
@@ -55,6 +57,18 @@ This project makes **deliberate architectural choices** that may appear unconven
 - SSOT violations (hardcoded genetic data in JS)
 - Security vulnerabilities
 - Accessibility improvements
+
+### Development Cost Context
+
+The "$150k - $500k+" estimate depends on context:
+
+| Scenario | Estimate | Notes |
+|----------|----------|-------|
+| Offshore team + existing genetics expertise | $50k - $100k | Rare combination |
+| US mid-tier agency | $150k - $250k | Requires domain consultant |
+| US enterprise/consulting | $300k - $500k+ | Full documentation, PM overhead |
+
+**Key cost driver**: Finding developers who understand both web development AND avian genetics (Mendelian inheritance, ZZ/ZW sex determination, linkage disequilibrium, Wright's coefficient). This expertise is rare; most estimates require separate domain consultation.
 
 ---
 
