@@ -81,9 +81,11 @@ function resetLinkageSettings() {
 // ========================================
 // トースト通知
 // ========================================
-function showToast(msg) {
+function showToast(msg, type = 'info') {
     const toast = document.createElement('div');
     toast.className = 'toast';
+    if (type === 'error') toast.classList.add('toast-error');
+    else if (type === 'success') toast.classList.add('toast-success');
     toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 10);
@@ -439,7 +441,7 @@ function importBirdDB(input) {
             refreshBirdList();
             refreshDBSelectors();
         } else {
-            showToast('Error: ' + result.error);
+            showToast(t('error') + ': ' + result.error, 'error');
         }
     };
     reader.readAsText(file);
@@ -491,7 +493,7 @@ function saveBreedingResult() {
         offspring.push({
             sex: card.dataset.sex,
             phenotype: card.dataset.pheno,
-            geno: JSON.parse(card.dataset.geno || '{}')
+            geno: (() => { try { return JSON.parse(card.dataset.geno || '{}'); } catch(e) { return {}; } })()
         });
     });
     
@@ -506,7 +508,7 @@ function saveBreedingResult() {
         offspring
     });
     
-    showToast(t('save') + ' OK');
+    showToast(t('save') + ' ' + t('ok'), 'success');
 }
 
 function registerOffspring(button) {
@@ -514,7 +516,8 @@ function registerOffspring(button) {
     if (!card) return;
     
     const sex = card.dataset.sex;
-    const geno = JSON.parse(card.dataset.geno || '{}');
+    let geno = {};
+    try { geno = JSON.parse(card.dataset.geno || '{}'); } catch(e) { console.warn('Invalid geno data:', e); }
     
     const sireId = document.getElementById('dbSelectSire')?.value;
     const damId = document.getElementById('dbSelectDam')?.value;
