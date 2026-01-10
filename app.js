@@ -321,7 +321,17 @@ function saveBird(event) {
     
     const sireId = document.getElementById('birdSire').value;
     const damId = document.getElementById('birdDam').value;
-    
+
+    // v7.0: 循環参照チェック（親子関係のループ防止）
+    if (typeof BirdDB.validatePedigree === 'function') {
+        const loopError = BirdDB.validatePedigree(currentEditBirdId || null, sireId, damId);
+        if (loopError) {
+            showToast(loopError.error, 'error');
+            alert(loopError.error + '\n\n' + loopError.details);
+            return;
+        }
+    }
+
     const birdData = {
         name,
         code: document.getElementById('birdCode').value.trim(),
@@ -334,7 +344,7 @@ function saveBird(event) {
         sire: sireId ? { id: sireId, ...BirdDB.getBird(sireId) } : null,
         dam: damId ? { id: damId, ...BirdDB.getBird(damId) } : null
     };
-    
+
     if (currentEditBirdId) {
         BirdDB.updateBird(currentEditBirdId, birdData);
         showToast(t('updated'));

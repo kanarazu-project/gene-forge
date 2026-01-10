@@ -1022,6 +1022,134 @@ const BirdDB = {
         return birds.filter(b => b.pedigree?.sire === id || b.pedigree?.dam === id);
     },
 
+    // ========================================
+    // 循環参照検出（v7.0追加）
+    // ========================================
+
+    /**
+     * 指定した鳥のすべての祖先IDを取得（再帰的に6世代まで）
+     * @param {string} birdId - 対象の鳥ID
+     * @param {Set} visited - 訪問済みID（無限ループ防止）
+     * @returns {Set} 祖先IDのセット
+     */
+    getAllAncestorIds(birdId, visited = new Set()) {
+        if (!birdId || visited.has(birdId)) return visited;
+        visited.add(birdId);
+
+        const bird = this.getBird(birdId);
+        if (!bird || !bird.pedigree) return visited;
+
+        // 直接の親
+        if (bird.pedigree.sire) this.getAllAncestorIds(bird.pedigree.sire, visited);
+        if (bird.pedigree.dam) this.getAllAncestorIds(bird.pedigree.dam, visited);
+
+        // pedigreeに記録された祖先
+        const ancestorFields = ['sire_sire', 'sire_dam', 'dam_sire', 'dam_dam',
+            'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam',
+            'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'];
+        for (const field of ancestorFields) {
+            if (bird.pedigree[field]) visited.add(bird.pedigree[field]);
+        }
+
+        return visited;
+    },
+
+    /**
+     * 指定した鳥のすべての子孫IDを取得（再帰的に6世代まで）
+     * @param {string} birdId - 対象の鳥ID
+     * @param {Set} visited - 訪問済みID（無限ループ防止）
+     * @param {number} depth - 現在の深さ
+     * @returns {Set} 子孫IDのセット
+     */
+    getAllDescendantIds(birdId, visited = new Set(), depth = 0) {
+        if (!birdId || visited.has(birdId) || depth > 6) return visited;
+        visited.add(birdId);
+
+        const offspring = this.getOffspring(birdId);
+        for (const child of offspring) {
+            this.getAllDescendantIds(child.id, visited, depth + 1);
+        }
+
+        return visited;
+    },
+
+    /**
+     * 親設定時の循環参照をチェック
+     * @param {string|null} currentBirdId - 編集中の鳥ID（新規の場合はnull）
+     * @param {string} parentId - 設定しようとしている親のID
+     * @param {string} parentType - 'sire' または 'dam'
+     * @returns {object|null} エラーがあれば {error: string, details: string}、なければnull
+     */
+    checkPedigreeLoop(currentBirdId, parentId, parentType) {
+        if (!parentId) return null;
+
+        const isJa = typeof LANG !== 'undefined' && LANG === 'ja';
+        const parentLabel = parentType === 'sire'
+            ? (isJa ? '父親' : 'Sire')
+            : (isJa ? '母親' : 'Dam');
+
+        // 1. 自分自身を親に設定しようとしている
+        if (currentBirdId && currentBirdId === parentId) {
+            return {
+                error: isJa ? '自分自身を親に設定することはできません' : 'Cannot set self as parent',
+                details: isJa ? `${parentLabel}に自分自身が選択されています` : `Self selected as ${parentLabel}`
+            };
+        }
+
+        // 2. 自分の子孫を親に設定しようとしている（編集時のみ）
+        if (currentBirdId) {
+            const descendants = this.getAllDescendantIds(currentBirdId, new Set());
+            descendants.delete(currentBirdId); // 自分自身は除外
+
+            if (descendants.has(parentId)) {
+                const parent = this.getBird(parentId);
+                return {
+                    error: isJa
+                        ? 'この個体は既にあなたの子孫として登録されています'
+                        : 'This bird is already registered as your descendant',
+                    details: isJa
+                        ? `${parent?.name || parentId}はこの鳥の子孫です。親に設定すると循環参照が発生します。`
+                        : `${parent?.name || parentId} is a descendant of this bird. Setting as parent creates a loop.`
+                };
+            }
+        }
+
+        // 3. 選択した親の祖先に自分がいる（つまり親が自分の子孫である）
+        if (currentBirdId) {
+            const parentAncestors = this.getAllAncestorIds(parentId, new Set());
+            if (parentAncestors.has(currentBirdId)) {
+                const parent = this.getBird(parentId);
+                return {
+                    error: isJa
+                        ? 'この個体の血統情報にあなたが祖先として記録されています'
+                        : 'You are recorded as an ancestor in this bird\'s pedigree',
+                    details: isJa
+                        ? `${parent?.name || parentId}の血統書にこの鳥が祖先として登録されています。`
+                        : `This bird is listed as an ancestor in ${parent?.name || parentId}'s pedigree.`
+                };
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * 鳥の保存前に循環参照をチェック（addBird/updateBird用）
+     * @param {string|null} currentBirdId - 編集中の鳥ID
+     * @param {string|null} sireId - 父親ID
+     * @param {string|null} damId - 母親ID
+     * @returns {object|null} エラーがあれば {error: string, details: string}、なければnull
+     */
+    validatePedigree(currentBirdId, sireId, damId) {
+        const sireCheck = this.checkPedigreeLoop(currentBirdId, sireId, 'sire');
+        if (sireCheck) return sireCheck;
+
+        const damCheck = this.checkPedigreeLoop(currentBirdId, damId, 'dam');
+        if (damCheck) return damCheck;
+
+        return null;
+    },
+
     calculateInbreedingCoefficient(sireId, damId, generations = 3) {
         if (!sireId || !damId) return { coefficient: 0, warningLevel: { level: 'safe' } };
 
