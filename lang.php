@@ -92,3 +92,15 @@ function t_pf(string $key, array $params = []): string {
 
     return $text;
 }
+
+// ============================================================
+// HealthGuardian翻訳を統合
+// ============================================================
+require_once __DIR__ . '/lang_guardian.php';
+
+// Guardian翻訳をマージ
+foreach ($guardian_translations as $langCode => $guardianDict) {
+    if (isset($translations[$langCode])) {
+        $translations[$langCode] = array_merge($translations[$langCode], $guardianDict);
+    }
+}

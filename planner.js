@@ -20,6 +20,21 @@
  */
 const BreedingPlanner = {
 
+    // v7.0: 翻訳対応ヘルパー
+    _t(key, fallback) {
+        const T = window.T || {};
+        return T[key] || fallback;
+    },
+    _tp(key, params, fallback) {
+        let text = this._t(key, fallback);
+        if (params) {
+            Object.keys(params).forEach(k => {
+                text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), params[k]);
+            });
+        }
+        return text;
+    },
+
     // v6.7.4: 近交係数閾値
     INBREEDING_THRESHOLD: 0.125,  // 12.5%
     
@@ -102,27 +117,28 @@ const BreedingPlanner = {
         return colorKey;
     },
     
+    // v7.0: 翻訳対応plan関数
     plan(targetKey) {
         const target = this.TARGET_REQUIREMENTS[targetKey];
-        if (!target) return { error: '未対応の目標形質です' };
+        if (!target) return { error: this._t('bp_unsupported_target', '未対応の目標形質です') };
         const birds = typeof BirdDB !== 'undefined' ? BirdDB.getAllBirds() : [];
-        if (birds.length === 0) return { error: '個体が登録されていません', suggestion: '「個体管理」タブで手持ち個体を登録してください' };
+        if (birds.length === 0) return { error: this._t('bp_no_birds', '個体が登録されていません'), suggestion: this._t('bp_register_hint', '「個体管理」タブで手持ち個体を登録してください') };
         const males = birds.filter(b => b.sex === 'male'), females = birds.filter(b => b.sex === 'female');
-        if (males.length === 0 || females.length === 0) return { error: 'オスとメスが両方必要です', suggestion: `現在: オス ${males.length}羽, メス ${females.length}羽` };
-        
+        if (males.length === 0 || females.length === 0) return { error: this._t('bp_need_both_sex', 'オスとメスが両方必要です'), suggestion: this._tp('bp_current_count', { m: males.length, f: females.length }, `現在: オス ${males.length}羽, メス ${females.length}羽`) };
+
         let pairings = [];
         males.forEach(m => females.forEach(f => pairings.push(this.evaluatePairing(m, f, target, targetKey))));
-        
+
         // v6.7.4: 近親交配フィルタリング
         pairings = this.filterByInbreeding(pairings);
-        
+
         pairings.sort((a, b) => b.score - a.score);
-        
+
         // v6.7.4: フィルタリング後に候補がない場合
         if (pairings.length === 0) {
-            return { 
-                error: '倫理基準を満たすペアがありません', 
-                suggestion: '近交係数12.5%未満のペアが存在しません。別血統の個体を導入してください。',
+            return {
+                error: this._t('bp_no_ethical_pairs', '倫理基準を満たすペアがありません'),
+                suggestion: this._t('bp_introduce_new_blood', '近交係数12.5%未満のペアが存在しません。別血統の個体を導入してください。'),
                 filteredOut: true
             };
         }
@@ -257,18 +273,18 @@ const BreedingPlanner = {
             health.warnings.forEach(w => warnings.push('⚠️ ' + w.message));
         }
         
-        // v6.7.4: 近交係数による推奨メッセージ
+        // v7.0: 翻訳対応推奨メッセージ
         let recommendation;
         if (!canBreed) {
-            recommendation = '🚫 繁殖禁止';
+            recommendation = '🚫 ' + this._t('bp_breeding_prohibited', '繁殖禁止');
         } else if (inbreedingCoef >= this.INBREEDING_THRESHOLD) {
-            recommendation = '⚠️ 競走馬では禁忌とされる配合';
+            recommendation = '⚠️ ' + this._t('bp_ethics_warning', '競走馬では禁忌とされる配合');
         } else if (prob >= 0.5) {
-            recommendation = '🌟 最適ペア';
+            recommendation = '🌟 ' + this._t('bp_optimal_pair', '最適ペア');
         } else if (prob > 0) {
-            recommendation = '✓ 可能';
+            recommendation = '✓ ' + this._t('bp_possible', '可能');
         } else {
-            recommendation = '✗ 目標への貢献度低';
+            recommendation = '✗ ' + this._t('bp_low_contribution', '目標への貢献度低');
         }
 
         // v7.0: 連鎖遺伝に関する推奨
@@ -329,11 +345,13 @@ const BreedingPlanner = {
         return prob;
     },
     
+    // v7.0: 翻訳対応
     generateRoadmap(topPairing, target, targetKey, missingGenes) {
-        if (!topPairing) return [{ generation: 0, action: '繁殖可能なペアがありません', goal: '健康リスクの低い個体を導入してください' }];
+        if (!topPairing) return [{ generation: 0, action: this._t('bp_no_breedable_pair', '繁殖可能なペアがありません'), goal: this._t('bp_introduce_healthy', '健康リスクの低い個体を導入してください') }];
         // v6.7.5: COLOR_LABELSから色名取得
         const targetName = this.getColorName(targetKey);
-        return [{ generation: 1, action: `${topPairing.male.name} × ${topPairing.female.name}`, goal: targetName + 'の作出', probability: `${(topPairing.probability * 100).toFixed(1)}%` }];
+        const goalText = this._tp('bp_goal_produce', { name: targetName }, targetName + 'の作出');
+        return [{ generation: 1, action: `${topPairing.male.name} × ${topPairing.female.name}`, goal: goalText, probability: `${(topPairing.probability * 100).toFixed(1)}%` }];
     },
 
     // ========================================
@@ -373,7 +391,7 @@ const BreedingPlanner = {
 
         // メスはヘミ接合（相の概念なし）
         if (sex === 'female') {
-            return { phase: 'hemizygous', note: 'メスは相の概念なし' };
+            return { phase: 'hemizygous', note: this._t('bp_female_hemizygous', 'メスは相の概念なし') };
         }
 
         // 必要な伴性座位を特定
@@ -384,7 +402,7 @@ const BreedingPlanner = {
         if (slr.op) neededLoci.push('opaline');
 
         if (neededLoci.length < 2) {
-            return { phase: 'not_applicable', note: '連鎖考慮不要' };
+            return { phase: 'not_applicable', note: this._t('bp_linkage_not_needed', '連鎖考慮不要') };
         }
 
         // v7形式のZ_linkedハプロタイプがあれば使用
@@ -416,7 +434,7 @@ const BreedingPlanner = {
                 Z1: z1,
                 Z2: z2,
                 advantage: true,
-                note: 'Cis配置（効率的）'
+                note: this._t('bp_phase_cis', 'Cis配置（効率的）')
             };
         }
 
@@ -426,11 +444,11 @@ const BreedingPlanner = {
                 Z1: z1,
                 Z2: z2,
                 advantage: false,
-                note: 'Trans配置（非効率）'
+                note: this._t('bp_phase_trans', 'Trans配置（非効率）')
             };
         }
 
-        return { phase: 'unknown', note: '相不明' };
+        return { phase: 'unknown', note: this._t('bp_phase_unknown', '相不明') };
     },
 
     /**
@@ -451,11 +469,11 @@ const BreedingPlanner = {
             return {
                 phase: 'cis_inferred',
                 advantage: true,
-                note: '複数発現 → Cis推定'
+                note: this._t('bp_phase_cis_inferred', '複数発現 → Cis推定')
             };
         }
 
-        return { phase: 'unknown', note: '相情報なし' };
+        return { phase: 'unknown', note: this._t('bp_phase_no_info', '相情報なし') };
     },
 
     /**
@@ -578,15 +596,15 @@ const BreedingPlanner = {
         }
 
         if (mPhase.Z_linked.phase === 'cis' || mPhase.Z_linked.phase === 'cis_inferred') {
-            return '✓ オスがCis配置 → 効率的';
+            return '✓ ' + this._t('bp_male_cis_efficient', 'オスがCis配置 → 効率的');
         }
 
         if (mPhase.Z_linked.phase === 'trans') {
-            return '⚠ オスがTrans配置 → 非効率（Cis個体推奨）';
+            return '⚠ ' + this._t('bp_male_trans_inefficient', 'オスがTrans配置 → 非効率（Cis個体推奨）');
         }
 
         if (mPhase.Z_linked.phase === 'unknown') {
-            return '? オスの相不明 → テスト交配で確認推奨';
+            return '? ' + this._t('bp_male_phase_unknown', 'オスの相不明 → テスト交配で確認推奨');
         }
 
         return null;
@@ -594,42 +612,45 @@ const BreedingPlanner = {
 };
 
 /**
- * v6.7.5: runPlanner() - SSOT対応版
+ * v7.0: runPlanner() - 翻訳対応版
  * 表示時はCOLOR_LABELSから色名を取得
  */
 function runPlanner() {
+    const T = window.T || {};
+    const _t = (key, fallback) => T[key] || fallback;
+
     const targetSelect = document.getElementById('plannerTarget'), resultPanel = document.getElementById('plannerResult');
     if (!targetSelect || !resultPanel) return;
     const targetKey = targetSelect.value;
-    if (!targetKey) { alert('目標形質を選択してください'); return; }
+    if (!targetKey) { alert(_t('bp_select_target', '目標形質を選択してください')); return; }
     const result = BreedingPlanner.plan(targetKey);
-    
-    if (result.error) { 
+
+    if (result.error) {
         let errorHtml = `<div class="empty-state"><p>⚠️ ${result.error}</p>`;
         if (result.suggestion) errorHtml += `<p>${result.suggestion}</p>`;
         // v6.7.4: フィルタリングによる候補なしの場合の追加メッセージ
         if (result.filteredOut) {
-            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ 近交係数12.5%以上のペアは倫理基準により候補から除外されています</p>`;
+            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ ${_t('bp_filtered_note', '近交係数12.5%以上のペアは倫理基準により候補から除外されています')}</p>`;
         }
         errorHtml += '</div>';
-        resultPanel.innerHTML = errorHtml; 
-        resultPanel.style.display = 'block'; 
-        return; 
+        resultPanel.innerHTML = errorHtml;
+        resultPanel.style.display = 'block';
+        return;
     }
-    
+
     // v6.7.5: targetNameはresultから取得（SSOT対応）
     const targetName = result.targetName;
-    
-    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} 作出計画</span></div>`;
-    html += '<h4>🏆 推奨ペアリング TOP5</h4><div class="pairing-list">';
+
+    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} ${_t('bp_production_plan', '作出計画')}</span></div>`;
+    html += `<h4>🏆 ${_t('bp_recommended_top5', '推奨ペアリング TOP5')}</h4><div class="pairing-list">`;
     result.topPairings.forEach((p, i) => {
         // v6.7.4: 近交係数表示の強化
         const icPercent = (p.inbreedingCoef * 100).toFixed(2);
         const icClass = p.inbreedingCoef >= 0.125 ? 'ic-warning' : (p.inbreedingCoef >= 0.0625 ? 'ic-caution' : 'ic-safe');
-        
+
         html += `<div class="pairing-card ${p.canBreed ? '' : 'pairing-blocked'}">`;
         html += `<div class="pairing-header">#${i+1} ♂${p.male.name} × ♀${p.female.name} ${!p.canBreed ? '🚫' : ''}</div>`;
-        html += `<div class="pairing-stats">確率: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">F値: ${icPercent}%</span></div>`;
+        html += `<div class="pairing-stats">${_t('bp_probability', '確率')}: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">${_t('bp_f_value', 'F値')}: ${icPercent}%</span></div>`;
         html += `<div class="pairing-recommendation">${p.recommendation}</div>`;
         if (p.warnings.length > 0) {
             html += `<div class="pairing-warnings">${p.warnings.join('<br>')}</div>`;
@@ -637,10 +658,10 @@ function runPlanner() {
         html += '</div>';
     });
     html += '</div>';
-    
+
     // v6.7.4: 倫理基準の説明を追加
     html += `<div class="ethics-note" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 0.85em;">`;
-    html += `<p>📋 <strong>倫理基準:</strong> 近交係数12.5%以上のペアは候補から除外されています（サラブレッド規則準拠）</p>`;
+    html += `<p>📋 <strong>${_t('bp_ethics_standard', '倫理基準')}:</strong> ${_t('bp_ethics_description', '近交係数12.5%以上のペアは候補から除外されています（サラブレッド規則準拠）')}</p>`;
     html += `</div>`;
     
     resultPanel.innerHTML = html; 

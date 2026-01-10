@@ -504,25 +504,22 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                     </div>
                     <?php if (!empty($familyResult['testBreedings'])): ?>
                     <h4 style="margin-top:1.5rem;color:#fff;">🧪 <?= t('test_breeding_proposal') ?></h4>
-                    <?php foreach ($familyResult['testBreedings'] as $t): ?>
+                    <?php foreach ($familyResult['testBreedings'] as $tb): ?>
                     <div class="test-item">
-                        <div class="test-locus"><?= htmlspecialchars($t['locus']) ?></div>
-                        <div style="margin:.5rem 0;color:#ccc;"><?= t('current_status') ?>: <?= htmlspecialchars($t['currentStatus'] ?? '') ?></div>
+                        <div class="test-locus"><?= htmlspecialchars(t($tb['locus']) ?: ucfirst($tb['locus'])) ?></div>
                         <div style="margin:.5rem 0;">
-                            <strong style="color:#4ecdc4;"><?= t('recommended_partner') ?>:</strong> <?= htmlspecialchars($t['partner'] ?? '') ?>
-                            <span style="color:#888;font-size:.85rem;"> (<?= htmlspecialchars($t['partnerGeno'] ?? '') ?>)</span>
+                            <strong style="color:#4ecdc4;"><?= t('recommendation') ?>:</strong>
+                            <span style="color:#ddd;"><?= htmlspecialchars($tb['recommendation'] ?? '') ?></span>
                         </div>
                         <div style="margin-top:.75rem;padding:.5rem;background:rgba(0,0,0,.2);border-radius:4px;">
                             <div style="font-size:.85rem;color:#aaa;margin-bottom:.3rem;"><?= t('determination_by_offspring') ?>:</div>
-                            <?php if (!empty($t['判定方法'])): ?>
-                            <?php foreach ($t['判定方法'] as $method): ?>
-                            <div style="font-size:.85rem;color:#ddd;padding:.2rem 0;"><?= htmlspecialchars($method) ?></div>
-                            <?php endforeach; ?>
+                            <div style="font-size:.85rem;color:#ddd;padding:.2rem 0;"><?= htmlspecialchars($tb['expectedResult'] ?? '') ?></div>
+                            <?php if (!empty($tb['minOffspring'])): ?>
+                            <div style="font-size:.8rem;color:#888;margin-top:.3rem;">
+                                (<?= $lang === 'ja' ? '推奨子数: ' . $tb['minOffspring'] . '羽以上' : 'Recommended offspring: ' . $tb['minOffspring'] . '+' ?>)
+                            </div>
                             <?php endif; ?>
                         </div>
-                        <?php if (!empty($t['note'])): ?>
-                        <div style="font-size:.8rem;color:#888;margin-top:.5rem;font-style:italic;">💡 <?= htmlspecialchars($t['note']) ?></div>
-                        <?php endif; ?>
                     </div>
                     <?php endforeach; ?>
                     <?php endif; ?>

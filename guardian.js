@@ -34,14 +34,22 @@ const BreedingValidator = {
         HIGH_RISK: 0.125   // 半兄弟・祖父孫（計画モードで禁止）
     },
     
-    // メッセージ定義
-    MESSAGES: {
-        DANGER: '危険な配合です。生存率低下は不可避です。',
-        WARNING: '競走馬では禁忌とされる配合です',
-        SEX_MALE: '父には♂を指定してください',
-        SEX_FEMALE: '母には♀を指定してください',
-        SAME_BIRD: '同一個体です',
-        PEDIGREE_CONFLICT: 'その鳥は配置できません。個体の血統データを手動で変更してください。'
+    // v7.0: 翻訳対応メッセージ取得
+    _msg(key, fallback) {
+        const T = window.T || {};
+        return T[key] || fallback;
+    },
+
+    // メッセージ定義（翻訳キー対応）
+    get MESSAGES() {
+        return {
+            DANGER: this._msg('bv_danger', '危険な配合です。生存率低下は不可避です。'),
+            WARNING: this._msg('bv_warning', '競走馬では禁忌とされる配合です'),
+            SEX_MALE: this._msg('bv_sex_male', '父には♂を指定してください'),
+            SEX_FEMALE: this._msg('bv_sex_female', '母には♀を指定してください'),
+            SAME_BIRD: this._msg('bv_same_bird', '同一個体です'),
+            PEDIGREE_CONFLICT: this._msg('bv_pedigree_conflict', 'その鳥は配置できません。個体の血統データを手動で変更してください。')
+        };
     },
     
     /**
@@ -285,19 +293,42 @@ const BreedingValidator = {
 // ============================================================
 
 const HealthGuardian = {
-    INBREEDING_LIMITS: {
-        ino: { limit: 2, risk: 'critical', reason: 'メラニン欠損による免疫脆弱化（ルチノー/クリーミノ/ピュアホワイト共通）', icon: '🧬' },
-        pallid: { limit: 2, risk: 'critical', reason: 'メラニン減少による免疫脆弱化', icon: '🧬' },
-        fallow: { limit: 2, risk: 'high', reason: 'メラニン合成異常による虚弱化', icon: '⚗️' },
-        dark_df: { limit: 3, risk: 'moderate', reason: '体格縮小・繁殖能力低下', icon: '📏' },
-        general: { limit: 4, risk: 'low', reason: '活力低下', icon: '💪' }
+    // v7.0: 翻訳対応ヘルパー
+    _t(key, fallback) {
+        const T = window.T || {};
+        return T[key] || fallback;
+    },
+
+    // v7.0: パラメータ置換付き翻訳 (例: "{type}系近親{gen}世代目" → "ルチノー系近親2世代目")
+    _tp(key, params, fallback) {
+        let text = this._t(key, fallback);
+        if (params) {
+            Object.keys(params).forEach(k => {
+                text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), params[k]);
+            });
+        }
+        return text;
+    },
+
+    // v7.0: 翻訳対応 INBREEDING_LIMITS
+    get INBREEDING_LIMITS() {
+        return {
+            ino: { limit: 2, risk: 'critical', reason: this._t('hg_ino_reason', 'メラニン欠損による免疫脆弱化（ルチノー/クリーミノ/ピュアホワイト共通）'), icon: '🧬' },
+            pallid: { limit: 2, risk: 'critical', reason: this._t('hg_pallid_reason', 'メラニン減少による免疫脆弱化'), icon: '🧬' },
+            fallow: { limit: 2, risk: 'high', reason: this._t('hg_fallow_reason', 'メラニン合成異常による虚弱化'), icon: '⚗️' },
+            dark_df: { limit: 3, risk: 'moderate', reason: this._t('hg_dark_df_reason', '体格縮小・繁殖能力低下'), icon: '📏' },
+            general: { limit: 4, risk: 'low', reason: this._t('hg_general_reason', '活力低下'), icon: '💪' }
+        };
     },
     F_THRESHOLDS: { critical: 0.25, high: 0.125, moderate: 0.0625, safe: 0 },
-    RISK_LEVELS: {
-        critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.15)', icon: '🚫', label: '危険' },
-        high: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', icon: '⚠️', label: '高リスク' },
-        moderate: { color: '#eab308', bg: 'rgba(234,179,8,0.15)', icon: '⚡', label: '注意' },
-        safe: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', icon: '✓', label: '安全' }
+    // v7.0: 翻訳対応 RISK_LEVELS
+    get RISK_LEVELS() {
+        return {
+            critical: { color: '#ef4444', bg: 'rgba(239,68,68,0.15)', icon: '🚫', label: this._t('risk_critical', '危険') },
+            high: { color: '#f59e0b', bg: 'rgba(245,158,11,0.15)', icon: '⚠️', label: this._t('risk_high', '高リスク') },
+            moderate: { color: '#eab308', bg: 'rgba(234,179,8,0.15)', icon: '⚡', label: this._t('risk_moderate', '注意') },
+            safe: { color: '#10b981', bg: 'rgba(16,185,129,0.15)', icon: '✓', label: this._t('risk_safe', '安全') }
+        };
     },
 
     evaluateHealth(male, female, inbreedingCoef, options = {}) {
@@ -317,45 +348,91 @@ const HealthGuardian = {
             summary: this._generateSummary(blocks.length === 0, riskLevel, blocks, warnings) };
     },
 
+    // v7.0: 翻訳対応チェック関数
     _checkINOLimit(mGeno, fGeno, mGen, fGen, blocks, warnings) {
         if (!this._hasINOGenes(mGeno) || !this._hasINOGenes(fGeno)) return;
         const nextGen = Math.max(mGen, fGen) + 1, limit = this.INBREEDING_LIMITS.ino.limit;
         const inoType = this._getINOTypeName(mGeno, fGeno);
-        if (nextGen > limit) blocks.push({ type: 'INO_LIMIT_EXCEEDED', severity: 'critical', message: `${inoType}系近親${nextGen}世代目 - 免疫崩壊リスク`, detail: this.INBREEDING_LIMITS.ino.reason, action: `別血統の${inoType}個体を導入してください` });
-        else if (nextGen === limit) warnings.push({ type: 'INO_LIMIT_WARNING', severity: 'high', message: `${inoType}系近親${nextGen}世代目 - 次世代で限界到達`, detail: '子の世代では別血統導入が必須', action: `次世代繁殖前に別血統${inoType}個体の入手を計画` });
+        const p = { type: inoType, gen: nextGen };
+        if (nextGen > limit) blocks.push({ type: 'INO_LIMIT_EXCEEDED', severity: 'critical',
+            message: this._tp('ino_limit_exceeded', p, `${inoType}系近親${nextGen}世代目 - 免疫崩壊リスク`),
+            detail: this.INBREEDING_LIMITS.ino.reason,
+            action: this._tp('ino_limit_action', p, `別血統の${inoType}個体を導入してください`) });
+        else if (nextGen === limit) warnings.push({ type: 'INO_LIMIT_WARNING', severity: 'high',
+            message: this._tp('ino_limit_warning', p, `${inoType}系近親${nextGen}世代目 - 次世代で限界到達`),
+            detail: this._t('ino_limit_detail', '子の世代では別血統導入が必須'),
+            action: this._tp('ino_limit_action_plan', p, `次世代繁殖前に別血統${inoType}個体の入手を計画`) });
     },
     _checkPallidLimit(mGeno, fGeno, mGen, fGen, blocks, warnings) {
         if (!this._hasPallidGenes(mGeno) || !this._hasPallidGenes(fGeno)) return;
         const nextGen = Math.max(mGen, fGen) + 1, limit = this.INBREEDING_LIMITS.pallid.limit;
-        if (nextGen > limit) blocks.push({ type: 'PALLID_LIMIT_EXCEEDED', severity: 'critical', message: `パリッド系近親${nextGen}世代目 - 虚弱化リスク`, detail: this.INBREEDING_LIMITS.pallid.reason, action: '別血統のパリッド個体を導入してください' });
-        else if (nextGen === limit) warnings.push({ type: 'PALLID_LIMIT_WARNING', severity: 'high', message: `パリッド系近親${nextGen}世代目 - 次世代で限界`, detail: '子の世代では別血統導入が必須', action: '次世代繁殖前に別血統パリッド個体の入手を計画' });
+        const p = { gen: nextGen };
+        if (nextGen > limit) blocks.push({ type: 'PALLID_LIMIT_EXCEEDED', severity: 'critical',
+            message: this._tp('pallid_limit_exceeded', p, `パリッド系近親${nextGen}世代目 - 虚弱化リスク`),
+            detail: this.INBREEDING_LIMITS.pallid.reason,
+            action: this._t('pallid_limit_action', '別血統のパリッド個体を導入してください') });
+        else if (nextGen === limit) warnings.push({ type: 'PALLID_LIMIT_WARNING', severity: 'high',
+            message: this._tp('pallid_limit_warning', p, `パリッド系近親${nextGen}世代目 - 次世代で限界`),
+            detail: this._t('pallid_limit_detail', '子の世代では別血統導入が必須'),
+            action: this._t('pallid_limit_action_plan', '次世代繁殖前に別血統パリッド個体の入手を計画') });
     },
     _checkFallowLimit(mGeno, fGeno, mGen, fGen, blocks, warnings) {
         if (!this._hasFallowGenes(mGeno) || !this._hasFallowGenes(fGeno)) return;
         const nextGen = Math.max(mGen, fGen) + 1, limit = this.INBREEDING_LIMITS.fallow.limit;
-        if (nextGen > limit) blocks.push({ type: 'FALLOW_LIMIT_EXCEEDED', severity: 'high', message: `Fallow系近親${nextGen}世代目 - 虚弱化固定リスク`, detail: this.INBREEDING_LIMITS.fallow.reason, action: '別血統のFallow個体を導入してください' });
-        else if (nextGen === limit) warnings.push({ type: 'FALLOW_LIMIT_WARNING', severity: 'moderate', message: `Fallow系近親${nextGen}世代目 - 次世代で限界`, detail: '虚弱化が固定するリスク', action: '別血統Fallow個体の入手を検討' });
+        const p = { gen: nextGen };
+        if (nextGen > limit) blocks.push({ type: 'FALLOW_LIMIT_EXCEEDED', severity: 'high',
+            message: this._tp('fallow_limit_exceeded', p, `Fallow系近親${nextGen}世代目 - 虚弱化固定リスク`),
+            detail: this.INBREEDING_LIMITS.fallow.reason,
+            action: this._t('fallow_limit_action', '別血統のFallow個体を導入してください') });
+        else if (nextGen === limit) warnings.push({ type: 'FALLOW_LIMIT_WARNING', severity: 'moderate',
+            message: this._tp('fallow_limit_warning', p, `Fallow系近親${nextGen}世代目 - 次世代で限界`),
+            detail: this._t('fallow_limit_detail', '虚弱化が固定するリスク'),
+            action: this._t('fallow_limit_action_plan', '別血統Fallow個体の入手を検討') });
     },
     _checkDarkDFAccumulation(mGeno, fGeno, warnings) {
-        if (this._hasDarkDF(mGeno) && this._hasDarkDF(fGeno)) warnings.push({ type: 'DARK_DF_ACCUMULATION', severity: 'moderate', message: 'DF×DF交配 - 体格縮小リスク', detail: '全ての子がDF(D/D)となり、体格縮小の傾向', action: 'SF/ライト個体の導入を推奨' });
+        if (this._hasDarkDF(mGeno) && this._hasDarkDF(fGeno)) warnings.push({ type: 'DARK_DF_ACCUMULATION', severity: 'moderate',
+            message: this._t('dark_df_message', 'DF×DF交配 - 体格縮小リスク'),
+            detail: this._t('dark_df_detail', '全ての子がDF(D/D)となり、体格縮小の傾向'),
+            action: this._t('dark_df_action', 'SF/ライト個体の導入を推奨') });
     },
     _checkInbreedingCoefficient(F, blocks, warnings, risks) {
-        if (F >= this.F_THRESHOLDS.critical) blocks.push({ type: 'F_CRITICAL', severity: 'critical', message: `近交係数 F=${(F*100).toFixed(1)}% - 繁殖禁止レベル`, detail: '親子または全兄弟間に相当', action: '完全に異なる血統の個体を導入してください' });
-        else if (F >= this.F_THRESHOLDS.high) warnings.push({ type: 'F_HIGH', severity: 'high', message: `近交係数 F=${(F*100).toFixed(1)}% - 高リスク`, detail: '半兄弟間に相当', action: '別血統の導入を強く推奨' });
-        else if (F >= this.F_THRESHOLDS.moderate) risks.push({ type: 'F_MODERATE', severity: 'moderate', message: `近交係数 F=${(F*100).toFixed(1)}%`, detail: 'いとこ間に相当', action: '継続的な血統管理が必要' });
+        const pct = (F * 100).toFixed(1);
+        if (F >= this.F_THRESHOLDS.critical) blocks.push({ type: 'F_CRITICAL', severity: 'critical',
+            message: this._tp('f_critical_message', { pct }, `近交係数 F=${pct}% - 繁殖禁止レベル`),
+            detail: this._t('f_critical_detail', '親子または全兄弟間に相当'),
+            action: this._t('f_critical_action', '完全に異なる血統の個体を導入してください') });
+        else if (F >= this.F_THRESHOLDS.high) warnings.push({ type: 'F_HIGH', severity: 'high',
+            message: this._tp('f_high_message', { pct }, `近交係数 F=${pct}% - 高リスク`),
+            detail: this._t('f_high_detail', '半兄弟間に相当'),
+            action: this._t('f_high_action', '別血統の導入を強く推奨') });
+        else if (F >= this.F_THRESHOLDS.moderate) risks.push({ type: 'F_MODERATE', severity: 'moderate',
+            message: this._tp('f_moderate_message', { pct }, `近交係数 F=${pct}%`),
+            detail: this._t('f_moderate_detail', 'いとこ間に相当'),
+            action: this._t('f_moderate_action', '継続的な血統管理が必要') });
     },
     _checkMultiSplitCross(mGeno, fGeno, warnings) {
         const mSplits = this._countSplits(mGeno), fSplits = this._countSplits(fGeno);
-        if (mSplits >= 3 && fSplits >= 3) warnings.push({ type: 'MULTI_SPLIT_CROSS', severity: 'moderate', message: `多重スプリット交配 (${mSplits}×${fSplits})`, detail: '予測困難な結果や虚弱個体が生じるリスク', action: '目標形質を絞り込み、段階的に固定化' });
+        if (mSplits >= 3 && fSplits >= 3) warnings.push({ type: 'MULTI_SPLIT_CROSS', severity: 'moderate',
+            message: this._tp('multi_split_message', { m: mSplits, f: fSplits }, `多重スプリット交配 (${mSplits}×${fSplits})`),
+            detail: this._t('multi_split_detail', '予測困難な結果や虚弱個体が生じるリスク'),
+            action: this._t('multi_split_action', '目標形質を絞り込み、段階的に固定化') });
     },
     _checkGeneralLimit(mGen, fGen, risks) {
         const nextGen = Math.max(mGen, fGen) + 1;
-        if (nextGen >= this.INBREEDING_LIMITS.general.limit) risks.push({ type: 'GENERAL_LIMIT', severity: 'low', message: `一般形質${nextGen}世代目`, detail: '活力低下の可能性', action: '血統全体のリフレッシュを検討' });
+        if (nextGen >= this.INBREEDING_LIMITS.general.limit) risks.push({ type: 'GENERAL_LIMIT', severity: 'low',
+            message: this._tp('general_limit_message', { gen: nextGen }, `一般形質${nextGen}世代目`),
+            detail: this._t('general_limit_detail', '活力低下の可能性'),
+            action: this._t('general_limit_action', '血統全体のリフレッシュを検討') });
     },
 
     _hasINOGenes(geno) { return (geno.ino || '').includes('ino'); },
     _hasPallidGenes(geno) { return (geno.ino || '').includes('pld'); },
-    _hasFallowGenes(geno) { const fl = geno.fl || ''; return fl.includes('fl') && fl !== '++'; },
+    // v7.0: fallow_pale と fallow_bronze の両方をチェック
+    _hasFallowGenes(geno) {
+        const fp = geno.fallow_pale || geno.fl || '';  // 後方互換: geno.fl
+        const fb = geno.fallow_bronze || '';
+        return (fp.includes('flp') && fp !== '++') || (fb.includes('flb') && fb !== '++');
+    },
     _hasDarkDF(geno) { return geno.dark === 'DD'; },
     
     /**
@@ -396,17 +473,19 @@ const HealthGuardian = {
         return fallback[colorKey] || colorKey;
     },
     
+    // v7.0: 正しい座位名を使用（LOCI準拠）
     _countSplits(geno) {
         let count = 0;
         const checkParblue = (val) => val && (val.includes('aq') || val.includes('tq')) && val.includes('+');
         const check = (val, pats) => pats.some(p => val && val.includes(p) && val.includes('+'));
         if (checkParblue(geno.parblue)) count++;
         if (check(geno.ino, ['pld', 'ino'])) count++;
-        if (check(geno.op, ['op'])) count++;
-        if (check(geno.cin, ['cin'])) count++;
-        if (check(geno.fl, ['fl'])) count++;
-        if (check(geno.dil, ['dil'])) count++;
-        if (check(geno.pi, ['pi'])) count++;
+        if (check(geno.opaline || geno.op, ['op'])) count++;  // v7.0: opaline, 後方互換: op
+        if (check(geno.cinnamon || geno.cin, ['cin'])) count++;  // v7.0: cinnamon, 後方互換: cin
+        if (check(geno.fallow_pale || geno.fl, ['flp', 'fl'])) count++;  // v7.0: fallow_pale
+        if (check(geno.fallow_bronze, ['flb'])) count++;  // v7.0: fallow_bronze
+        if (check(geno.dilute || geno.dil, ['dil'])) count++;  // v7.0: dilute
+        if (check(geno.pied_rec || geno.pi, ['pi'])) count++;  // v7.0: pied_rec
         return count;
     },
     _calculateOverallRisk(blocks, warnings, risks) {
@@ -416,19 +495,21 @@ const HealthGuardian = {
         return 'safe';
     },
     _generateRecommendations(blocks, warnings, risks, mGeno, fGeno) { return []; },
+    // v7.0: 翻訳対応サマリー
     _generateSummary(canBreed, riskLevel, blocks, warnings) {
-        if (!canBreed) return `⛔ 繁殖非推奨: ${blocks[0].message}`;
-        if (riskLevel === 'high') return `⚠️ 高リスク: ${warnings[0].message}`;
-        if (riskLevel === 'moderate') return `⚡ 注意事項あり`;
-        return '✓ 健康リスク: 低';
+        if (!canBreed) return `⛔ ${this._t('summary_no_breed', '繁殖非推奨')}: ${blocks[0].message}`;
+        if (riskLevel === 'high') return `⚠️ ${this._t('risk_high', '高リスク')}: ${warnings[0].message}`;
+        if (riskLevel === 'moderate') return `⚡ ${this._t('summary_caution', '注意事項あり')}`;
+        return `✓ ${this._t('summary_safe', '健康リスク: 低')}`;
     },
 
+    // v7.0: 翻訳対応リフレッシュ判定
     needsRefresh(bird) {
         const gen = bird.inbreedingGen || 0, geno = bird.genotype || {};
-        if (this._hasINOGenes(geno) && gen >= 2) return { needed: true, reason: 'INO系（ルチノー/クリーミノ/ピュアホワイト）2世代到達', urgency: 'critical' };
-        if (this._hasPallidGenes(geno) && gen >= 2) return { needed: true, reason: 'パリッド系2世代到達', urgency: 'critical' };
-        if (this._hasFallowGenes(geno) && gen >= 2) return { needed: true, reason: 'Fallow系2世代到達', urgency: 'high' };
-        if (gen >= 4) return { needed: true, reason: '一般形質4世代到達', urgency: 'moderate' };
+        if (this._hasINOGenes(geno) && gen >= 2) return { needed: true, reason: this._t('refresh_ino', 'INO系（ルチノー/クリーミノ/ピュアホワイト）2世代到達'), urgency: 'critical' };
+        if (this._hasPallidGenes(geno) && gen >= 2) return { needed: true, reason: this._t('refresh_pallid', 'パリッド系2世代到達'), urgency: 'critical' };
+        if (this._hasFallowGenes(geno) && gen >= 2) return { needed: true, reason: this._t('refresh_fallow', 'Fallow系2世代到達'), urgency: 'high' };
+        if (gen >= 4) return { needed: true, reason: this._t('refresh_general', '一般形質4世代到達'), urgency: 'moderate' };
         return { needed: false };
     },
     calculateHealthScore(bird) {
