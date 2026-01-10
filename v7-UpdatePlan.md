@@ -128,6 +128,10 @@ Trans [cin +]/[+ ino] × Normal
 | ino-opaline | **30%** | 70% | 30% |
 | cinnamon-opaline | **33%** | 67% | 33% |
 
+※ **Pallid(pld)** はino座位の複対立遺伝子のため、同じ組み換え率を適用:
+- pld-cinnamon: 3%
+- pld-opaline: 30%
+
 ### 常染色体
 
 | 遺伝子座ペア | 組換え率 | 親型配偶子 | 組換え型配偶子 |
