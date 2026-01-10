@@ -1320,6 +1320,9 @@ class FamilyEstimatorV3
         // テスト交配提案を生成
         $testBreedings = $this->generateTestBreedingProposals($results);
 
+        // v7.0: 連鎖座位の相（Phase）を推論
+        $linkagePhase = $this->inferLinkagePhase();
+
         return [
             'success' => true,
             'target' => [
@@ -1331,6 +1334,8 @@ class FamilyEstimatorV3
             'notes' => $notes,
             'testBreedings' => $testBreedings,
             'overallConfidence' => round($confidenceSum / count(AgapornisLoci::LOCI), 1),
+            // v7.0: 連鎖遺伝情報
+            'linkage' => $linkagePhase,
         ];
     }
 
@@ -2199,6 +2204,383 @@ private function genotypeEquivalent(string $g1, string $g2): bool
             'candidates' => [],
             'note' => '座位情報が見つかりません',
         ];
+    }
+
+    // ========================================
+    // v7.0: 連鎖遺伝の相（Phase）推論
+    // ========================================
+
+    /**
+     * 連鎖座位群の相（Phase）を推論
+     * @return array 連鎖群ごとの相情報
+     */
+    public function inferLinkagePhase(): array
+    {
+        $result = [
+            'Z_linked' => $this->detectZLinkedPhase(),
+            'autosomal_1' => $this->detectAutosomal1Phase(),
+        ];
+
+        return $result;
+    }
+
+    /**
+     * Z染色体連鎖座位（cin, ino, opaline）の相を推論
+     */
+    private function detectZLinkedPhase(): array
+    {
+        $sex = $this->targetBird['sex'];
+        $phenotype = $this->targetBird['phenotype'] ?? [];
+        $baseColor = strtolower($phenotype['baseColor'] ?? '');
+
+        // メスはヘミ接合（ZW）なので相の概念なし
+        if ($sex === 'female') {
+            $z1 = $this->detectZLinkedHaplotypeFromPhenotype($baseColor);
+            return [
+                'phase' => 'hemizygous',
+                'Z1' => $z1,
+                'Z2' => null,
+                'confidence' => 100,
+                'note' => 'メスはZ染色体1本のみ（相の概念なし）',
+            ];
+        }
+
+        // オスの場合 - 表現型からの推論を試みる
+        $expressed = $this->detectZLinkedExpressedLoci($baseColor);
+
+        // 2つ以上の伴性形質が同時発現 → Cis確定
+        if (count($expressed) >= 2) {
+            $z1 = ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'];
+            foreach ($expressed as $locus => $allele) {
+                $z1[$locus] = $allele;
+            }
+            return [
+                'phase' => 'cis',
+                'Z1' => $z1,
+                'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => 100,
+                'note' => '複数伴性形質同時発現 → Cis確定',
+            ];
+        }
+
+        // 1つのみ発現 → ホモ接合または相不明
+        if (count($expressed) === 1) {
+            $locus = array_keys($expressed)[0];
+            $allele = $expressed[$locus];
+
+            // 子孫から相を推論
+            $phaseFromOffspring = $this->inferZLinkedPhaseFromOffspring();
+            if ($phaseFromOffspring['phase'] !== 'unknown') {
+                return $phaseFromOffspring;
+            }
+
+            return [
+                'phase' => 'unknown',
+                'Z1' => [$locus => $allele] + ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'Z2' => [$locus => $allele] + ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => 50,
+                'note' => "ホモ{$locus}発現（スプリット座位不明）",
+            ];
+        }
+
+        // 野生型表現 → スプリットの可能性は子孫から推論
+        $phaseFromOffspring = $this->inferZLinkedPhaseFromOffspring();
+        if ($phaseFromOffspring['phase'] !== 'unknown') {
+            return $phaseFromOffspring;
+        }
+
+        // 親からの推論
+        $phaseFromParents = $this->inferZLinkedPhaseFromParents();
+        if ($phaseFromParents['phase'] !== 'unknown') {
+            return $phaseFromParents;
+        }
+
+        return [
+            'phase' => 'unknown',
+            'Z1' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+            'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+            'confidence' => 0,
+            'note' => '相情報なし（野生型表現）',
+        ];
+    }
+
+    /**
+     * 表現型からZ_linkedハプロタイプを検出
+     */
+    private function detectZLinkedHaplotypeFromPhenotype(string $baseColor): array
+    {
+        $haplotype = ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'];
+
+        // Lacewing = cin + ino
+        if (strpos($baseColor, 'lacewing') !== false) {
+            $haplotype['cinnamon'] = 'cin';
+            $haplotype['ino'] = 'ino';
+        } elseif (strpos($baseColor, 'cinnamon') !== false) {
+            $haplotype['cinnamon'] = 'cin';
+        }
+
+        // INO系
+        if (strpos($baseColor, 'lutino') !== false ||
+            strpos($baseColor, 'creamino') !== false ||
+            strpos($baseColor, 'albino') !== false) {
+            $haplotype['ino'] = 'ino';
+        }
+        if (strpos($baseColor, 'pallid') !== false) {
+            $haplotype['ino'] = 'pld';
+        }
+
+        // Opaline
+        if (strpos($baseColor, 'opaline') !== false) {
+            $haplotype['opaline'] = 'op';
+        }
+
+        return $haplotype;
+    }
+
+    /**
+     * 表現型から発現している伴性座位を検出
+     */
+    private function detectZLinkedExpressedLoci(string $baseColor): array
+    {
+        $expressed = [];
+
+        if (strpos($baseColor, 'cinnamon') !== false || strpos($baseColor, 'lacewing') !== false) {
+            $expressed['cinnamon'] = 'cin';
+        }
+
+        if (strpos($baseColor, 'lutino') !== false ||
+            strpos($baseColor, 'creamino') !== false ||
+            strpos($baseColor, 'albino') !== false ||
+            strpos($baseColor, 'lacewing') !== false) {
+            $expressed['ino'] = 'ino';
+        }
+
+        if (strpos($baseColor, 'pallid') !== false) {
+            $expressed['ino'] = 'pld';
+        }
+
+        if (strpos($baseColor, 'opaline') !== false) {
+            $expressed['opaline'] = 'op';
+        }
+
+        return $expressed;
+    }
+
+    /**
+     * 子孫からZ_linked相を推論
+     * Lacewing子が多い → 親はCis
+     * cin子とino子が別々に出る → 親はTrans
+     */
+    private function inferZLinkedPhaseFromOffspring(): array
+    {
+        $offspring = $this->familyMap['offspring'] ?? [];
+        if (empty($offspring)) {
+            return ['phase' => 'unknown', 'confidence' => 0];
+        }
+
+        $stats = [
+            'lacewing' => 0,       // cin + ino 同時発現
+            'cin_only' => 0,       // cin のみ
+            'ino_only' => 0,       // ino のみ
+            'wild' => 0,           // 野生型
+            'total' => 0,
+        ];
+
+        foreach ($offspring as $child) {
+            $baseColor = strtolower($child['phenotype']['baseColor'] ?? '');
+            $stats['total']++;
+
+            if (strpos($baseColor, 'lacewing') !== false) {
+                $stats['lacewing']++;
+            } elseif (strpos($baseColor, 'cinnamon') !== false) {
+                $stats['cin_only']++;
+            } elseif (strpos($baseColor, 'lutino') !== false || strpos($baseColor, 'creamino') !== false) {
+                $stats['ino_only']++;
+            } else {
+                $stats['wild']++;
+            }
+        }
+
+        // 判定ロジック
+        $total = $stats['total'];
+        if ($total < 5) {
+            return ['phase' => 'unknown', 'confidence' => 0, 'note' => '子数不足'];
+        }
+
+        $lacewingRatio = $stats['lacewing'] / $total;
+        $separateRatio = ($stats['cin_only'] + $stats['ino_only']) / $total;
+
+        // Lacewingが20%以上 → Cis可能性高い（期待値24.25%）
+        if ($lacewingRatio >= 0.20 && $separateRatio < 0.05) {
+            return [
+                'phase' => 'cis',
+                'Z1' => ['cinnamon' => 'cin', 'ino' => 'ino', 'opaline' => '+'],
+                'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => min(90, $lacewingRatio * 200),
+                'note' => sprintf('Lacewing子%.0f%% → Cis推定', $lacewingRatio * 100),
+            ];
+        }
+
+        // cin/inoが別々に出る → Trans可能性高い
+        if ($separateRatio >= 0.30 && $stats['lacewing'] === 0) {
+            return [
+                'phase' => 'trans',
+                'Z1' => ['cinnamon' => 'cin', 'ino' => '+', 'opaline' => '+'],
+                'Z2' => ['cinnamon' => '+', 'ino' => 'ino', 'opaline' => '+'],
+                'confidence' => min(90, $separateRatio * 150),
+                'note' => sprintf('cin/ino別出現%.0f%% → Trans推定', $separateRatio * 100),
+            ];
+        }
+
+        return ['phase' => 'unknown', 'confidence' => 0];
+    }
+
+    /**
+     * 親からZ_linked相を推論
+     */
+    private function inferZLinkedPhaseFromParents(): array
+    {
+        $parents = $this->getParentsOf($this->targetPosition);
+        $dam = $parents['dam'] ?? null;
+
+        if (!$dam) {
+            return ['phase' => 'unknown', 'confidence' => 0];
+        }
+
+        // 母親がLacewing → 息子はCis cin-ino/+ を母から継承
+        $damColor = strtolower($dam['phenotype']['baseColor'] ?? '');
+        if (strpos($damColor, 'lacewing') !== false) {
+            return [
+                'phase' => 'cis',
+                'Z1' => ['cinnamon' => 'cin', 'ino' => 'ino', 'opaline' => '+'],
+                'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => 100,
+                'note' => '母がLacewing → 息子のZ1はCis cin-ino',
+            ];
+        }
+
+        return ['phase' => 'unknown', 'confidence' => 0];
+    }
+
+    /**
+     * 常染色体連鎖座位（dark, parblue）の相を推論
+     */
+    private function detectAutosomal1Phase(): array
+    {
+        $phenotype = $this->targetBird['phenotype'] ?? [];
+        $baseColor = strtolower($phenotype['baseColor'] ?? '');
+
+        // 両座位のアレルを検出
+        $darkAllele = $this->detectDarkAllele($baseColor);
+        $parblueAllele = $this->detectParblueAllele($baseColor);
+
+        // 両方とも野生型 → 相の概念なし
+        if ($darkAllele === 'd' && $parblueAllele === '+') {
+            return [
+                'phase' => 'wild',
+                'chr1' => ['dark' => 'd', 'parblue' => '+'],
+                'chr2' => ['dark' => 'd', 'parblue' => '+'],
+                'confidence' => 100,
+                'note' => '両座位野生型',
+            ];
+        }
+
+        // 子孫から相を推論
+        $phaseFromOffspring = $this->inferAutosomal1PhaseFromOffspring();
+        if ($phaseFromOffspring['phase'] !== 'unknown') {
+            return $phaseFromOffspring;
+        }
+
+        // 相不明
+        return [
+            'phase' => 'unknown',
+            'chr1' => ['dark' => $darkAllele, 'parblue' => $parblueAllele],
+            'chr2' => ['dark' => 'd', 'parblue' => '+'],
+            'confidence' => 0,
+            'note' => '相情報不足',
+        ];
+    }
+
+    /**
+     * 表現型からdarkアレルを検出
+     */
+    private function detectDarkAllele(string $baseColor): string
+    {
+        if (strpos($baseColor, 'olive') !== false || strpos($baseColor, 'mauve') !== false) {
+            return 'D'; // DF
+        }
+        if (strpos($baseColor, 'dark') !== false || strpos($baseColor, 'cobalt') !== false) {
+            return 'D'; // SF (ヘテロ)
+        }
+        return 'd';
+    }
+
+    /**
+     * 表現型からparblueアレルを検出
+     */
+    private function detectParblueAllele(string $baseColor): string
+    {
+        if (strpos($baseColor, 'aqua') !== false) return 'aq';
+        if (strpos($baseColor, 'turquoise') !== false) return 'tq';
+        if (strpos($baseColor, 'seagreen') !== false) return 'aq'; // tq/aq
+        return '+';
+    }
+
+    /**
+     * 子孫からautosomal_1相を推論
+     */
+    private function inferAutosomal1PhaseFromOffspring(): array
+    {
+        $offspring = $this->familyMap['offspring'] ?? [];
+        if (count($offspring) < 5) {
+            return ['phase' => 'unknown', 'confidence' => 0];
+        }
+
+        // dark+parblue同時発現 vs 別々発現をカウント
+        $stats = ['combined' => 0, 'dark_only' => 0, 'parblue_only' => 0, 'total' => 0];
+
+        foreach ($offspring as $child) {
+            $baseColor = strtolower($child['phenotype']['baseColor'] ?? '');
+            $stats['total']++;
+
+            $hasDark = strpos($baseColor, 'dark') !== false || strpos($baseColor, 'olive') !== false;
+            $hasParblue = strpos($baseColor, 'aqua') !== false || strpos($baseColor, 'turquoise') !== false;
+
+            if ($hasDark && $hasParblue) {
+                $stats['combined']++;
+            } elseif ($hasDark) {
+                $stats['dark_only']++;
+            } elseif ($hasParblue) {
+                $stats['parblue_only']++;
+            }
+        }
+
+        // 7%組み換えなので、Cisなら93%が同時遺伝
+        $total = $stats['total'];
+        $combinedRatio = $stats['combined'] / $total;
+        $separateRatio = ($stats['dark_only'] + $stats['parblue_only']) / $total;
+
+        if ($combinedRatio >= 0.80) {
+            return [
+                'phase' => 'cis',
+                'chr1' => ['dark' => 'D', 'parblue' => 'aq'],
+                'chr2' => ['dark' => 'd', 'parblue' => '+'],
+                'confidence' => min(90, $combinedRatio * 100),
+                'note' => sprintf('Dark+Parblue同時遺伝%.0f%% → Cis推定', $combinedRatio * 100),
+            ];
+        }
+
+        if ($separateRatio >= 0.80) {
+            return [
+                'phase' => 'trans',
+                'chr1' => ['dark' => 'D', 'parblue' => '+'],
+                'chr2' => ['dark' => 'd', 'parblue' => 'aq'],
+                'confidence' => min(90, $separateRatio * 100),
+                'note' => sprintf('Dark/Parblue別出現%.0f%% → Trans推定', $separateRatio * 100),
+            ];
+        }
+
+        return ['phase' => 'unknown', 'confidence' => 0];
     }
 }
 
