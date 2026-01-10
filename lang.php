@@ -38,3 +38,57 @@ function getLangDict(): array {
     $lang = getLang();
     return $translations[$lang] ?? $translations['ja'];
 }
+
+// ============================================================
+// PathFinder翻訳を統合
+// ============================================================
+require_once __DIR__ . '/lang_pathfinder.php';
+
+// PathFinder翻訳をマージ
+$pf_translations = [
+    'ja' => $pf_ja,
+    'en' => $pf_en,
+    'de' => $pf_de,
+    'fr' => $pf_fr,
+    'it' => $pf_it,
+    'es' => $pf_es,
+];
+
+foreach ($pf_translations as $langCode => $pfDict) {
+    if (isset($translations[$langCode])) {
+        $translations[$langCode] = array_merge($translations[$langCode], $pfDict);
+    }
+}
+
+/**
+ * PathFinder用翻訳関数（パラメータ置換対応）
+ *
+ * @param string $key 翻訳キー
+ * @param array $params プレースホルダー置換用パラメータ（例: ['locus' => 'opaline', 'gen' => 2]）
+ * @return string 翻訳済みテキスト
+ */
+function t_pf(string $key, array $params = []): string {
+    global $translations;
+    $lang = getLang();
+
+    // 翻訳テキストを取得
+    $text = $translations[$lang][$key] ?? $translations['ja'][$key] ?? $key;
+
+    // パラメータ置換
+    foreach ($params as $paramKey => $value) {
+        // {locus_name} → locus座位の翻訳済み名称
+        if ($paramKey === 'locus') {
+            $locusNameKey = $value; // locus キーをそのまま翻訳キーとして使用
+            $locusName = $translations[$lang][$value] ?? $translations['ja'][$value] ?? ucfirst($value);
+            $text = str_replace('{locus_name}', $locusName, $text);
+        } elseif ($paramKey === 'gen') {
+            $text = str_replace('{gen}', (string)$value, $text);
+        } elseif ($paramKey === 'tier') {
+            $text = str_replace('{tier}', (string)$value, $text);
+        } elseif ($paramKey === 'target') {
+            $text = str_replace('{target}', (string)$value, $text);
+        }
+    }
+
+    return $text;
+}

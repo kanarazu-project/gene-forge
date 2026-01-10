@@ -769,10 +769,72 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                 </form>
                 <div id="pathfinder-result">
                 <?php if ($action === 'pathfind' && $result && !isset($result['error'])): ?>
+                <?php
+                // 目標色名を取得
+                $targetKey = $result['targetKey'] ?? '';
+                $targetColorDef = AgapornisLoci::COLOR_DEFINITIONS[$targetKey] ?? null;
+                $targetName = $targetColorDef ? ($lang === 'ja' ? $targetColorDef['ja'] : $targetColorDef['en']) : $targetKey;
+
+                // ヘルパー関数: 色キーから翻訳済み名称を取得
+                $getColorName = function($colorKey) use ($lang) {
+                    $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$colorKey] ?? null;
+                    if ($colorDef) {
+                        return $lang === 'ja' ? $colorDef['ja'] : $colorDef['en'];
+                    }
+                    return t($colorKey) ?: ucfirst($colorKey);
+                };
+                ?>
                 <div class="output-panel" style="margin-top:1rem;">
-                    <h4><?= htmlspecialchars($result['name']) ?></h4>
-                    <?php if(!empty($result['warning'])): ?><div class="warning-box"><?= htmlspecialchars($result['warning']) ?></div><?php endif; ?>
-                    <?php foreach($result['steps'] as $s): ?><div style="margin:.5rem 0;padding:.5rem;background:var(--bg-tertiary);border-radius:4px;"><strong><?= htmlspecialchars($s['title']) ?></strong><br>♂<?= htmlspecialchars($s['male']) ?> × ♀<?= htmlspecialchars($s['female']) ?><br>→ <?= htmlspecialchars($s['result']) ?></div><?php endforeach; ?>
+                    <h4>🎯 <?= htmlspecialchars($targetName) ?></h4>
+                    <p style="color:var(--text-secondary);margin-bottom:1rem;"><?= t_pf('pf_estimated_gen') ?>: <?= count($result['steps']) ?></p>
+
+                    <?php // 警告表示 ?>
+                    <?php if(!empty($result['warnings'])): ?>
+                    <?php foreach($result['warnings'] as $warnKey): ?>
+                    <div class="warning-box" style="margin-bottom:.5rem;"><?= htmlspecialchars(t_pf($warnKey)) ?></div>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <?php // ステップ表示 ?>
+                    <?php foreach($result['steps'] as $stepIndex => $s): ?>
+                    <?php
+                    // タイトル翻訳
+                    $titleParams = $s['title_params'] ?? [];
+                    $stepTitle = t_pf($s['title_key'] ?? 'pf_wild_type', $titleParams);
+
+                    // オス親の色名
+                    $maleColorName = $getColorName($s['male_key'] ?? 'green');
+                    $maleSuffix = isset($s['male_suffix_key']) ? ' (' . t_pf($s['male_suffix_key']) . ')' : '';
+
+                    // メス親の色名
+                    $femaleColorName = $getColorName($s['female_key'] ?? 'green');
+                    $femaleSuffix = isset($s['female_suffix_key']) ? ' (' . t_pf($s['female_suffix_key']) . ')' : '';
+
+                    // 結果翻訳
+                    $resultParams = $s['result_params'] ?? [];
+                    $resultText = t_pf($s['result_key'] ?? '', $resultParams);
+                    ?>
+                    <div style="margin:.5rem 0;padding:.75rem;background:var(--bg-tertiary);border-radius:4px;border-left:3px solid var(--accent-primary);">
+                        <div style="font-weight:bold;margin-bottom:.5rem;">Step <?= $stepIndex + 1 ?>: <?= htmlspecialchars($stepTitle) ?></div>
+                        <div style="margin:.25rem 0;">♂ <?= htmlspecialchars($maleColorName . $maleSuffix) ?></div>
+                        <div style="margin:.25rem 0;">♀ <?= htmlspecialchars($femaleColorName . $femaleSuffix) ?></div>
+                        <div style="margin-top:.5rem;color:var(--text-secondary);font-size:.9em;">→ <?= htmlspecialchars($resultText) ?></div>
+                    </div>
+                    <?php endforeach; ?>
+
+                    <?php // v7.0 連鎖遺伝情報 ?>
+                    <?php if(!empty($result['linkage']) && !empty($result['linkage']['info'])): ?>
+                    <div style="margin-top:1rem;padding:.75rem;background:var(--bg-secondary);border-radius:4px;border:1px solid var(--accent-secondary);">
+                        <strong>🔗 <?= t('phase') ?></strong>
+                        <?php foreach($result['linkage']['info'] as $linkInfo): ?>
+                        <div style="margin-top:.25rem;font-size:.9em;"><?= htmlspecialchars($linkInfo) ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php elseif ($action === 'pathfind' && isset($result['error'])): ?>
+                <div class="warning-box" style="margin-top:1rem;">
+                    <?= htmlspecialchars(t_pf($result['error'], ['target' => $result['errorParam'] ?? ''])) ?>
                 </div>
                 <?php endif; ?>
                 </div>
