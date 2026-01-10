@@ -1,4 +1,4 @@
-# 🦜 Gene-Forge v6.8
+# 🦜 Gene-Forge v7.0
 
 **Agapornis Genetics Calculator — ALBS Compliant Edition**
 
@@ -190,6 +190,63 @@ BreedingResult = {
 2. **データ不整合の防止**: PHP計算とJS表示で同じデータを参照
 3. **他種への移植が容易**: genetics.phpのLOCI/COLOR_DEFINITIONSを差し替えるだけ
 4. **保守性向上**: 遺伝データの検索・修正がgenetics.php内で完結
+
+---
+
+## 🔒 Code Quality Standards
+
+Gene-Forge v7.0 adheres to **strict code quality standards** for maintainability and international accessibility.
+
+### SSOT Compliance (Single Source of Truth)
+
+All genetic data is centralized in `genetics.php`. JavaScript files contain **zero hardcoded genetic data**.
+
+| Principle | Enforcement |
+|-----------|-------------|
+| Locus definitions | Only in `LOCI` constant |
+| Color definitions | Only in `COLOR_DEFINITIONS` constant |
+| Allele names | Referenced via `LOCI_MASTER` / `COLOR_MASTER` |
+| Locus name fallbacks | **Prohibited** in JS files |
+
+**Violation examples (prohibited):**
+```javascript
+// ❌ WRONG: Hardcoded locus names
+const sexLinked = ['ino', 'opaline', 'cinnamon'];
+
+// ✅ CORRECT: Reference SSOT
+const sexLinked = Object.keys(LOCI_MASTER).filter(k => LOCI_MASTER[k].sex_linked);
+```
+
+### i18n Compliance (Internationalization)
+
+All user-facing strings support **6 languages**: Japanese (ja), English (en), German (de), French (fr), Italian (it), Spanish (es).
+
+| File Type | Pattern | Example |
+|-----------|---------|---------|
+| PHP | `t('key')` | `t('confirmed')` |
+| JavaScript | `T.key \|\| 'fallback'` | `T.save \|\| 'Save'` |
+| Inline objects | `{ ja: '...', en: '...', ... }` | Error messages |
+
+**Violation examples (prohibited):**
+```javascript
+// ❌ WRONG: Hardcoded Japanese without fallback
+return { error: '父個体が見つかりません' };
+
+// ✅ CORRECT: Multilingual object
+const errSire = { ja: '父個体が見つかりません', en: 'Sire not found', de: 'Vater nicht gefunden', fr: 'Père non trouvé', it: 'Padre non trovato', es: 'Padre no encontrado' };
+return { error: errSire[lang] || errSire.en };
+```
+
+### Quality Assurance Checklist
+
+Before merging code changes, verify:
+
+- [ ] No hardcoded locus names in JS (use `LOCI_MASTER`)
+- [ ] No hardcoded color names in JS (use `COLOR_MASTER`)
+- [ ] All user-facing strings use `t()` or `T.key` pattern
+- [ ] Fallback strings are in English (not Japanese)
+- [ ] Version numbers updated across all files
+- [ ] `genetics.php` remains the sole source for genetic data
 
 ---
 
@@ -458,7 +515,7 @@ Uses Bayesian-like logic to identify unknown genotypes from pedigree-wide constr
 
 ### Adaptation Guide for Other Birds (Budgerigars, Conures, etc.)
 
-Gene-Forge v6.8 is designed as a "genetic calculation framework" with complete separation of logic and data. Customize for any avian breeding support system in 3 steps.
+Gene-Forge v7.0 is designed as a "genetic calculation framework" with complete separation of logic and data. Customize for any avian breeding support system in 3 steps.
 
 ### Step 1: Redefine Loci (genetics.php)
 
