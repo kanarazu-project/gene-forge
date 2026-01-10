@@ -236,9 +236,10 @@ calculateOffspring()
         pale_headed: "++",
 
         // Z染色体連鎖グループ（新形式）
+        // ※キー名はLOCI定義と統一（cinnamon, ino, opaline）
         Z_linked: {
-            Z1: { cin: "cin", ino: "ino", op: "+" },  // Cis: cin-ino linked
-            Z2: { cin: "+",   ino: "+",   op: "+" }
+            Z1: { cinnamon: "cin", ino: "ino", opaline: "+" },  // Cis: cin-ino linked
+            Z2: { cinnamon: "+",   ino: "+",   opaline: "+" }
         },
 
         // 常染色体連鎖グループ（新形式）
@@ -253,9 +254,10 @@ calculateOffspring()
 ### メス（ZW）の場合
 
 ```javascript
+// ※オスと同じZ1/Z2形式を使用（Z2 = null でW染色体を表現）
 Z_linked: {
-    Z: { cin: "cin", ino: "+", op: "op" },  // Z染色体1本のみ
-    W: null                                  // W染色体（座位なし）
+    Z1: { cinnamon: "cin", ino: "+", opaline: "op" },  // Z染色体
+    Z2: null                                            // W染色体
 }
 ```
 
@@ -308,11 +310,12 @@ Z_linked: {
 ```php
 // 例: Cis配置 (cin-ino/++) の場合
 // cin-ino: 3% 組み換え
+// ※キー名はLOCI定義と統一
 $gametes = [
-    ['cin' => 'cin', 'ino' => 'ino', 'op' => '+'] => 0.485,  // 親型
-    ['cin' => '+',   'ino' => '+',   'op' => '+'] => 0.485,  // 親型
-    ['cin' => 'cin', 'ino' => '+',   'op' => '+'] => 0.015,  // 組換え型
-    ['cin' => '+',   'ino' => 'ino', 'op' => '+'] => 0.015,  // 組換え型
+    ['cinnamon' => 'cin', 'ino' => 'ino', 'opaline' => '+'] => 0.485,  // 親型
+    ['cinnamon' => '+',   'ino' => '+',   'opaline' => '+'] => 0.485,  // 親型
+    ['cinnamon' => 'cin', 'ino' => '+',   'opaline' => '+'] => 0.015,  // 組換え型
+    ['cinnamon' => '+',   'ino' => 'ino', 'opaline' => '+'] => 0.015,  // 組換え型
 ];
 ```
 
@@ -321,10 +324,11 @@ $gametes = [
 Z染色体が1本のため、組み換えなし。そのままのハプロタイプが配偶子になる。
 
 ```php
-// メス Z: [cin, +, op] の場合
+// メス Z1: [cin, +, op] の場合
+// ※W配偶子も連想配列形式（値はnull）で統一
 $gametes = [
-    ['cin' => 'cin', 'ino' => '+', 'op' => 'op'] => 0.5,  // Z染色体
-    'W' => 0.5,  // W染色体
+    ['cinnamon' => 'cin', 'ino' => '+', 'opaline' => 'op'] => 0.5,   // Z染色体
+    ['cinnamon' => null,  'ino' => null, 'opaline' => null] => 0.5,  // W染色体
 ];
 ```
 
@@ -457,6 +461,146 @@ Lovebirds Compendium p.230-231 の例に準拠。
 
 ---
 
+## 設計セルフチェック（2026-01-10）
+
+### 発見された問題点と解決案
+
+#### 問題1: キー名不一致（重要度: 高）
+
+**問題**: LOCI定義では `cinnamon`, `opaline` だが、v7設計のZ_linkedでは `cin`, `op` を使用。
+
+```javascript
+// 現在の設計（問題あり）
+Z_linked: {
+    Z1: { cin: "cin", ino: "ino", op: "+" },
+    Z2: { cin: "+",   ino: "+",   op: "+" }
+}
+```
+
+**解決**: LOCIキー名と統一
+
+```javascript
+// 修正後
+Z_linked: {
+    Z1: { cinnamon: "cin", ino: "ino", opaline: "+" },
+    Z2: { cinnamon: "+",   ino: "+",   opaline: "+" }
+}
+```
+
+#### 問題2: オス/メスのZ_linked構造差異（重要度: 高）
+
+**問題**: オスは `Z1/Z2`、メスは `Z/W` と異なるキー名を使用。
+
+```javascript
+// オス
+Z_linked: { Z1: {...}, Z2: {...} }
+
+// メス（現在の設計）
+Z_linked: { Z: {...}, W: null }
+```
+
+**解決**: Z1/Z2形式に統一（Z2 = null でW染色体を表現）
+
+```javascript
+// メス（修正後）
+Z_linked: {
+    Z1: { cinnamon: "cin", ino: "+", opaline: "op" },
+    Z2: null  // W染色体
+}
+```
+
+#### 問題3: メスW配偶子の型不整合（重要度: 中）
+
+**問題**: オスの配偶子は連想配列、メスのW配偶子は文字列 `'W'`。
+
+```php
+// 現在の設計（型が混在）
+$gametes = [
+    ['cin' => 'cin', 'ino' => '+'] => 0.5,  // 連想配列
+    'W' => 0.5,                              // 文字列
+];
+```
+
+**解決**: W配偶子も連想配列（値はnull）
+
+```php
+// 修正後
+$gametes = [
+    ['cinnamon' => 'cin', 'ino' => '+', 'opaline' => 'op'] => 0.5,
+    ['cinnamon' => null, 'ino' => null, 'opaline' => null] => 0.5,  // W染色体
+];
+```
+
+#### 問題4: 3座位組み換え計算式未定義（重要度: 高）
+
+**問題**: 2重組み換えの確率（0.9%）は記載あるが、8通りの配偶子確率の完全な計算式がない。
+
+**解決**: Haldane関数に基づく計算式を明記
+
+```
+設定:
+  r1 = 0.03 (cinnamon-ino 組み換え率)
+  r2 = 0.30 (ino-opaline 組み換え率)
+
+親型ハプロタイプ（例: [cin, ino, op] と [+, +, +]）の場合:
+
+配偶子確率:
+  [cin, ino, op]: (1-r1)(1-r2)/2 = 0.3395 (33.95%)
+  [+, +, +]:      (1-r1)(1-r2)/2 = 0.3395 (33.95%)
+  [cin, +, op]:   r1(1-r2)/2     = 0.0105 (1.05%)   ← cin-ino間組換
+  [+, ino, +]:    r1(1-r2)/2     = 0.0105 (1.05%)
+  [cin, ino, +]:  (1-r1)r2/2     = 0.1455 (14.55%)  ← ino-op間組換
+  [+, +, op]:     (1-r1)r2/2     = 0.1455 (14.55%)
+  [cin, +, +]:    r1*r2/2        = 0.0045 (0.45%)   ← 二重組換
+  [+, ino, op]:   r1*r2/2        = 0.0045 (0.45%)
+  ───────────────────────────────
+  合計:                            1.0000 (100%)
+```
+
+#### 問題5: 相不明時の事前確率未定義（重要度: 中）
+
+**問題**: 相が不明な場合「Cis/Trans両方の可能性を組み換え率で重み付け」とあるが、具体的な重み付け方法がない。
+
+**解決**: デフォルト50:50、表現型から推論可能な場合は確定
+
+```
+1. 単一座位のみ変異 → phase: "N/A"
+2. 表現型発現（Lacewing等）→ phase: "cis" (確定)
+3. スプリットのみ → phase: "unknown", prior: { cis: 0.5, trans: 0.5 }
+```
+
+#### 問題6: トリプルヘテロの相表現（重要度: 中）
+
+**問題**: 3座位全てがヘテロの場合、相の組み合わせが複雑。
+
+**解決**: 座位ペア方式で定義（推移律を適用）
+
+```javascript
+// 相の表現方法
+phase: {
+    "cinnamon-ino": "cis",    // cin と ino が同一染色体
+    "ino-opaline": "trans"    // ino と op が別染色体
+    // → cinnamon-opaline は自動的に "trans"（推移律）
+}
+```
+
+### エッジケース一覧
+
+| ケース | 処理方法 |
+|-------|---------|
+| Pallid(pld)の連鎖 | ino座位と同じ3%を適用 |
+| ダブルホモ接合 | Z1=Z2として記録（冗長だが一貫性優先） |
+| メスからの相遺伝 | 子のZ1に直接継承（組み換えなし） |
+| 小サンプルでの相推論 | 信頼度スコア付与 + 警告表示 |
+
+### セルフチェック結論
+
+**設計は修正後に機能する** ✅
+
+上記6点を Phase 1（データ構造移行）で反映すれば、4エンジン全てで連鎖遺伝計算が正しく動作する。
+
+---
+
 ## ステータス
 
 ### 設計フェーズ ✅
@@ -467,9 +611,10 @@ Lovebirds Compendium p.230-231 の例に準拠。
 - [x] 計算ロジック設計（GametesGenerator）
 - [x] 影響範囲の特定（4エンジン: Calculator, Estimator, PathFinder, Planner）
 - [x] v6.8 整合性検証（全31テストパス）
+- [x] 設計セルフチェック（問題点6件特定、解決案策定）
 
 ### 実装フェーズ 🔲
-- [ ] Phase 1: データ構造移行（SSOT）
+- [ ] Phase 1: データ構造移行（SSOT）← 上記修正を反映
 - [ ] Phase 2: 共通エンジン実装（GametesGenerator）
 - [ ] Phase 3: 親→子 計算（GeneticsCalculator）
 - [ ] Phase 4: 子→親 推論（FamilyEstimatorV3）
