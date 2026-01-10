@@ -30,6 +30,30 @@ index.phpにおける全機能のUI操作・動作確認リスト。
    - 対応: birds.js に `validatePedigree()` 追加、app.js で保存時にチェック
    - 多言語対応: エラーメッセージは6言語対応 (ja, en, de, fr, es, it)
 
+4. **FamilyEstimator mapLegacyColorName Fatal Error (修正済み)**
+   - 原因: infer.php:70で未定義の`mapLegacyColorName()`を呼び出し
+   - 影響: REST API `/infer.php` が常にエラーを返す
+   - 対応: infer.phpに`mapLegacyColorName()`関数を実装
+
+5. **FamilyEstimator testBreedings構造ミスマッチ (修正済み)**
+   - 原因: index.phpが期待するキー(`currentStatus`等)と実際の戻り値(`recommendation`等)が不一致
+   - 対応: index.php:505-525を実際の構造に合わせて修正
+
+6. **HealthGuardian遺伝子型フォーマットミスマッチ (修正済み)**
+   - 原因: guardian.jsが旧略称(`geno.fl`)を使用、v7.0は正式名(`geno.fallow_pale`)
+   - 対応: guardian.jsの`_hasFallowGenes()`, `_countSplits()`を更新
+
+7. **lang_guardian.php未統合 (修正済み)**
+   - 原因: lang_guardian.phpの翻訳がlang.phpにマージされていない
+   - 対応: lang.phpの末尾でlang_guardian.phpをincludeしマージ
+
+8. **HealthGuardian/BreedingPlanner日本語ハードコード (修正済み)**
+   - 原因: 両JSファイルで28+の文字列が日本語ハードコード
+   - 対応:
+     - guardian.js: `_t()`, `_tp()`ヘルパー追加、MESSAGES/LIMITS/LEVELSをgetter化
+     - planner.js: `_t()`, `_tp()`ヘルパー追加、全エラー/推奨メッセージを翻訳キー対応
+   - 注: 翻訳キーは日本語フォールバック付きで実装済み
+
 ---
 
 ## グローバル機能
