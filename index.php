@@ -20,7 +20,16 @@ require_once 'genetics.php';
 require_once 'lang.php';
 
 $lang = getLang();
-if (isset($_GET['lang'])) setcookie('lang', $_GET['lang'], time() + 86400 * 365, '/');
+// セキュリティ: langパラメータをホワイトリストで検証
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['ja', 'en', 'de', 'fr', 'it', 'es'], true)) {
+    setcookie('lang', $_GET['lang'], [
+        'expires' => time() + 86400 * 365,
+        'path' => '/',
+        'secure' => isset($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
 
 /**
  * 共通：表現型選択肢を生成
@@ -87,9 +96,15 @@ if ($action === 'calculate') {
     $activeTab = 'estimator';
 } elseif ($action === 'family_infer') {
     $familyEstimator = new FamilyEstimatorV3();
-    $familyData = json_decode($_POST['familyData'] ?? '{}', true);
+    $rawJson = $_POST['familyData'] ?? '{}';
+    $familyData = json_decode($rawJson, true);
     $targetPosition = $_POST['targetPosition'] ?? '';
-    if ($familyData && $targetPosition) {
+    // JSON検証: デコード失敗または不正な構造をチェック
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $familyResult = ['error' => 'Invalid JSON data'];
+    } elseif (!is_array($familyData)) {
+        $familyResult = ['error' => 'Invalid data structure'];
+    } elseif ($familyData && $targetPosition) {
         $familyResult = $familyEstimator->estimate($familyData, $targetPosition);
     } else {
         $familyResult = ['error' => t('select_target')];
@@ -425,7 +440,13 @@ if ($action === 'calculate') {
     // v6.8修正: T辞書を先に定義（customConfirm等で使用）
     const LANG = '<?= $lang ?>';
     const T = <?= json_encode(getLangDict()) ?>;
-    
+
+    // XSS対策: HTMLエスケープ関数
+    function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    }
+
     // SSOT: genetics.php から注入
     const COLOR_LABELS = <?= json_encode(AgapornisLoci::labels($lang === 'ja')) ?>;
     const COLOR_MASTER = <?= json_encode(AgapornisLoci::COLOR_DEFINITIONS) ?>;
@@ -1236,17 +1257,17 @@ $mPh = $_POST['m_ph'] ?? '++';
                     const males = birds.filter(b => b.sex === 'male');
                     const females = birds.filter(b => b.sex === 'female');
                     
-                    healthSire.innerHTML = `<option value="">${T.select_placeholder}</option>`;
-                    healthDam.innerHTML = `<option value="">${T.select_placeholder}</option>`;
+                    healthSire.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
+                    healthDam.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
                     males.forEach(b => {
                         const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
-                        const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                        healthSire.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno}${lineage}</option>`;
+                        const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                        healthSire.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)}${lineage}</option>`;
                     });
                     females.forEach(b => {
                         const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
-                        const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                        healthDam.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno}${lineage}</option>`;
+                        const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                        healthDam.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)}${lineage}</option>`;
                     });
                 }
 
@@ -1423,23 +1444,35 @@ function refreshBirdList() {
         return;
     }
     
+    // XSS対策: すべてのユーザーデータをエスケープ
     listEl.innerHTML = filtered.map(function(bird) {
+        var safeId = escapeHtml(bird.id);
         return '<div class="bird-card" style="background:var(--bg-tertiary);padding:.75rem;border-radius:8px;margin-bottom:.5rem;">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                 '<div>' +
-                    '<strong style="color:#fff;">' + (bird.name || '') + '</strong> ' +
-                    '<span style="color:#888;font-size:.8rem;">' + (bird.code || '') + '</span> ' +
+                    '<strong style="color:#fff;">' + escapeHtml(bird.name || '') + '</strong> ' +
+                    '<span style="color:#888;font-size:.8rem;">' + escapeHtml(bird.code || '') + '</span> ' +
                     '<span style="color:' + (bird.sex === 'male' ? '#4a90d9' : '#d94a8c') + ';">' + (bird.sex === 'male' ? '♂' : '♀') + '</span>' +
                 '</div>' +
                 '<div style="display:flex;gap:.25rem;">' +
-                    '<button type="button" class="btn btn-tiny" onclick="editBird(\'' + bird.id + '\')">✏️</button>' +
-                    '<button type="button" class="btn btn-tiny" onclick="showPedigree(\'' + bird.id + '\')">📜</button>' +
-                    '<button type="button" class="btn btn-tiny" onclick="deleteBird(\'' + bird.id + '\')">🗑️</button>' +
+                    '<button type="button" class="btn btn-tiny" data-action="edit" data-id="' + safeId + '">✏️</button>' +
+                    '<button type="button" class="btn btn-tiny" data-action="pedigree" data-id="' + safeId + '">📜</button>' +
+                    '<button type="button" class="btn btn-tiny" data-action="delete" data-id="' + safeId + '">🗑️</button>' +
                 '</div>' +
             '</div>' +
-            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + (bird.phenotype || '') + '</div>' +
+            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + escapeHtml(bird.phenotype || '') + '</div>' +
         '</div>';
     }).join('');
+    // イベント委譲: data属性を使用してXSSを防止
+    listEl.querySelectorAll('[data-action]').forEach(function(btn) {
+        btn.onclick = function() {
+            var action = this.dataset.action;
+            var id = this.dataset.id;
+            if (action === 'edit') editBird(id);
+            else if (action === 'pedigree') showPedigree(id);
+            else if (action === 'delete') deleteBird(id);
+        };
+    });
 }
 
 function filterBirds() { refreshBirdList(); }
@@ -1548,37 +1581,37 @@ function showTab(id){
             const females = birds.filter(b => b.sex === 'female');
             const isJa = document.documentElement.lang === 'ja';
             
-            healthSire.innerHTML = `<option value="">${T.select_placeholder}</option>`;
-            healthDam.innerHTML = `<option value="">${T.select_placeholder}</option>`;
-            
+            healthSire.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
+            healthDam.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
+
             males.forEach(b => {
                 const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
                 const geno = formatGenoShort(b.genotype, b.sex);
-                const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                healthSire.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno} (${geno})${lineage}</option>`;
+                const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                healthSire.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)} (${escapeHtml(geno)})${lineage}</option>`;
             });
-            
+
             females.forEach(b => {
                 const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
                 const geno = formatGenoShort(b.genotype, b.sex);
-                const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                healthDam.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno} (${geno})${lineage}</option>`;
+                const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                healthDam.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)} (${escapeHtml(geno)})${lineage}</option>`;
             });
         }
         
-        // 遺伝構成を短縮表示
+        // 遺伝構成を短縮表示（SSOT: v7.0座位名を使用）
         function formatGenoShort(geno, sex) {
             if (!geno || Object.keys(geno).length === 0) return 'WT';
             const parts = [];
             if (geno.parblue && geno.parblue !== '++') parts.push(geno.parblue);
             if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(geno.ino);
             if (geno.dark && geno.dark !== 'dd') parts.push(geno.dark);
-            if (geno.op && geno.op !== '++' && geno.op !== '+W') parts.push('op');
-            if (geno.cin && geno.cin !== '++' && geno.cin !== '+W') parts.push('cin');
-            if (geno.pirec && geno.pirec !== '++') parts.push('pirec');
-if (geno.pidom && geno.pidom !== '++') parts.push('pidom');
-if (geno.flp && geno.flp !== '++') parts.push('flp');
-if (geno.flb && geno.flb !== '++') parts.push('flb');
+            if (geno.opaline && geno.opaline !== '++' && geno.opaline !== '+W') parts.push('op');
+            if (geno.cinnamon && geno.cinnamon !== '++' && geno.cinnamon !== '+W') parts.push('cin');
+            if (geno.pied_rec && geno.pied_rec !== '++') parts.push('pirec');
+            if (geno.pied_dom && geno.pied_dom !== '++') parts.push('pidom');
+            if (geno.fallow_pale && geno.fallow_pale !== '++') parts.push('flp');
+            if (geno.fallow_bronze && geno.fallow_bronze !== '++') parts.push('flb');
             return parts.length > 0 ? parts.join('/') : 'WT';
         }
         /**
