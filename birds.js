@@ -1073,6 +1073,67 @@ const BirdDB = {
         return visited;
     },
 
+    // 循環参照エラーメッセージ（6言語対応: ja, en, de, fr, es, it）
+    _loopMessages: {
+        parentLabel: {
+            sire: { ja: '父親', en: 'Sire', de: 'Vater', fr: 'Père', es: 'Padre', it: 'Padre' },
+            dam: { ja: '母親', en: 'Dam', de: 'Mutter', fr: 'Mère', es: 'Madre', it: 'Madre' }
+        },
+        selfAsParent: {
+            ja: '自分自身を親に設定することはできません',
+            en: 'Cannot set self as parent',
+            de: 'Kann sich selbst nicht als Elternteil festlegen',
+            fr: 'Impossible de se définir comme parent',
+            es: 'No se puede establecer a sí mismo como padre',
+            it: 'Non è possibile impostare se stesso come genitore'
+        },
+        selfAsParentDetail: {
+            ja: '{parent}に自分自身が選択されています',
+            en: 'Self selected as {parent}',
+            de: 'Selbst als {parent} ausgewählt',
+            fr: 'Soi-même sélectionné comme {parent}',
+            es: 'Seleccionado a sí mismo como {parent}',
+            it: 'Selezionato se stesso come {parent}'
+        },
+        descendantAsParent: {
+            ja: 'この個体は既にあなたの子孫として登録されています',
+            en: 'This bird is already registered as your descendant',
+            de: 'Dieser Vogel ist bereits als Ihr Nachkomme registriert',
+            fr: 'Cet oiseau est déjà enregistré comme votre descendant',
+            es: 'Esta ave ya está registrada como su descendiente',
+            it: 'Questo uccello è già registrato come tuo discendente'
+        },
+        descendantAsParentDetail: {
+            ja: '{name}はこの鳥の子孫です。親に設定すると循環参照が発生します。',
+            en: '{name} is a descendant of this bird. Setting as parent creates a loop.',
+            de: '{name} ist ein Nachkomme dieses Vogels. Als Elternteil entsteht eine Schleife.',
+            fr: '{name} est un descendant de cet oiseau. Le définir comme parent crée une boucle.',
+            es: '{name} es un descendiente de esta ave. Establecerlo como padre crea un bucle.',
+            it: '{name} è un discendente di questo uccello. Impostarlo come genitore crea un ciclo.'
+        },
+        ancestorLoop: {
+            ja: 'この個体の血統情報にあなたが祖先として記録されています',
+            en: 'You are recorded as an ancestor in this bird\'s pedigree',
+            de: 'Sie sind im Stammbaum dieses Vogels als Vorfahre verzeichnet',
+            fr: 'Vous êtes enregistré comme ancêtre dans le pedigree de cet oiseau',
+            es: 'Usted está registrado como ancestro en el pedigrí de esta ave',
+            it: 'Sei registrato come antenato nel pedigree di questo uccello'
+        },
+        ancestorLoopDetail: {
+            ja: '{name}の血統書にこの鳥が祖先として登録されています。',
+            en: 'This bird is listed as an ancestor in {name}\'s pedigree.',
+            de: 'Dieser Vogel ist im Stammbaum von {name} als Vorfahre aufgeführt.',
+            fr: 'Cet oiseau est listé comme ancêtre dans le pedigree de {name}.',
+            es: 'Esta ave está listada como ancestro en el pedigrí de {name}.',
+            it: 'Questo uccello è elencato come antenato nel pedigree di {name}.'
+        }
+    },
+
+    _getLoopMsg(key, lang) {
+        const msgs = this._loopMessages[key];
+        return msgs ? (msgs[lang] || msgs['en']) : key;
+    },
+
     /**
      * 親設定時の循環参照をチェック
      * @param {string|null} currentBirdId - 編集中の鳥ID（新規の場合はnull）
@@ -1083,49 +1144,41 @@ const BirdDB = {
     checkPedigreeLoop(currentBirdId, parentId, parentType) {
         if (!parentId) return null;
 
-        const isJa = typeof LANG !== 'undefined' && LANG === 'ja';
-        const parentLabel = parentType === 'sire'
-            ? (isJa ? '父親' : 'Sire')
-            : (isJa ? '母親' : 'Dam');
+        const lang = (typeof LANG !== 'undefined') ? LANG : 'en';
+        const parentLabel = this._loopMessages.parentLabel[parentType]?.[lang] || parentType;
 
         // 1. 自分自身を親に設定しようとしている
         if (currentBirdId && currentBirdId === parentId) {
             return {
-                error: isJa ? '自分自身を親に設定することはできません' : 'Cannot set self as parent',
-                details: isJa ? `${parentLabel}に自分自身が選択されています` : `Self selected as ${parentLabel}`
+                error: this._getLoopMsg('selfAsParent', lang),
+                details: this._getLoopMsg('selfAsParentDetail', lang).replace('{parent}', parentLabel)
             };
         }
 
         // 2. 自分の子孫を親に設定しようとしている（編集時のみ）
         if (currentBirdId) {
             const descendants = this.getAllDescendantIds(currentBirdId, new Set());
-            descendants.delete(currentBirdId); // 自分自身は除外
+            descendants.delete(currentBirdId);
 
             if (descendants.has(parentId)) {
                 const parent = this.getBird(parentId);
+                const name = parent?.name || parentId;
                 return {
-                    error: isJa
-                        ? 'この個体は既にあなたの子孫として登録されています'
-                        : 'This bird is already registered as your descendant',
-                    details: isJa
-                        ? `${parent?.name || parentId}はこの鳥の子孫です。親に設定すると循環参照が発生します。`
-                        : `${parent?.name || parentId} is a descendant of this bird. Setting as parent creates a loop.`
+                    error: this._getLoopMsg('descendantAsParent', lang),
+                    details: this._getLoopMsg('descendantAsParentDetail', lang).replace('{name}', name)
                 };
             }
         }
 
-        // 3. 選択した親の祖先に自分がいる（つまり親が自分の子孫である）
+        // 3. 選択した親の祖先に自分がいる
         if (currentBirdId) {
             const parentAncestors = this.getAllAncestorIds(parentId, new Set());
             if (parentAncestors.has(currentBirdId)) {
                 const parent = this.getBird(parentId);
+                const name = parent?.name || parentId;
                 return {
-                    error: isJa
-                        ? 'この個体の血統情報にあなたが祖先として記録されています'
-                        : 'You are recorded as an ancestor in this bird\'s pedigree',
-                    details: isJa
-                        ? `${parent?.name || parentId}の血統書にこの鳥が祖先として登録されています。`
-                        : `This bird is listed as an ancestor in ${parent?.name || parentId}'s pedigree.`
+                    error: this._getLoopMsg('ancestorLoop', lang),
+                    details: this._getLoopMsg('ancestorLoopDetail', lang).replace('{name}', name)
                 };
             }
         }
