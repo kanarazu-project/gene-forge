@@ -250,6 +250,71 @@ Before merging code changes, verify:
 
 ---
 
+## 🧬 Why PHP? — A Deliberate Technical Choice
+
+Gene-Forge uses **vanilla PHP with zero external dependencies**. This is not a limitation—it's a deliberate architectural decision.
+
+### Domain Characteristics of Genetic Calculation
+
+| Aspect | Reality | Implication |
+|--------|---------|-------------|
+| Data type | Discrete (allele combinations) | Associative arrays are optimal |
+| Operations | Cartesian product, enumeration, filtering | PHP `array_*` functions excel |
+| Precision | Rational numbers (1/4, 1/16, etc.) | No floating-point library needed |
+| Output | Web UI | Native PHP integration |
+
+### Why Not Python/R?
+
+```
+Python + NumPy:
+  ✓ Strong at matrix operations
+  ✗ Requires separate API layer for web
+  ✗ Complex deployment (pip, virtualenv)
+
+R + genetics packages:
+  ✓ Rich statistical/genetics libraries
+  ✗ Weak web integration
+  ✗ Won't run on standard hosting
+
+PHP (vanilla):
+  ✓ Problem domain fits array operations perfectly
+  ✓ Calculation → Display in one layer
+  ✓ Runs anywhere
+  ✓ PHP 8+ JIT for high performance
+```
+
+### Zero Dependencies = 20-Year Longevity
+
+```php
+// No composer.json. No vendor/. No package-lock.json.
+// Just PHP files that run on any PHP 7.4+ environment.
+
+require_once 'genetics.php';
+$calc = new GeneticsCalculator();
+// That's it. Forever.
+```
+
+**This code will still run in 2045** because:
+- No framework deprecation cycles
+- No npm/composer dependency hell
+- No build tools to break
+- PHP maintains backward compatibility
+
+### The Right Tool for the Job
+
+Genetic calculation is **discrete combinatorics**, not differential equations. PHP's associative arrays naturally represent genotypes:
+
+```php
+$genotype = ['parblue' => 'aqaq', 'dark' => 'Dd', 'ino' => '+ino'];
+// Direct JSON output to frontend—no transformation needed
+echo json_encode($result);
+```
+
+> "Scientific computing = Python" is a heuristic, not a law.
+> Domain-driven language selection beats cargo-cult engineering.
+
+---
+
 ## 🚀 Quick Start
 
 ### Requirements
