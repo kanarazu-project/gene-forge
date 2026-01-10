@@ -1204,8 +1204,17 @@ $mPh = $_POST['m_ph'] ?? '++';
                 
                 <div id="feasibility-result">
                 <?php if ($action === 'calculate' && $result): ?>
+                <?php
+                // v7互換: 結果配列を取得
+                $offspring = $result['results'] ?? $result['phenotype'] ?? $result;
+                ?>
                 <div class="output-panel" style="margin-top:1rem;"><div class="offspring-grid">
-                    <?php foreach($result as $o): ?><div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($o['prob']*100,1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype']) ?></div></div><?php endforeach; ?>
+                    <?php foreach($offspring as $o): ?>
+                    <?php
+                    // probが1以上ならパーセント値、1未満なら小数
+                    $probValue = $o['prob'] > 1 ? $o['prob'] : $o['prob'] * 100;
+                    ?>
+                    <div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($probValue, 1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype'] ?? $o['displayName'] ?? '') ?></div></div><?php endforeach; ?>
                 </div></div>
                 <?php endif; ?>
                 </div>
