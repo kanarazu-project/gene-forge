@@ -70,121 +70,126 @@ gene-forge/
 
 ---
 
-## 🏗️ Complete SSOT Architecture
+## 🔗 SSOT設計とJavaScriptファイルの役割
 
-Gene-Forge employs a **Complete Single Source of Truth (SSOT)** architecture, where all genetic data originates exclusively from `genetics.php`. JavaScript files contain zero hardcoded genetic information — they dynamically consume data injected from PHP.
+### genetics.php を中心としたSSOT（Single Source of Truth）
 
-### Core Principle
+Gene-Forgeでは、**すべての遺伝データが `genetics.php` に一元化**されています。JavaScriptファイルには遺伝情報のハードコードが一切なく、PHPから注入されたグローバル定数を参照します。
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                      genetics.php (SSOT)                        │
-│  ┌──────────────┐ ┌───────────────────┐ ┌───────────────────┐  │
-│  │     LOCI     │ │ COLOR_DEFINITIONS │ │ GENOTYPE_OPTIONS  │  │
-│  │  (14 loci)   │ │   (310+ colors)   │ │  (UI selections)  │  │
-│  └──────┬───────┘ └─────────┬─────────┘ └─────────┬─────────┘  │
-│         │                   │                     │             │
-│  ┌──────┴───────────────────┴─────────────────────┴──────────┐  │
-│  │                   UI_GENOTYPE_LOCI                        │  │
-│  │               (UI key mapping config)                     │  │
-│  └──────────────────────────┬────────────────────────────────┘  │
-└─────────────────────────────┼───────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     index.php (Injector)                        │
-│  ┌────────────────────────────────────────────────────────────┐ │
-│  │ <script>                                                   │ │
-│  │   const LOCI_MASTER = <?= json_encode(...) ?>;            │ │
-│  │   const COLOR_MASTER = <?= json_encode(...) ?>;           │ │
-│  │   const GENOTYPE_OPTIONS = <?= json_encode(...) ?>;       │ │
-│  │   const UI_GENOTYPE_LOCI = <?= json_encode(...) ?>;       │ │
-│  │ </script>                                                  │ │
-│  └────────────────────────────────────────────────────────────┘ │
-└─────────────────────────────┬───────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        ▼                     ▼                     ▼
-┌───────────────┐    ┌───────────────┐    ┌───────────────┐
-│   family.js   │    │    app.js     │    │  planner.js   │
-│ COLOR_MASTER  │    │ GENOTYPE_OPT  │    │ COLOR_MASTER  │
-│ GENOTYPE_OPT  │    │ UI_GENO_LOCI  │    │ LOCI_MASTER   │
-└───────────────┘    └───────────────┘    └───────────────┘
+                    ┌─────────────────────────────┐
+                    │      genetics.php           │
+                    │         (SSOT)              │
+                    ├─────────────────────────────┤
+                    │ • LOCI (14座位定義)          │
+                    │ • COLOR_DEFINITIONS (310色) │
+                    │ • GENOTYPE_OPTIONS (UI選択) │
+                    │ • RECOMBINATION_RATES (v7)  │
+                    │ • GametesGenerator (v7)     │
+                    │ • GeneticsCalculator        │
+                    │ • FamilyEstimatorV3         │
+                    │ • PathFinder                │
+                    └──────────────┬──────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │        index.php            │
+                    │    (HTML + JS定数注入)       │
+                    │                             │
+                    │  const LOCI_MASTER = ...    │
+                    │  const COLOR_MASTER = ...   │
+                    │  const LINKAGE_GROUPS = ... │
+                    └──────────────┬──────────────┘
+                                   │
+         ┌──────────┬──────────┬───┴───┬──────────┬──────────┐
+         ▼          ▼          ▼       ▼          ▼          ▼
+    ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐
+    │birds.js│ │family.js│ │planner│ │guardian│ │breeding│ │pedigree│
+    └────────┘ └────────┘ └────────┘ └────────┘ └────────┘ └────────┘
 ```
 
-### genetics.php Constants Structure
+### 各JavaScriptファイルのindex.php上の役割
 
-| Constant | Purpose | Structure |
-|----------|---------|-----------|
-| `LOCI` | 14 genetic loci definitions | `['parblue' => ['type' => 'AR_MULTI', 'alleles' => [...]], ...]` |
-| `COLOR_DEFINITIONS` | 310+ phenotype colors | `['green' => ['ja' => '...', 'en' => '...', 'genotype' => [...]], ...]` |
-| `GENOTYPE_OPTIONS` | Genotype selection UI options | Autosomal: `['options' => [[val, label], ...]]`<br>Sex-linked: `['male' => [...], 'female' => [...]]` |
-| `UI_GENOTYPE_LOCI` | UI form field configuration | `[['key' => 'op', 'source' => 'opaline', 'label' => 'Opaline'], ...]` |
+| ファイル | タブ/機能 | 主な役割 |
+|---------|----------|---------|
+| **app.js** | 全体 | タブ切り替え、i18n (多言語)、Toast通知、初期化処理 |
+| **birds.js** | 📁 個体管理 | localStorage個体DB、登録/編集/削除、デモデータ66羽、CSV/JSONエクスポート |
+| **family.js** | 👨‍👩‍👧 家系推論 | 家系図UI、ドラッグ&ドロップ、個体入力モーダル、FamilyEstimatorV3呼び出し |
+| **guardian.js** | 🛡️ 健康評価 | 近交係数計算、INO/Pallid警告、世代制限チェック、リスク評価 |
+| **breeding.js** | 🧬 繁殖結果 | 子孫確率計算結果の表示、スプリット表記、カラーカード生成 |
+| **pedigree.js** | 📜 血統書 | 3世代/5世代血統書HTML生成、印刷用フォーマット |
+| **planner.js** | 🎯 目標計画 | 目標色への経路探索、ペアリング評価、Cis/Trans連鎖評価 (v7) |
 
-### JavaScript File Dependencies
+### 各ファイルの詳細
 
-| JS File | Consumed Constants | Usage |
-|---------|-------------------|-------|
-| `family.js` | `COLOR_MASTER`, `GENOTYPE_OPTIONS`, `UI_GENOTYPE_LOCI` | Family tree UI, bird input modal, color selection |
-| `app.js` | `GENOTYPE_OPTIONS`, `UI_GENOTYPE_LOCI` | Specimen registration form, genotype dropdowns |
-| `planner.js` | `COLOR_MASTER`, `LOCI_MASTER` | Breeding path calculation, target phenotype selection |
-| `pedigree.js` | `COLOR_MASTER` | Pedigree chart color display |
-| `guardian.js` | `LOCI_MASTER` | Health evaluation, inbreeding calculation |
-| `breeding.js` | `COLOR_MASTER`, `LOCI_MASTER` | Breeding validation, offspring prediction display |
-
-### Key Mapping (UI_GENOTYPE_LOCI)
-
-The `UI_GENOTYPE_LOCI` constant maps short form keys (used in forms/storage) to full locus names in `GENOTYPE_OPTIONS`:
-
-| UI Key | Source Key | Display Label |
-|--------|------------|---------------|
-| `parblue` | `parblue` | Parblue |
-| `ino` | `ino` | INO |
-| `op` | `opaline` | Opaline |
-| `cin` | `cinnamon` | Cinnamon |
-| `dark` | `dark` | Dark |
-| `vio` | `violet` | Violet |
-| `fl` | `fallow_pale` | Fallow |
-| `dil` | `dilute` | Dilute |
-| `pi` | `pied_rec` | Pied |
-
-### Benefits of Complete SSOT
-
-1. **Single Point of Modification**: Change genetic data in one place (`genetics.php`), automatically propagates to all UI
-2. **Zero Duplication**: No hardcoded genetic values in JavaScript files
-3. **Consistency Guarantee**: Impossible for PHP calculations and JS UI to have mismatched data
-4. **Maintainability**: When porting to other species, modify only `genetics.php`
-5. **Type Safety**: PHP constants provide compile-time validation
-
-### Modification Guidelines
-
-When adding/modifying genetic data:
-
-```php
-// 1. Add locus definition
-AgapornisLoci::LOCI['new_locus'] = [
-    'type' => 'AR',
-    'alleles' => ['wild' => '+', 'mutant' => 'mut'],
-];
-
-// 2. Add color definitions
-AgapornisLoci::COLOR_DEFINITIONS['new_color'] = [
-    'ja' => '新色', 'en' => 'New Color',
-    'genotype' => ['new_locus' => 'mutmut'],
-];
-
-// 3. Add UI options
-AgapornisLoci::GENOTYPE_OPTIONS['new_locus'] = [
-    'options' => [['++', 'Wild'], ['+mut', 'Split'], ['mutmut', 'Mutant']],
-];
-
-// 4. Add to UI config (if needed in forms)
-AgapornisLoci::UI_GENOTYPE_LOCI[] = [
-    'key' => 'nl', 'source' => 'new_locus', 'label' => 'New Locus'
-];
+#### birds.js — 個体データベース
+```javascript
+BirdDB = {
+    getAllBirds()      // 全個体取得
+    save(bird)         // 保存 (localStorage)
+    delete(id)         // 削除
+    exportJSON()       // JSONエクスポート
+    importCSV(csv)     // CSVインポート
+    loadDemoData()     // デモデータ66羽読み込み
+    migrateGenotypeToV7() // v7形式変換 (連鎖遺伝対応)
+}
 ```
 
-**Never** add genetic data directly to JavaScript files.
+#### family.js — 家系図インターフェース
+```javascript
+Family = {
+    init()             // 家系図UI初期化
+    addBird(position)  // 個体追加（モーダル表示）
+    removeBird(pos)    // 個体削除
+    runInference()     // FamilyEstimatorV3で推論実行
+    renderTree()       // 家系図描画
+}
+```
+
+#### guardian.js — 健康リスク評価
+```javascript
+HealthGuardian = {
+    evaluate(sire, dam)           // ペアリングリスク評価
+    calcInbreedingCoefficient()   // Wright's F計算
+    checkINOLineage()             // INO系統チェック
+    checkPallidLineage()          // Pallid系統チェック
+}
+```
+
+#### planner.js — 繁殖計画エンジン
+```javascript
+BreedingPlanner = {
+    plan(targetKey)              // 目標色への計画生成
+    evaluatePairing(m, f)        // ペアリング評価
+    calculateGeneScore(bird)     // 遺伝スコア計算
+    evaluateLinkagePhase(bird)   // v7: Cis/Trans相評価
+    calculateLinkageBonus()      // v7: 連鎖ボーナス計算
+}
+```
+
+#### pedigree.js — 血統書生成
+```javascript
+Pedigree = {
+    generate(birdId, generations)  // 血統書HTML生成
+    print()                        // 印刷用ウィンドウ
+    getAncestors(bird, depth)      // 祖先取得
+}
+```
+
+#### breeding.js — 繁殖結果表示
+```javascript
+BreedingResult = {
+    display(results)      // 子孫確率をカード表示
+    formatSplits(geno)    // スプリット表記整形
+    getColorCard(color)   // 色カード生成
+}
+```
+
+### なぜSSOTが重要か
+
+1. **一箇所変更で全体反映**: genetics.phpを修正すれば、全UIに自動反映
+2. **データ不整合の防止**: PHP計算とJS表示で同じデータを参照
+3. **他種への移植が容易**: genetics.phpのLOCI/COLOR_DEFINITIONSを差し替えるだけ
+4. **保守性向上**: 遺伝データの検索・修正がgenetics.php内で完結
 
 ---
 
