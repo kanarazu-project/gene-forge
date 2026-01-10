@@ -327,7 +327,7 @@ const BirdDB = {
                         phase: 'independent',
                         phenotype: color.name,
                         inbreedingGen: 0,
-                        notes: `デモ用サンプル個体 (${color.name})`,
+                        notes: `${(window.T && T.demo_sample_note) || 'Demo sample bird'} (${color.name})`,
                         createdAt: now,
                         updatedAt: now
                     });
@@ -500,7 +500,7 @@ const BirdDB = {
         };
         
         return {
-            name: 'デモ家系図（希少色ファミリー）',
+            name: (window.T && T.demo_family_name) || 'Demo Family Tree (Rare Colors)',
             savedAt: new Date().toISOString(),
             // 曽祖父母
             sire_sire_sire: toBirdData(cfg.greatGrandparents.sire_sire_sire.id),
@@ -727,47 +727,74 @@ const BirdDB = {
         };
     },
 
+    /**
+     * 表現型文字列から観察情報を推定（SSOT: COLOR_MASTER使用）
+     * COLOR_MASTERが利用可能な場合、ja/en両方の名前でマッチング
+     */
     inferObservedFromPhenotype(phenotype, genotype) {
         const observed = { baseColor: 'green', eyeColor: 'black', darkness: 'none' };
         if (!phenotype) return observed;
 
         const p = phenotype.toLowerCase();
 
-        if (p.includes('ルチノー') || p.includes('lutino')) { observed.baseColor = 'lutino'; observed.eyeColor = 'red'; }
-        else if (p.includes('クリーミノシーグリーン')) { observed.baseColor = 'creamino_seagreen'; observed.eyeColor = 'red'; }
-        else if (p.includes('クリーミノ') || p.includes('creamino')) { observed.baseColor = 'creamino'; observed.eyeColor = 'red'; }
-        else if (p.includes('ピュアホワイト') || p.includes('pure white') || p.includes('アルビノ')) { observed.baseColor = 'pure_white'; observed.eyeColor = 'red'; }
-        else if ((p.includes('フォロー') || p.includes('fallow')) && p.includes('アクア')) { observed.baseColor = 'fallow_aqua'; observed.eyeColor = 'red'; }
-        else if (p.includes('フォロー') || p.includes('fallow')) { observed.baseColor = 'fallow_green'; observed.eyeColor = 'red'; }
-        else if (p.includes('パリッド') && p.includes('シーグリーン')) { observed.baseColor = 'pallid_seagreen'; }
-        else if (p.includes('パリッド') && p.includes('ターコイズ')) { observed.baseColor = 'pallid_turquoise'; }
-        else if (p.includes('パリッド') && p.includes('アクア')) { observed.baseColor = 'pallid_aqua'; }
-        else if (p.includes('パリッド')) { observed.baseColor = 'pallid_green'; }
-        else if (p.includes('シナモン') && p.includes('シーグリーン')) { observed.baseColor = 'cinnamon_seagreen'; }
-        else if (p.includes('シナモン') && p.includes('ターコイズ')) { observed.baseColor = 'cinnamon_turquoise'; }
-        else if (p.includes('シナモン') && p.includes('アクア')) { observed.baseColor = 'cinnamon_aqua'; }
-        else if (p.includes('シナモン')) { observed.baseColor = 'cinnamon_green'; }
-        else if (p.includes('オパーリン') && p.includes('シーグリーン')) { observed.baseColor = 'opaline_seagreen'; }
-        else if (p.includes('オパーリン') && p.includes('ターコイズ')) { observed.baseColor = 'opaline_turquoise'; }
-        else if (p.includes('オパーリン') && p.includes('アクア')) { observed.baseColor = 'opaline_aqua'; }
-        else if (p.includes('オパーリン')) { observed.baseColor = 'opaline_green'; }
-        else if (p.includes('パイド') && p.includes('シーグリーン')) { observed.baseColor = 'pied_seagreen'; }
-        else if (p.includes('パイド') && p.includes('ターコイズ')) { observed.baseColor = 'pied_turquoise'; }
-        else if (p.includes('パイド') && p.includes('アクア')) { observed.baseColor = 'pied_aqua'; }
-        else if (p.includes('パイド')) { observed.baseColor = 'pied_green'; }
-        else if (p.includes('シーグリーンダーク')) { observed.baseColor = 'seagreen_dark'; observed.darkness = 'sf'; }
-        else if (p.includes('シーグリーン')) { observed.baseColor = 'seagreen'; }
-        else if (p.includes('ターコイズダーク')) { observed.baseColor = 'turquoise_dark'; observed.darkness = 'sf'; }
-        else if (p.includes('ターコイズ')) { observed.baseColor = 'turquoise'; }
-        else if (p.includes('アクアdd') || p.includes('モーブ')) { observed.baseColor = 'aqua_dd'; observed.darkness = 'df'; }
-        else if (p.includes('アクアダーク') || p.includes('コバルト')) { observed.baseColor = 'aqua_dark'; observed.darkness = 'sf'; }
-        else if (p.includes('アクア') || p.includes('ブルー')) { observed.baseColor = 'aqua'; }
-        else if (p.includes('オリーブ')) { observed.baseColor = 'olive'; observed.darkness = 'df'; }
-        else if (p.includes('ダークグリーン')) { observed.baseColor = 'darkgreen'; observed.darkness = 'sf'; }
-        else if (p.includes('グリーン') || p.includes('ノーマル')) { observed.baseColor = 'green'; }
+        // SSOT: COLOR_MASTERからマッチング（利用可能な場合）
+        if (typeof COLOR_MASTER !== 'undefined') {
+            // 長い名前を先にチェック（部分一致対策）
+            const sortedKeys = Object.keys(COLOR_MASTER).sort((a, b) => {
+                const aLen = Math.max((COLOR_MASTER[a].ja || '').length, (COLOR_MASTER[a].en || '').length);
+                const bLen = Math.max((COLOR_MASTER[b].ja || '').length, (COLOR_MASTER[b].en || '').length);
+                return bLen - aLen;
+            });
 
-        if (p.includes('df') || p.includes('ダブル')) { observed.darkness = 'df'; }
-        else if (p.includes('sf') || p.includes('シングル')) { observed.darkness = 'sf'; }
+            for (const key of sortedKeys) {
+                const def = COLOR_MASTER[key];
+                const jaName = (def.ja || '').toLowerCase();
+                const enName = (def.en || '').toLowerCase();
+                if ((jaName && p.includes(jaName)) || (enName && p.includes(enName))) {
+                    observed.baseColor = key;
+                    observed.eyeColor = def.eye || 'black';
+                    // ダーク因子の推定
+                    const geno = def.genotype || {};
+                    if (geno.dark === 'DD') observed.darkness = 'df';
+                    else if (geno.dark === 'Dd') observed.darkness = 'sf';
+                    break;
+                }
+            }
+        } else {
+            // フォールバック: COLOR_MASTER未定義時
+            if (p.includes('lutino')) { observed.baseColor = 'lutino'; observed.eyeColor = 'red'; }
+            else if (p.includes('creamino') && p.includes('seagreen')) { observed.baseColor = 'creamino_seagreen'; observed.eyeColor = 'red'; }
+            else if (p.includes('creamino')) { observed.baseColor = 'creamino'; observed.eyeColor = 'red'; }
+            else if (p.includes('pure') && p.includes('white')) { observed.baseColor = 'pure_white'; observed.eyeColor = 'red'; }
+            else if (p.includes('fallow') && p.includes('aqua')) { observed.baseColor = 'fallow_aqua'; observed.eyeColor = 'red'; }
+            else if (p.includes('fallow')) { observed.baseColor = 'fallow_green'; observed.eyeColor = 'red'; }
+            else if (p.includes('pallid') && p.includes('seagreen')) { observed.baseColor = 'pallid_seagreen'; }
+            else if (p.includes('pallid') && p.includes('turquoise')) { observed.baseColor = 'pallid_turquoise'; }
+            else if (p.includes('pallid') && p.includes('aqua')) { observed.baseColor = 'pallid_aqua'; }
+            else if (p.includes('pallid')) { observed.baseColor = 'pallid_green'; }
+            else if (p.includes('cinnamon') && p.includes('seagreen')) { observed.baseColor = 'cinnamon_seagreen'; }
+            else if (p.includes('cinnamon') && p.includes('turquoise')) { observed.baseColor = 'cinnamon_turquoise'; }
+            else if (p.includes('cinnamon') && p.includes('aqua')) { observed.baseColor = 'cinnamon_aqua'; }
+            else if (p.includes('cinnamon')) { observed.baseColor = 'cinnamon_green'; }
+            else if (p.includes('opaline') && p.includes('seagreen')) { observed.baseColor = 'opaline_seagreen'; }
+            else if (p.includes('opaline') && p.includes('turquoise')) { observed.baseColor = 'opaline_turquoise'; }
+            else if (p.includes('opaline') && p.includes('aqua')) { observed.baseColor = 'opaline_aqua'; }
+            else if (p.includes('opaline')) { observed.baseColor = 'opaline_green'; }
+            else if (p.includes('seagreen') && p.includes('dark')) { observed.baseColor = 'seagreen_dark'; observed.darkness = 'sf'; }
+            else if (p.includes('seagreen')) { observed.baseColor = 'seagreen'; }
+            else if (p.includes('turquoise') && p.includes('dark')) { observed.baseColor = 'turquoise_dark'; observed.darkness = 'sf'; }
+            else if (p.includes('turquoise')) { observed.baseColor = 'turquoise'; }
+            else if (p.includes('aqua') && (p.includes('olive') || p.includes('dd'))) { observed.baseColor = 'aqua_dd'; observed.darkness = 'df'; }
+            else if (p.includes('aqua') && (p.includes('dark') || p.includes('cobalt'))) { observed.baseColor = 'aqua_dark'; observed.darkness = 'sf'; }
+            else if (p.includes('aqua') || p.includes('blue')) { observed.baseColor = 'aqua'; }
+            else if (p.includes('olive')) { observed.baseColor = 'olive'; observed.darkness = 'df'; }
+            else if (p.includes('dark') && p.includes('green')) { observed.baseColor = 'darkgreen'; observed.darkness = 'sf'; }
+            else if (p.includes('green') || p.includes('normal')) { observed.baseColor = 'green'; }
+        }
+
+        // ダーク因子の追加判定
+        if (p.includes('df') || p.includes('double')) { observed.darkness = 'df'; }
+        else if (p.includes('sf') || p.includes('single')) { observed.darkness = 'sf'; }
 
         return observed;
     },
