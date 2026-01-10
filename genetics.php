@@ -1005,6 +1005,273 @@ final class AgapornisLoci
 }
 
 /**
+ * GametesGenerator - 配偶子確率分布生成エンジン（v7.0）
+ *
+ * ハプロタイプ構成と組み換え率から配偶子の確率分布を計算。
+ * 連鎖遺伝計算の共通エンジンとして、GeneticsCalculator, FamilyEstimatorV3,
+ * PathFinder, Planner の4エンジンで使用される。
+ *
+ * @version 7.0
+ */
+final class GametesGenerator
+{
+    /**
+     * Z染色体連鎖群から配偶子確率分布を生成（オス用）
+     *
+     * @param array $Z1 Z1染色体のハプロタイプ {cinnamon, ino, opaline}
+     * @param array $Z2 Z2染色体のハプロタイプ {cinnamon, ino, opaline}
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateZLinkedMale(array $Z1, array $Z2): array
+    {
+        $rates = AgapornisLoci::RECOMBINATION_RATES;
+        $r1 = $rates['cinnamon-ino'];      // 0.03
+        $r2 = $rates['ino-opaline'];       // 0.30
+
+        // 組み換えなし（親型）
+        $noRecomb = (1 - $r1) * (1 - $r2);  // 0.679
+
+        // cin-ino間のみ組み換え
+        $recomb1Only = $r1 * (1 - $r2);     // 0.021
+
+        // ino-op間のみ組み換え
+        $recomb2Only = (1 - $r1) * $r2;     // 0.291
+
+        // 両方で組み換え（二重組み換え）
+        $doubleRecomb = $r1 * $r2;          // 0.009
+
+        $gametes = [];
+
+        // 親型配偶子（組み換えなし）
+        // Z1そのまま、Z2そのまま
+        $gametes[self::haplotypeKey($Z1)] = ($gametes[self::haplotypeKey($Z1)] ?? 0) + $noRecomb / 2;
+        $gametes[self::haplotypeKey($Z2)] = ($gametes[self::haplotypeKey($Z2)] ?? 0) + $noRecomb / 2;
+
+        // cin-ino間組み換え型
+        // Z1のcin + Z2のino,op → 新ハプロタイプ
+        // Z2のcin + Z1のino,op → 新ハプロタイプ
+        $recomb1_from_Z1 = ['cinnamon' => $Z1['cinnamon'], 'ino' => $Z2['ino'], 'opaline' => $Z2['opaline']];
+        $recomb1_from_Z2 = ['cinnamon' => $Z2['cinnamon'], 'ino' => $Z1['ino'], 'opaline' => $Z1['opaline']];
+        $gametes[self::haplotypeKey($recomb1_from_Z1)] = ($gametes[self::haplotypeKey($recomb1_from_Z1)] ?? 0) + $recomb1Only / 2;
+        $gametes[self::haplotypeKey($recomb1_from_Z2)] = ($gametes[self::haplotypeKey($recomb1_from_Z2)] ?? 0) + $recomb1Only / 2;
+
+        // ino-op間組み換え型
+        // Z1のcin,ino + Z2のop → 新ハプロタイプ
+        // Z2のcin,ino + Z1のop → 新ハプロタイプ
+        $recomb2_from_Z1 = ['cinnamon' => $Z1['cinnamon'], 'ino' => $Z1['ino'], 'opaline' => $Z2['opaline']];
+        $recomb2_from_Z2 = ['cinnamon' => $Z2['cinnamon'], 'ino' => $Z2['ino'], 'opaline' => $Z1['opaline']];
+        $gametes[self::haplotypeKey($recomb2_from_Z1)] = ($gametes[self::haplotypeKey($recomb2_from_Z1)] ?? 0) + $recomb2Only / 2;
+        $gametes[self::haplotypeKey($recomb2_from_Z2)] = ($gametes[self::haplotypeKey($recomb2_from_Z2)] ?? 0) + $recomb2Only / 2;
+
+        // 二重組み換え型
+        // Z1のcin + Z2のino + Z1のop
+        // Z2のcin + Z1のino + Z2のop
+        $doubleRecomb_from_Z1 = ['cinnamon' => $Z1['cinnamon'], 'ino' => $Z2['ino'], 'opaline' => $Z1['opaline']];
+        $doubleRecomb_from_Z2 = ['cinnamon' => $Z2['cinnamon'], 'ino' => $Z1['ino'], 'opaline' => $Z2['opaline']];
+        $gametes[self::haplotypeKey($doubleRecomb_from_Z1)] = ($gametes[self::haplotypeKey($doubleRecomb_from_Z1)] ?? 0) + $doubleRecomb / 2;
+        $gametes[self::haplotypeKey($doubleRecomb_from_Z2)] = ($gametes[self::haplotypeKey($doubleRecomb_from_Z2)] ?? 0) + $doubleRecomb / 2;
+
+        return $gametes;
+    }
+
+    /**
+     * Z染色体連鎖群から配偶子確率分布を生成（メス用）
+     *
+     * メスはZ染色体が1本のため組み換えなし。
+     * Z配偶子（50%）とW配偶子（50%）を生成。
+     *
+     * @param array $Z1 Z染色体のハプロタイプ {cinnamon, ino, opaline}
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateZLinkedFemale(array $Z1): array
+    {
+        return [
+            self::haplotypeKey($Z1) => 0.5,
+            'W' => 0.5,  // W染色体（伴性座位なし）
+        ];
+    }
+
+    /**
+     * 常染色体連鎖群から配偶子確率分布を生成
+     *
+     * @param array $chr1 染色体1のハプロタイプ {dark, parblue}
+     * @param array $chr2 染色体2のハプロタイプ {dark, parblue}
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateAutosomal1(array $chr1, array $chr2): array
+    {
+        $rates = AgapornisLoci::RECOMBINATION_RATES;
+        $r = $rates['dark-parblue'];  // 0.07
+
+        $gametes = [];
+
+        // 親型（組み換えなし）: 各50% × (1-r)
+        $noRecomb = 1 - $r;  // 0.93
+        $gametes[self::autosomalKey($chr1)] = ($gametes[self::autosomalKey($chr1)] ?? 0) + $noRecomb / 2;
+        $gametes[self::autosomalKey($chr2)] = ($gametes[self::autosomalKey($chr2)] ?? 0) + $noRecomb / 2;
+
+        // 組み換え型: 各50% × r
+        $recomb1 = ['dark' => $chr1['dark'], 'parblue' => $chr2['parblue']];
+        $recomb2 = ['dark' => $chr2['dark'], 'parblue' => $chr1['parblue']];
+        $gametes[self::autosomalKey($recomb1)] = ($gametes[self::autosomalKey($recomb1)] ?? 0) + $r / 2;
+        $gametes[self::autosomalKey($recomb2)] = ($gametes[self::autosomalKey($recomb2)] ?? 0) + $r / 2;
+
+        return $gametes;
+    }
+
+    /**
+     * 独立座位の配偶子確率分布を生成
+     *
+     * 連鎖しない座位は従来通り独立分離。
+     *
+     * @param string $genotype 遺伝型文字列（例: 'Vv', '++', 'flpflp'）
+     * @param string $locusKey 座位キー（LOCI定義に準拠）
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateIndependent(string $genotype, string $locusKey): array
+    {
+        $locus = AgapornisLoci::LOCI[$locusKey] ?? null;
+        if (!$locus) {
+            return ['+' => 1.0];
+        }
+
+        $alleles = array_keys($locus['alleles']);
+
+        // 遺伝型をパース（簡易版）
+        $parsed = self::parseGenotype($genotype, $alleles);
+
+        if ($parsed['a1'] === $parsed['a2']) {
+            // ホモ接合
+            return [$parsed['a1'] => 1.0];
+        } else {
+            // ヘテロ接合
+            return [
+                $parsed['a1'] => 0.5,
+                $parsed['a2'] => 0.5,
+            ];
+        }
+    }
+
+    /**
+     * ハプロタイプを一意のキー文字列に変換
+     */
+    private static function haplotypeKey(array $haplotype): string
+    {
+        return implode('|', [
+            $haplotype['cinnamon'] ?? '+',
+            $haplotype['ino'] ?? '+',
+            $haplotype['opaline'] ?? '+',
+        ]);
+    }
+
+    /**
+     * 常染色体ハプロタイプを一意のキー文字列に変換
+     */
+    private static function autosomalKey(array $haplotype): string
+    {
+        return implode('|', [
+            $haplotype['dark'] ?? 'd',
+            $haplotype['parblue'] ?? '+',
+        ]);
+    }
+
+    /**
+     * キー文字列からハプロタイプ配列に復元
+     */
+    public static function keyToHaplotype(string $key): array
+    {
+        $parts = explode('|', $key);
+        if (count($parts) === 3) {
+            return [
+                'cinnamon' => $parts[0],
+                'ino' => $parts[1],
+                'opaline' => $parts[2],
+            ];
+        } elseif (count($parts) === 2) {
+            return [
+                'dark' => $parts[0],
+                'parblue' => $parts[1],
+            ];
+        }
+        return [];
+    }
+
+    /**
+     * 遺伝型文字列をパース
+     */
+    private static function parseGenotype(string $genotype, array $alleles): array
+    {
+        // 代表的なパターンをハンドル
+        if ($genotype === '++') {
+            return ['a1' => '+', 'a2' => '+'];
+        }
+
+        // VV, Vv, vv パターン
+        if (preg_match('/^([A-Z])([A-Z])$/i', $genotype, $m)) {
+            return ['a1' => $m[1], 'a2' => $m[2]];
+        }
+
+        // +x, xx パターン
+        if (preg_match('/^\+([a-z]+)$/', $genotype, $m)) {
+            return ['a1' => '+', 'a2' => $m[1]];
+        }
+        if (preg_match('/^([a-z]+)([a-z]+)$/', $genotype, $m)) {
+            return ['a1' => $m[1], 'a2' => $m[2]];
+        }
+
+        return ['a1' => '+', 'a2' => '+'];
+    }
+
+    /**
+     * 配偶子確率分布を正規化（合計が1.0になるように）
+     */
+    public static function normalize(array $gametes): array
+    {
+        $total = array_sum($gametes);
+        if ($total <= 0) {
+            return $gametes;
+        }
+        return array_map(fn($p) => $p / $total, $gametes);
+    }
+
+    /**
+     * 2つの配偶子分布を掛け合わせて子の遺伝型分布を生成
+     *
+     * @param array $sireGametes 父の配偶子分布
+     * @param array $damGametes 母の配偶子分布
+     * @return array 子の遺伝型 => 確率 の連想配列
+     */
+    public static function combineGametes(array $sireGametes, array $damGametes): array
+    {
+        $offspring = [];
+        foreach ($sireGametes as $sireG => $sireP) {
+            foreach ($damGametes as $damG => $damP) {
+                // 遺伝型キーを生成（順序を正規化）
+                $genotypeKey = self::makeGenotypeKey($sireG, $damG);
+                $offspring[$genotypeKey] = ($offspring[$genotypeKey] ?? 0) + $sireP * $damP;
+            }
+        }
+        return $offspring;
+    }
+
+    /**
+     * 2つの配偶子から遺伝型キーを生成
+     */
+    private static function makeGenotypeKey(string $g1, string $g2): string
+    {
+        // Wを含む場合は特別処理（メスのZ/W）
+        if ($g1 === 'W') {
+            return $g2 . '/W';
+        }
+        if ($g2 === 'W') {
+            return $g1 . '/W';
+        }
+        // アルファベット順にソートして一貫性を保つ
+        return $g1 <= $g2 ? "$g1/$g2" : "$g2/$g1";
+    }
+}
+
+/**
  * FamilyEstimatorV3 - 一族マップからの遺伝子型推論エンジン
  * @version 6.8
  */
