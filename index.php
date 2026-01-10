@@ -434,6 +434,10 @@ const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
 const GENOTYPE_OPTIONS = <?= json_encode(AgapornisLoci::GENOTYPE_OPTIONS) ?>;
 const UI_GENOTYPE_LOCI = <?= json_encode(AgapornisLoci::UI_GENOTYPE_LOCI) ?>;
+// v7.0: 連鎖遺伝用定数
+const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
+const RECOMBINATION_RATES = <?= json_encode(AgapornisLoci::RECOMBINATION_RATES) ?>;
+const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
 </script>
 </head>
 

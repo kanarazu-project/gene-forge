@@ -17,7 +17,7 @@ const BirdDB = {
     STORAGE_KEY_USER: 'geneforge_birds_user',
     STORAGE_KEY_DEMO: 'geneforge_birds_demo',
     MODE_KEY: 'geneforge_mode',
-    VERSION: '6.7.5',
+    VERSION: '7.0.0',
     
     _currentMode: 'user',
     _initialized: false,
@@ -570,7 +570,7 @@ const BirdDB = {
         if (!bird.observed) {
             bird.observed = this.inferObservedFromPhenotype(bird.phenotype, bird.genotype);
         }
-        
+
         if (!bird.pedigree) {
             bird.pedigree = this.createEmptyPedigree();
             if (bird.sire?.id || bird.dam?.id) {
@@ -578,8 +578,153 @@ const BirdDB = {
                 bird.pedigree.dam = bird.dam?.id || null;
             }
         }
-        
+
+        // v7.0: 連鎖遺伝子座のハプロタイプ形式への移行
+        if (!bird.genotype.Z_linked) {
+            bird.genotype = this.migrateGenotypeToV7(bird.genotype, bird.sex, bird.observed?.baseColor);
+        }
+
         return bird;
+    },
+
+    /**
+     * v7.0: 遺伝型をハプロタイプベース形式に変換
+     * @param {Object} oldGenotype - 旧形式の遺伝型
+     * @param {string} sex - 'male' | 'female'
+     * @param {string} baseColor - 表現型（相の推論に使用）
+     * @returns {Object} 新形式の遺伝型
+     */
+    migrateGenotypeToV7(oldGenotype, sex, baseColor) {
+        const isMale = sex === 'male';
+
+        // 旧形式の値をパース
+        const parseZLinkedAllele = (value, locusKey) => {
+            if (!value) return { a1: '+', a2: isMale ? '+' : null };
+
+            // メス形式: 'cinW', 'opW', 'inoW', 'pldW', '+W'
+            if (value.endsWith('W')) {
+                const allele = value.slice(0, -1);
+                return { a1: allele === '+' ? '+' : allele, a2: null };
+            }
+
+            // オス形式
+            if (value === '++') return { a1: '+', a2: '+' };
+            if (value === 'opop') return { a1: 'op', a2: 'op' };
+            if (value === 'cincin') return { a1: 'cin', a2: 'cin' };
+            if (value === 'inoino') return { a1: 'ino', a2: 'ino' };
+            if (value === 'pldpld') return { a1: 'pld', a2: 'pld' };
+            if (value === 'pldino') return { a1: 'pld', a2: 'ino' };
+            if (value === '+op') return { a1: 'op', a2: '+' };
+            if (value === '+cin') return { a1: 'cin', a2: '+' };
+            if (value === '+ino') return { a1: 'ino', a2: '+' };
+            if (value === '+pld') return { a1: 'pld', a2: '+' };
+
+            return { a1: '+', a2: isMale ? '+' : null };
+        };
+
+        const parseAutosomalAllele = (value, locusKey) => {
+            if (!value) return { a1: '+', a2: '+' };
+
+            // dark: 'dd', 'Dd', 'DD'
+            if (locusKey === 'dark') {
+                if (value === 'dd') return { a1: 'd', a2: 'd' };
+                if (value === 'Dd') return { a1: 'D', a2: 'd' };
+                if (value === 'DD') return { a1: 'D', a2: 'D' };
+            }
+
+            // parblue: '++', '+aq', '+tq', 'aqaq', 'tqtq', 'tqaq'
+            if (locusKey === 'parblue') {
+                if (value === '++') return { a1: '+', a2: '+' };
+                if (value === '+aq') return { a1: 'aq', a2: '+' };
+                if (value === '+tq') return { a1: 'tq', a2: '+' };
+                if (value === 'aqaq') return { a1: 'aq', a2: 'aq' };
+                if (value === 'tqtq') return { a1: 'tq', a2: 'tq' };
+                if (value === 'tqaq') return { a1: 'tq', a2: 'aq' };
+            }
+
+            return { a1: '+', a2: '+' };
+        };
+
+        // Z連鎖座位のパース
+        const cin = parseZLinkedAllele(oldGenotype.cin, 'cinnamon');
+        const ino = parseZLinkedAllele(oldGenotype.ino, 'ino');
+        const op = parseZLinkedAllele(oldGenotype.op, 'opaline');
+
+        // 常染色体連鎖座位のパース
+        const dark = parseAutosomalAllele(oldGenotype.dark, 'dark');
+        const parblue = parseAutosomalAllele(oldGenotype.parblue, 'parblue');
+
+        // 相の推論（表現型から）
+        // Lacewing (cinnamon + ino) → cin-ino は Cis
+        const isLacewing = baseColor && (
+            baseColor.includes('lacewing') ||
+            (baseColor.includes('cinnamon') && baseColor.includes('ino'))
+        );
+
+        // ハプロタイプ構築
+        // デフォルト: 変異アレルをZ1に配置
+        // 相が推論可能な場合はそれに従う
+        let Z_linked;
+        if (isMale) {
+            Z_linked = {
+                Z1: { cinnamon: cin.a1, ino: ino.a1, opaline: op.a1 },
+                Z2: { cinnamon: cin.a2, ino: ino.a2, opaline: op.a2 }
+            };
+        } else {
+            Z_linked = {
+                Z1: { cinnamon: cin.a1, ino: ino.a1, opaline: op.a1 },
+                Z2: null
+            };
+        }
+
+        const autosomal_1 = {
+            chr1: { dark: dark.a1, parblue: parblue.a1 },
+            chr2: { dark: dark.a2, parblue: parblue.a2 }
+        };
+
+        // 相の確定状態を記録
+        const hasMultipleZMutations =
+            (cin.a1 !== '+' || cin.a2 !== '+') &&
+            (ino.a1 !== '+' || ino.a2 !== '+' || op.a1 !== '+' || op.a2 !== '+');
+
+        const phaseKnown = isLacewing || !hasMultipleZMutations;
+
+        // 新形式の遺伝型を構築
+        // 独立座位は旧形式を維持（キー名を正規化）
+        return {
+            // 独立座位（LOCI準拠キー名）
+            violet: oldGenotype.vio || 'vv',
+            fallow_pale: oldGenotype.fl || '++',
+            fallow_bronze: '++',
+            pied_dom: '++',
+            pied_rec: oldGenotype.pi || '++',
+            dilute: oldGenotype.dil || '++',
+            edged: '++',
+            orangeface: '++',
+            pale_headed: '++',
+
+            // Z染色体連鎖グループ（v7新形式）
+            Z_linked: Z_linked,
+
+            // 常染色体連鎖グループ（v7新形式）
+            autosomal_1: autosomal_1,
+
+            // 相の確定状態
+            phase_known: phaseKnown,
+
+            // 後方互換性のため旧キーも維持（読み取り専用）
+            _legacy: {
+                parblue: oldGenotype.parblue,
+                ino: oldGenotype.ino,
+                op: oldGenotype.op,
+                cin: oldGenotype.cin,
+                dark: oldGenotype.dark,
+                vio: oldGenotype.vio,
+                fl: oldGenotype.fl,
+                dil: oldGenotype.dil,
+                pi: oldGenotype.pi
+            }
+        };
     },
 
     inferObservedFromPhenotype(phenotype, genotype) {

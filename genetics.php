@@ -177,6 +177,66 @@ final class AgapornisLoci
         ['key' => 'pi', 'source' => 'pied_rec', 'label' => 'Pied'],
     ];
 
+    /**
+     * LINKAGE_GROUPS - 連鎖遺伝子群の定義（v7.0 SSOT）
+     *
+     * 同一染色体上で連鎖している座位のグループを定義。
+     * これらの座位は独立分離せず、組み換え率に基づいて遺伝する。
+     *
+     * 構造:
+     * - 'loci': 連鎖している座位のキー名（LOCIと同じキー）
+     * - 'chromosome': 染色体タイプ（'Z' = 伴性, 'autosome' = 常染色体）
+     */
+    public const LINKAGE_GROUPS = [
+        'Z_linked' => [
+            'loci' => ['cinnamon', 'ino', 'opaline'],
+            'chromosome' => 'Z',
+        ],
+        'autosomal_1' => [
+            'loci' => ['dark', 'parblue'],
+            'chromosome' => 'autosome',
+        ],
+    ];
+
+    /**
+     * RECOMBINATION_RATES - 組み換え率の定義（v7.0 SSOT）
+     *
+     * 連鎖した座位間の組み換え率を定義。
+     * 出典: Lovebirds Compendium (Dirk Van den Abeele, 2016) p.228-231
+     *
+     * キー形式: 'locus1-locus2'（アルファベット順）
+     * 値: 組み換え率（0.0〜0.5、0.5で独立分離と等価）
+     *
+     * 注: Pallid(pld)はino座位の複対立遺伝子のため、
+     *     ino関連の組み換え率がそのまま適用される
+     */
+    public const RECOMBINATION_RATES = [
+        // Z染色体（伴性）
+        'cinnamon-ino' => 0.03,      // 3% - ほぼ完全連鎖
+        'ino-opaline' => 0.30,       // 30%
+        'cinnamon-opaline' => 0.33,  // 33% (= 3% + 30%)
+        // 常染色体
+        'dark-parblue' => 0.07,      // 7%
+    ];
+
+    /**
+     * INDEPENDENT_LOCI - 独立遺伝座位（v7.0 SSOT）
+     *
+     * 連鎖グループに属さず、独立分離する座位。
+     * v6.8以前と同じ計算方法を維持。
+     */
+    public const INDEPENDENT_LOCI = [
+        'violet',
+        'fallow_pale',
+        'fallow_bronze',
+        'pied_dom',
+        'pied_rec',
+        'dilute',
+        'edged',
+        'orangeface',
+        'pale_headed',
+    ];
+
     public const COLOR_DEFINITIONS = [
         // 基底色（12色）
         'green'=>['ja'=>'グリーン','en'=>'Green','albs'=>'Green','genotype'=>['parblue'=>'++','dark'=>'dd'],'eye'=>'black','category'=>'green'],
