@@ -1,7 +1,7 @@
 <?php
 /**
  * infer.php - 家系図推論APIエンドポイント
- * Agapornis Gene-Forge v6.7.5
+ * Agapornis Gene-Forge v7.0
  * 
  * FamilyEstimatorV3 を呼び出して遺伝子型を推論する
  */

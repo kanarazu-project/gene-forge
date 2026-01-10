@@ -487,7 +487,7 @@ const BreedingPlanner = {
         const needsParblue = req.parblue && !req.parblue.includes('++');
 
         if (!needsDark || !needsParblue) {
-            return { phase: 'not_applicable', note: '連鎖考慮不要' };
+            return { phase: 'not_applicable', note: this._t('bp_linkage_not_needed', '連鎖考慮不要') };
         }
 
         // v7形式確認
@@ -502,12 +502,12 @@ const BreedingPlanner = {
                 return {
                     phase: 'cis',
                     advantage: true,
-                    note: 'Dark+Parblue Cis配置'
+                    note: this._t('bp_autosomal_cis', 'Dark+Parblue Cis配置')
                 };
             }
         }
 
-        return { phase: 'unknown', note: '相情報なし' };
+        return { phase: 'unknown', note: this._t('bp_phase_no_info', '相情報なし') };
     },
 
     /**

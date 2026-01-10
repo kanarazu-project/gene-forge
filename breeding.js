@@ -1,5 +1,5 @@
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * breeding.js - 交配実行・結果生成モジュール
  * 
  * 整合性原理：
@@ -14,7 +14,7 @@
  */
 
 const BreedingEngine = {
-    VERSION: '6.8',
+    VERSION: '7.0',
     
     // ========================================
     // SSOT参照
@@ -76,24 +76,29 @@ const BreedingEngine = {
      */
     execute(sireId, damId, options = {}) {
         const mode = options.mode || 'plan';
-        
+        const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
+        const errBirdDB = { ja: 'BirdDB未定義', en: 'BirdDB not defined', de: 'BirdDB nicht definiert', fr: 'BirdDB non défini', it: 'BirdDB non definito', es: 'BirdDB no definido' };
+        const errSire = { ja: '父個体が見つかりません', en: 'Sire not found', de: 'Vater nicht gefunden', fr: 'Père non trouvé', it: 'Padre non trovato', es: 'Padre no encontrado' };
+        const errDam = { ja: '母個体が見つかりません', en: 'Dam not found', de: 'Mutter nicht gefunden', fr: 'Mère non trouvée', it: 'Madre non trovata', es: 'Madre no encontrada' };
+
         if (typeof BirdDB === 'undefined') {
-            return { success: false, error: 'BirdDB未定義' };
+            return { success: false, error: errBirdDB[lang] || errBirdDB.en };
         }
-        
+
         const sire = BirdDB.getBird(sireId);
         const dam = BirdDB.getBird(damId);
-        
-        if (!sire) return { success: false, error: '父個体が見つかりません' };
-        if (!dam) return { success: false, error: '母個体が見つかりません' };
+
+        if (!sire) return { success: false, error: errSire[lang] || errSire.en };
+        if (!dam) return { success: false, error: errDam[lang] || errDam.en };
         
         // BreedingValidator によるチェック
         if (typeof BreedingValidator !== 'undefined' && !options.skipValidation) {
             const validation = BreedingValidator.validate(sire, dam, mode);
             if (!validation.allowed) {
+                const errCannotBreed = { ja: '交配できません', en: 'Cannot breed', de: 'Zucht nicht möglich', fr: 'Reproduction impossible', it: 'Riproduzione non possibile', es: 'No se puede criar' };
                 return {
                     success: false,
-                    error: validation.reason || '交配できません',
+                    error: validation.reason || (errCannotBreed[lang] || errCannotBreed.en),
                     blockType: validation.type
                 };
             }

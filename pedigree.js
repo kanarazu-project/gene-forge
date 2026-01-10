@@ -1,5 +1,5 @@
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * 血統書生成（Pedigree Certificate Generator）
  * 
  * 整合性原理：
@@ -218,18 +218,18 @@ const PedigreeGenerator = {
     formatConfidenceDisplay(confidence, source) {
         const T = window.T || {};
         if (source === 'phenotype') {
-            return T.confirmed_phenotype || '✓ 確定（表現型）';
+            return T.confirmed_phenotype || '✓ Confirmed (phenotype)';
         }
         if (confidence === 100) {
-            return T.confirmed || '✓ 確定';
+            return T.confirmed || '✓ Confirmed';
         }
         if (confidence > 0) {
             return `${confidence}%`;
         }
         if (source === 'manual') {
-            return T.manual_input || '手動入力';
+            return T.manual_input || 'Manual input';
         }
-        return T.unknown || '? 不明';
+        return T.unknown || '? Unknown';
     },
 
     // ========================================
@@ -269,7 +269,7 @@ const PedigreeGenerator = {
         <header class="cert-header">
             <div class="logo">🦜</div>
             <h1>${labels.title}</h1>
-            <div class="subtitle">Agapornis Gene-Forge v6.8</div>
+            <div class="subtitle">Agapornis Gene-Forge v7.0</div>
         </header>
 
         <section class="bird-info">
@@ -342,7 +342,7 @@ const PedigreeGenerator = {
         <footer class="cert-footer">
             <div class="footer-grid">
                 <div>${labels.issueDate}: ${issueDate}</div>
-                <div>${labels.generator}: Agapornis Gene-Forge v6.8</div>
+                <div>${labels.generator}: Agapornis Gene-Forge v7.0</div>
             </div>
             <div class="disclaimer">${labels.disclaimer}</div>
         </footer>
