@@ -247,8 +247,10 @@ const PedigreeGenerator = {
 
         const generations = options.generations || 4;
         const ancestors = BirdDB.getAncestors ? BirdDB.getAncestors(birdId, generations) : null;
-        const issueDate = new Date().toLocaleDateString('ja-JP');
         const lang = options.lang || (typeof LANG !== 'undefined' ? LANG : 'ja');
+        // v7.0: 言語に応じたロケール
+        const localeMap = { ja: 'ja-JP', en: 'en-US', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', es: 'es-ES' };
+        const issueDate = new Date().toLocaleDateString(localeMap[lang] || 'ja-JP');
         const labels = this.getLabels(lang);
         const loci = this.getLoci();
 
@@ -559,7 +561,13 @@ section h3 { font-size: 14px; color: #2c5282; border-bottom: 1px solid #e2e8f0; 
     downloadHTML(birdId, options = {}) {
         const html = this.generateHTML(birdId, options);
         if (!html) return;
+        // v7.0: BirdDB存在チェック追加
+        if (typeof BirdDB === 'undefined' || !BirdDB.getBird) {
+            console.error('BirdDB not available');
+            return;
+        }
         const bird = BirdDB.getBird(birdId);
+        if (!bird) return;
         const blob = new Blob([html], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);

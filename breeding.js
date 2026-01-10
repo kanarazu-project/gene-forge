@@ -56,8 +56,10 @@ const BreedingEngine = {
      * 色名を取得（SSOT）
      */
     getColorLabel(colorKey) {
+        // v7.0: 現在の言語設定を使用
+        const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
         if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) {
-            return COLOR_MASTER[colorKey].ja || COLOR_MASTER[colorKey].en || colorKey;
+            return COLOR_MASTER[colorKey][lang] || COLOR_MASTER[colorKey].en || COLOR_MASTER[colorKey].ja || colorKey;
         }
         if (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) {
             return COLOR_LABELS[colorKey];
@@ -344,21 +346,25 @@ const BreedingEngine = {
      * 表現型を推測（SSOT準拠）
      */
     _inferPhenotype(geno, sex) {
+        // v7.0: 現在の言語設定を使用
+        const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
+
         // BirdDB.calculatePhenotype があれば使用
         if (typeof BirdDB !== 'undefined' && BirdDB.calculatePhenotype) {
             return BirdDB.calculatePhenotype(geno, sex, null);
         }
-        
+
         // COLOR_MASTER から逆引き
         if (typeof COLOR_MASTER !== 'undefined') {
             for (const [key, def] of Object.entries(COLOR_MASTER)) {
                 if (this._matchesGenotype(geno, def.genotype || {}, sex)) {
-                    return def.ja || def.en || key;
+                    return def[lang] || def.en || def.ja || key;
                 }
             }
         }
-        
-        return '不明';
+
+        const unknownLabel = { ja: '不明', en: 'Unknown', de: 'Unbekannt', fr: 'Inconnu', it: 'Sconosciuto', es: 'Desconocido' };
+        return unknownLabel[lang] || 'Unknown';
     },
     
     /**
@@ -415,10 +421,16 @@ const BreedingEngine = {
     },
     
     registerOffspring(offspringData, parentResult) {
+        const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
+        const errMsg = { ja: 'BirdDB未定義', en: 'BirdDB not defined', de: 'BirdDB nicht definiert', fr: 'BirdDB non défini', it: 'BirdDB non definito', es: 'BirdDB no definido' };
         if (typeof BirdDB === 'undefined') {
-            return { success: false, error: 'BirdDB未定義' };
+            return { success: false, error: errMsg[lang] || errMsg.en };
         }
-        const pedigree = BirdDB.buildPedigreeFromParents(parentResult.sire.id, parentResult.dam.id);
+        // v7.0: buildPedigreeFromParents存在チェック
+        const pedigree = (typeof BirdDB.buildPedigreeFromParents === 'function')
+            ? BirdDB.buildPedigreeFromParents(parentResult.sire.id, parentResult.dam.id)
+            : null;
+        const offspringLabel = { ja: 'の子', en: ' offspring', de: ' Nachkommen', fr: ' descendant', it: ' discendente', es: ' descendiente' };
         const bird = BirdDB.addBird({
             name: offspringData.name || '',
             sex: offspringData.sex,
@@ -428,7 +440,7 @@ const BreedingEngine = {
             dam: { id: parentResult.dam.id, name: parentResult.dam.name },
             pedigree,
             birthDate: offspringData.birthDate || new Date().toISOString().split('T')[0],
-            notes: offspringData.notes || `${parentResult.sire.name} × ${parentResult.dam.name} の子`
+            notes: offspringData.notes || `${parentResult.sire.name} × ${parentResult.dam.name}${offspringLabel[lang] || offspringLabel.en}`
         });
         return { success: true, bird };
     },

@@ -830,12 +830,13 @@ const BirdDB = {
             darkness: bird.darkness || 'none'
         };
 
+        // v7.0: 正しい座位名を使用
         const defaultGenotype = {
             parblue: '++',
             ino: bird.sex === 'female' ? '+W' : '++',
-            op: bird.sex === 'female' ? '+W' : '++',
-            cin: bird.sex === 'female' ? '+W' : '++',
-            dark: 'dd', vio: 'vv', fl: '++', dil: '++', pi: '++'
+            opaline: bird.sex === 'female' ? '+W' : '++',
+            cinnamon: bird.sex === 'female' ? '+W' : '++',
+            dark: 'dd', violet: 'vv', fallow_pale: '++', dilute: '++', pied_rec: '++'
         };
 
         const pedigree = bird.pedigree || this.buildPedigreeFromParents(
@@ -927,35 +928,43 @@ const BirdDB = {
     },
 
     calculatePhenotype(geno, sex, observed) {
-        if (observed?.baseColor) return this.getColorLabel(observed.baseColor, 'ja');
+        // v7.0: 現在の言語設定を使用
+        const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
+        if (observed?.baseColor) return this.getColorLabel(observed.baseColor, lang);
+
+        // v7.0: 新旧両方の座位名に対応
+        const op = geno.opaline || geno.op || '++';
+        const cin = geno.cinnamon || geno.cin || '++';
+        const fl = geno.fallow_pale || geno.fl || '++';
+        const pi = geno.pied_rec || geno.pi || '++';
 
         const parts = [];
-        let baseColor = 'グリーン';
+        let baseColor = lang === 'ja' ? 'グリーン' : 'Green';
 
-        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseColor = 'アクア';
-        else if (geno.parblue === 'tqtq') baseColor = 'ターコイズ';
-        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseColor = 'シーグリーン';
+        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseColor = lang === 'ja' ? 'アクア' : 'Aqua';
+        else if (geno.parblue === 'tqtq') baseColor = lang === 'ja' ? 'ターコイズ' : 'Turquoise';
+        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseColor = lang === 'ja' ? 'シーグリーン' : 'Sea Green';
 
         if (['inoino', 'inoW'].includes(geno.ino)) {
-            if (baseColor === 'アクア') { parts.push('クリーミノ'); baseColor = ''; }
-            else if (baseColor === 'ターコイズ') { parts.push('ピュアホワイト'); baseColor = ''; }
-            else if (baseColor === 'シーグリーン') { parts.push('クリーミノシーグリーン'); baseColor = ''; }
-            else { parts.push('ルチノー'); baseColor = ''; }
-        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push('パリッド');
+            if (baseColor.includes('アクア') || baseColor.includes('Aqua')) { parts.push(lang === 'ja' ? 'クリーミノ' : 'Creamino'); baseColor = ''; }
+            else if (baseColor.includes('ターコイズ') || baseColor.includes('Turquoise')) { parts.push(lang === 'ja' ? 'ピュアホワイト' : 'Pure White'); baseColor = ''; }
+            else if (baseColor.includes('シーグリーン') || baseColor.includes('Sea Green')) { parts.push(lang === 'ja' ? 'クリーミノシーグリーン' : 'Creamino Sea Green'); baseColor = ''; }
+            else { parts.push(lang === 'ja' ? 'ルチノー' : 'Lutino'); baseColor = ''; }
+        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push(lang === 'ja' ? 'パリッド' : 'Pallid');
 
-        if (['opop', 'opW'].includes(geno.op)) parts.push('オパーリン');
-        if (['cincin', 'cinW'].includes(geno.cin)) parts.push('シナモン');
+        if (['opop', 'opW'].includes(op)) parts.push(lang === 'ja' ? 'オパーリン' : 'Opaline');
+        if (['cincin', 'cinW'].includes(cin)) parts.push(lang === 'ja' ? 'シナモン' : 'Cinnamon');
 
         if (geno.dark === 'DD') {
-            if (baseColor === 'グリーン') baseColor = 'オリーブ';
-            else if (baseColor === 'アクア') baseColor = 'アクアDD';
+            if (baseColor.includes('グリーン') || baseColor === 'Green') baseColor = lang === 'ja' ? 'オリーブ' : 'Olive';
+            else if (baseColor.includes('アクア') || baseColor.includes('Aqua')) baseColor = lang === 'ja' ? 'アクアDD' : 'Aqua DD';
         } else if (geno.dark === 'Dd') {
-            if (baseColor === 'グリーン') baseColor = 'ダークグリーン';
-            else if (baseColor === 'アクア') baseColor = 'アクアダーク';
+            if (baseColor.includes('グリーン') || baseColor === 'Green') baseColor = lang === 'ja' ? 'ダークグリーン' : 'Dark Green';
+            else if (baseColor.includes('アクア') || baseColor.includes('Aqua')) baseColor = lang === 'ja' ? 'アクアダーク' : 'Aqua Dark';
         }
 
-        if (geno.fl === 'flfl') parts.push('フォロー');
-        if (geno.pi === 'pipi') parts.push('パイド');
+        if (['flpflp', 'flfl'].includes(fl)) parts.push(lang === 'ja' ? 'フォロー' : 'Fallow');
+        if (['pipi'].includes(pi)) parts.push(lang === 'ja' ? 'パイド' : 'Pied');
 
         let result = parts.length > 0 ? parts.join(' ') + ' ' + baseColor : baseColor;
         return result.trim();

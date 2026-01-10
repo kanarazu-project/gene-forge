@@ -438,7 +438,8 @@ const FamilyMap = {
             if (form.elements['bird_darkness']) form.elements['bird_darkness'].value = bird.phenotype?.darkness || 'none';
             if (form.elements['bird_eyeColor']) form.elements['bird_eyeColor'].value = bird.phenotype?.eyeColor || 'black';
             const geno = bird.genotype || {};
-            ['parblue', 'ino', 'op', 'cin', 'dark', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
+            // v7.0: 新旧両方の座位名に対応
+            ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed', 'op', 'cin', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
         } else {
             if (form.elements['bird_name']) form.elements['bird_name'].value = '';
             if (form.elements['bird_baseColor']) form.elements['bird_baseColor'].value = 'green';
@@ -533,7 +534,8 @@ const FamilyMap = {
         else sex = this.getDefaultSex(position);
         const inputName = form.elements['bird_name'].value.trim();
         const genotype = {};
-        ['parblue', 'ino', 'op', 'cin', 'dark', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
+        // v7.0: 新旧両方の座位名に対応
+        ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed', 'op', 'cin', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
         const phenotype = { baseColor: form.elements['bird_baseColor'].value, darkness: form.elements['bird_darkness'].value, eyeColor: form.elements['bird_eyeColor'].value };
         const geneticError = this.checkGeneticConsistency(position, phenotype, genotype);
         if (geneticError) { alert(geneticError); return; }
@@ -688,7 +690,9 @@ const FamilyMap = {
 
     async saveSnapshot() {
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-        const name = await customPrompt(isJa ? 'スナップショット名を入力:' : 'Enter snapshot name:');
+        // v7.0: customPrompt未定義時はpromptにフォールバック
+        const promptFn = typeof customPrompt === 'function' ? customPrompt : (msg) => Promise.resolve(prompt(msg));
+        const name = await promptFn(isJa ? 'スナップショット名を入力:' : 'Enter snapshot name:');
         if (!name) return;
         const snapshot = { name: name, savedAt: new Date().toISOString(), ...this.data, targetPosition: this.targetPosition, familyMode: this.familyMode };
         const maps = JSON.parse(localStorage.getItem('familyMaps') || '[]');
@@ -701,9 +705,16 @@ const FamilyMap = {
     showLoadModal() {
         const maps = JSON.parse(localStorage.getItem('familyMaps') || '[]');
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        const untitledLabel = isJa ? '(無題)' : '(Untitled)';
         if (maps.length === 0) { alert(isJa ? '保存されたマップがありません' : 'No saved maps'); return; }
-        const options = maps.map((m, i) => { const date = m.savedAt ? new Date(m.savedAt).toLocaleString() : ''; return { label: `${m.name || '(無題)'} - ${date}`, value: i }; });
-        customSelect(isJa ? '読み込むマップを選択:' : 'Select map to load:', options).then(idx => { if (idx !== null) this.loadSnapshot(idx); });
+        const options = maps.map((m, i) => { const date = m.savedAt ? new Date(m.savedAt).toLocaleString() : ''; return { label: `${m.name || untitledLabel} - ${date}`, value: i }; });
+        // v7.0: customSelect未定義時は簡易セレクトにフォールバック
+        if (typeof customSelect === 'function') {
+            customSelect(isJa ? '読み込むマップを選択:' : 'Select map to load:', options).then(idx => { if (idx !== null) this.loadSnapshot(idx); });
+        } else {
+            const idx = parseInt(prompt((isJa ? '読み込むマップ番号を入力 (0-' : 'Enter map number (0-') + (options.length - 1) + '):'), '0');
+            if (!isNaN(idx) && idx >= 0 && idx < options.length) this.loadSnapshot(idx);
+        }
     },
 
     loadSnapshot(idx) {
@@ -753,15 +764,20 @@ const FamilyMap = {
     formatGenotypeShort(geno) {
         if (!geno || typeof geno !== 'object') return '';
         const parts = [];
+        // v7.0: 新旧両方の座位名に対応
         if (geno.parblue && geno.parblue !== '++') parts.push(`pb:${geno.parblue}`);
         if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(`ino:${geno.ino}`);
         if (geno.dark && geno.dark !== 'dd') parts.push(`D:${geno.dark}`);
-        if (geno.vio && geno.vio !== 'vv') parts.push(`vi:${geno.vio}`);
-        if (geno.op && geno.op !== '++' && geno.op !== '+W') parts.push(`op:${geno.op}`);
-        if (geno.cin && geno.cin !== '++' && geno.cin !== '+W') parts.push(`cin:${geno.cin}`);
-        if (geno.fl && geno.fl !== '++') parts.push(`fl:${geno.fl}`);
-        if (geno.dil && geno.dil !== '++') parts.push(`dil:${geno.dil}`);
-        if (geno.pi && geno.pi !== '++') parts.push(`pi:${geno.pi}`);
+        const vio = geno.violet || geno.vio; if (vio && vio !== 'vv') parts.push(`vi:${vio}`);
+        const op = geno.opaline || geno.op; if (op && op !== '++' && op !== '+W') parts.push(`op:${op}`);
+        const cin = geno.cinnamon || geno.cin; if (cin && cin !== '++' && cin !== '+W') parts.push(`cin:${cin}`);
+        const fl = geno.fallow_pale || geno.fl; if (fl && fl !== '++') parts.push(`fl:${fl}`);
+        if (geno.fallow_bronze && geno.fallow_bronze !== '++') parts.push(`flb:${geno.fallow_bronze}`);
+        const dil = geno.dilute || geno.dil; if (dil && dil !== '++') parts.push(`dil:${dil}`);
+        const pi = geno.pied_rec || geno.pi; if (pi && pi !== '++') parts.push(`pi:${pi}`);
+        if (geno.pied_dom && geno.pied_dom !== '++') parts.push(`Pi:${geno.pied_dom}`);
+        if (geno.edged && geno.edged !== '++') parts.push(`ed:${geno.edged}`);
+        if (geno.pale_headed && geno.pale_headed !== '++') parts.push(`ph:${geno.pale_headed}`);
         return parts.join(' ');
     },
 
