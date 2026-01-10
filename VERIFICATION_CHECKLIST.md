@@ -17,10 +17,12 @@ index.phpにおける全機能のUI操作・動作確認リスト。
    - 原因: calculateOffspringの戻り値構造変更 (`results`キー追加)
    - 対応: index.php 1205-1218行目を修正
 
-2. **PathFinder結果表示バグ (未修正・既存)**
+2. **PathFinder結果表示バグ (修正済み)**
    - 原因: PathFinderが翻訳キー(`title_key`等)を返すが、index.phpは翻訳済みテキストを期待
    - 影響: パスファインダー結果が空で表示される
-   - 対応必要: lang_pathfinder.phpとindex.phpの連携修正
+   - 対応:
+     - lang.php: lang_pathfinder.php統合、t_pf()パラメータ置換関数追加
+     - index.php: PathFinder結果をt_pf()で翻訳表示するよう修正
 
 3. **親子関係ループ検出なし (修正済み)**
    - 原因: 個体登録時に循環参照をチェックしていなかった
