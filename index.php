@@ -7,7 +7,8 @@
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
+ * 連鎖遺伝（Linkage Genetics）対応版
  * FamilyEstimator V3 搭載
  * ALBS Peachfaced部門準拠版
  * 
@@ -922,17 +923,55 @@ $mPh = $_POST['m_ph'] ?? '++';
 <div class="form-group"><label>Pale Headed</label><select name="m_ph"><?php foreach(['++'=>'+/+','+ph'=>'+/ph','phph'=>'ph/ph'] as $v=>$l){echo '<option value="'.$v.'"'.(($mPh??'')===$v?' selected':'').'>'.$l.'</option>';}?></select></div>
                         </div>
                     </div>
+
+                    <!-- v7.0: 連鎖遺伝モード -->
+                    <div class="linkage-mode-section" style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="use_linkage" value="1" id="useLinkageCheck" onchange="toggleLinkageUI()">
+                            <strong>🧬 <?= $lang === 'ja' ? '連鎖遺伝モード (v7.0)' : 'Linkage Mode (v7.0)' ?></strong>
+                        </label>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.5rem 0 0 1.5rem;">
+                            <?= $lang === 'ja'
+                                ? 'cin-ino: 3%, ino-op: 30%, dark-parblue: 7% の組み換え率を適用'
+                                : 'Apply recombination rates: cin-ino: 3%, ino-op: 30%, dark-parblue: 7%' ?>
+                        </p>
+
+                        <!-- オス用 相(Phase)選択 -->
+                        <div id="fatherPhaseUI" style="display: none; margin-top: 1rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 4px;">
+                            <label style="font-weight: bold;">♂ <?= $lang === 'ja' ? 'Z染色体の相 (Phase)' : 'Z Chromosome Phase' ?></label>
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                                <label><input type="radio" name="f_z_phase" value="unknown" checked> <?= $lang === 'ja' ? '不明' : 'Unknown' ?></label>
+                                <label><input type="radio" name="f_z_phase" value="cis"> Cis (cin-ino連鎖)</label>
+                                <label><input type="radio" name="f_z_phase" value="trans"> Trans (cin/ino分離)</label>
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">
+                                <?= $lang === 'ja'
+                                    ? '※ 母親がLacewingの場合、息子はCis確定'
+                                    : '* If dam is Lacewing, son is Cis confirmed' ?>
+                            </p>
+                        </div>
+                    </div>
+
                     <button type="button" class="btn btn-primary" style="margin-top:1rem;" onclick="window._allowSubmit=true; document.getElementById('feasibilityForm').submit();">🧬 <?= t('btn_calculate') ?></button>
 
                 </form>
                 
                 <script>
+                // v7.0: 連鎖遺伝モードUI切り替え
+                function toggleLinkageUI() {
+                    const checked = document.getElementById('useLinkageCheck').checked;
+                    const phaseUI = document.getElementById('fatherPhaseUI');
+                    if (phaseUI) {
+                        phaseUI.style.display = checked ? 'block' : 'none';
+                    }
+                }
+
                 function toggleInputMode(parent) {
                     const mode = document.querySelector(`input[name="${parent}_mode"]:checked`).value;
                     document.getElementById(`${parent}_phenotype_inputs`).style.display = mode === 'phenotype' ? 'block' : 'none';
                     document.getElementById(`${parent}_genotype_inputs`).style.display = mode === 'genotype' ? 'block' : 'none';
                     document.getElementById(`${parent}_db_inputs`).style.display = mode === 'fromdb' ? 'block' : 'none';
-                    
+
                     // DB選択時はリストを更新
                     if (mode === 'fromdb') {
                         populateDbSelect(parent);
