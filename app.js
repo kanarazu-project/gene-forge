@@ -7,14 +7,18 @@
 // ========================================
 // 多言語サポート
 // ========================================
-let LANG = {};
+// Note: LANG (language code string like 'ja') is defined in index.php
+// T_DICT holds the translation dictionary
+let T_DICT = {};
 
 function initLang(dict) {
-    LANG = dict || {};
+    T_DICT = dict || {};
+    // Also ensure window.T is set for compatibility
+    if (!window.T) window.T = T_DICT;
 }
 
 function t(key) {
-    return LANG[key] || key;
+    return T_DICT[key] || window.T?.[key] || key;
 }
 
 // ========================================

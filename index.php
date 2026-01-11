@@ -470,7 +470,6 @@ const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
     // v7.3.11: SSOT - 色キー部品翻訳（genetics.phpから注入）
     const COLOR_PART_LABELS = <?= json_encode(AgapornisLoci::COLOR_PART_LABELS) ?>;
-    const LANG = '<?= $lang ?>';
 
     /**
      * 任意のカラーキーをローカライズされたラベルに変換
