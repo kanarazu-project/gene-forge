@@ -478,11 +478,12 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
      */
     function keyToLabel(key) {
         if (!key) return '';
-        const isJa = LANG === 'ja';
+        // v7.3.14: 6言語対応 - COLOR_MASTERはja/enのみなので、非日本語はenをフォールバック
+        const langKey = (LANG === 'ja') ? 'ja' : 'en';
 
         // 1. COLOR_MASTERに存在すれば正しい言語で取得（最も信頼性が高い）
         if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[key]) {
-            return isJa ? COLOR_MASTER[key].ja : COLOR_MASTER[key].en;
+            return COLOR_MASTER[key][langKey] || COLOR_MASTER[key].en || COLOR_MASTER[key].ja || key;
         }
 
         // 2. COLOR_LABELSに存在すればそれを返す（キャッシュ対策: 言語が一致するか確認）
@@ -497,11 +498,11 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
         const parts = key.split('_');
         const result = parts.map(part => {
             const p = part.toLowerCase();
-            if (COLOR_PART_LABELS[p]) return isJa ? COLOR_PART_LABELS[p].ja : COLOR_PART_LABELS[p].en;
+            if (COLOR_PART_LABELS[p]) return COLOR_PART_LABELS[p][langKey] || COLOR_PART_LABELS[p].en || p;
             return part.charAt(0).toUpperCase() + part.slice(1);
         });
 
-        return isJa ? result.join('') : result.join(' ');
+        return (LANG === 'ja') ? result.join('') : result.join(' ');
     }
 const GENOTYPE_OPTIONS = <?= json_encode(AgapornisLoci::GENOTYPE_OPTIONS) ?>;
 const UI_GENOTYPE_LOCI = <?= json_encode(AgapornisLoci::UI_GENOTYPE_LOCI) ?>;

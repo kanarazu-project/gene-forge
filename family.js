@@ -107,16 +107,17 @@ const FamilyMap = {
     },
 
     /**
-     * v7.3.13: COLOR_MASTERから色ラベルを取得（SSOT準拠）
+     * v7.3.14: COLOR_MASTERから色ラベルを取得（SSOT準拠、6言語対応）
      * baseColorOptionsに含まれない色も正しく表示できるようにする
+     * COLOR_MASTERはja/enのみなので、非日本語はenをフォールバック
      */
     getColorLabel(colorKey) {
         if (!colorKey) return '?';
-        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        const langKey = (typeof LANG !== 'undefined' && LANG === 'ja') ? 'ja' : 'en';
 
         // 1. COLOR_MASTERから直接取得（SSOT）
         if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) {
-            return isJa ? COLOR_MASTER[colorKey].ja : COLOR_MASTER[colorKey].en;
+            return COLOR_MASTER[colorKey][langKey] || COLOR_MASTER[colorKey].en || COLOR_MASTER[colorKey].ja || colorKey;
         }
 
         // 2. keyToLabel関数があれば使用
@@ -405,7 +406,7 @@ const FamilyMap = {
         return `<div class="bird-card ${isEmpty ? 'empty' : 'filled'} ${isTarget ? 'target' : ''} ${isParent ? 'parent' : ''}" data-position="${position}">
             <div class="card-header" onclick="FamilyMap.selectSlot('${position}')"><span class="card-label">${label}${sexSymbol}</span><div class="card-actions"><button class="act-btn" onclick="event.stopPropagation(); FamilyMap.loadFromDB('${position}')" title="DB">📂</button>${!isEmpty ? `<button class="act-btn del" onclick="event.stopPropagation(); FamilyMap.clearSlot('${position}')" title="${T.clear}">×</button>` : ''}</div></div>
             <div class="card-body" onclick="FamilyMap.selectSlot('${position}')">${content}</div>
-            <button class="target-select-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('${position}')" ${targetBtnDisabled}>🎯 ${isTarget ? '推論対象' : '対象に設定'}</button>
+            <button class="target-select-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('${position}')" ${targetBtnDisabled}>🎯 ${isTarget ? T.is_inference_target : T.set_as_target}</button>
         </div>`;
     },
 
@@ -425,7 +426,7 @@ const FamilyMap = {
             html += `<div class="child-card ${isTarget ? 'target' : ''}" data-position="offspring_${idx}">
                 <div class="child-header" onclick="FamilyMap.selectSlot('offspring_${idx}')"><span>${T.child}${idx + 1}</span><button class="act-btn del" onclick="event.stopPropagation(); FamilyMap.removeOffspring(${idx})">×</button></div>
                 <div class="child-body" onclick="FamilyMap.selectSlot('offspring_${idx}')"><span class="sex-icon">${bird.sex === 'male' ? '♂' : '♀'}</span><span class="pheno-color">${colorLabel}</span>${bird.name ? `<span class="bird-name">${bird.name}</span>` : ''}${idDisplay}</div>
-                <button class="child-target-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('offspring_${idx}')" ${targetBtnDisabled}>🎯${isTarget ? '対象' : ''}</button>
+                <button class="child-target-btn ${isTarget ? 'active' : ''} ${targetBtnClass}" onclick="event.stopPropagation(); FamilyMap.setAsTarget('offspring_${idx}')" ${targetBtnDisabled}>🎯${isTarget ? T.target : ''}</button>
             </div>`;
         });
         return html;
@@ -450,8 +451,7 @@ const FamilyMap = {
                 const prevBtn = prevCard.querySelector('.target-select-btn, .child-target-btn');
                 if (prevBtn) {
                     prevBtn.classList.remove('active');
-                    const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-                    prevBtn.innerHTML = '🎯 ' + (isJa ? '対象に設定' : 'Set as target');
+                    prevBtn.innerHTML = '🎯 ' + T.set_as_target;
                 }
             }
         }
@@ -463,12 +463,11 @@ const FamilyMap = {
             const newBtn = newCard.querySelector('.target-select-btn, .child-target-btn');
             if (newBtn) {
                 newBtn.classList.add('active');
-                const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-                // 子供カードの場合は短いテキスト
+                // v7.3.14: 6言語対応 - T オブジェクトから翻訳を取得
                 if (newBtn.classList.contains('child-target-btn')) {
-                    newBtn.innerHTML = '🎯' + (isJa ? '対象' : '');
+                    newBtn.innerHTML = '🎯' + T.target;
                 } else {
-                    newBtn.innerHTML = '🎯 ' + (isJa ? '推論対象' : 'Target');
+                    newBtn.innerHTML = '🎯 ' + T.is_inference_target;
                 }
             }
         }
