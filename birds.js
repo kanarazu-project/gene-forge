@@ -148,22 +148,26 @@ const BirdDB = {
     },
 
     initDemoData() {
-        const demoBirds = this.generateDemoBirds();
-        const data = {
-            version: this.VERSION,
-            birds: demoBirds,
-            breedingResults: [],
-            settings: {
-                defaultLineage: '',
-                codePrefix: 'DEMO'
-            }
-        };
-        
         try {
+            const demoBirds = this.generateDemoBirds();
+            if (!demoBirds || demoBirds.length === 0) {
+                console.error('[BirdDB] generateDemoBirds returned empty array');
+                return;
+            }
+            const data = {
+                version: this.VERSION,
+                birds: demoBirds,
+                breedingResults: [],
+                settings: {
+                    defaultLineage: '',
+                    codePrefix: 'DEMO'
+                }
+            };
+
             localStorage.setItem(this.STORAGE_KEY_DEMO, JSON.stringify(data));
             console.log('[BirdDB] Demo data initialized:', demoBirds.length, 'birds');
         } catch (e) {
-            console.error('Failed to init demo data:', e);
+            console.error('[BirdDB] Failed to init demo data:', e);
         }
     },
 

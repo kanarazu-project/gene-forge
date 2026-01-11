@@ -1231,29 +1231,33 @@ $mPh = $_POST['m_ph'] ?? '++';
                 
                 function populateDbSelect(parent) {
                     const select = document.getElementById(`${parent}_db_select`);
-                    if (!select || typeof BirdDB === 'undefined') return;
-                    
+                    if (!select) return;
+                    if (typeof BirdDB === 'undefined' || !BirdDB.isReady()) {
+                        console.log('[populateDbSelect] BirdDB not ready, retrying...');
+                        setTimeout(() => populateDbSelect(parent), 300);
+                        return;
+                    }
+
                     const sex = parent === 'f' ? 'male' : 'female';
                     const birds = BirdDB.getAllBirds().filter(b => b.sex === sex);
-                    const isJa = document.documentElement.lang === 'ja';
-                    
+                    console.log('[populateDbSelect]', parent, 'birds:', birds.length);
+
                     select.innerHTML = `<option value="">${T.select_placeholder}</option>`;
                     birds.forEach(b => {
-                        const geno = b.genotype || {};
-                        // v7.3.11: keyToLabelで動的にローカライズ（observed.baseColorを優先）
+                        // v7.3.12: keyToLabelを優先使用（SSOT）
                         let colorLabel;
-                        if (Object.keys(geno).length > 0 && BirdDB.calculatePhenotype) {
-                            colorLabel = BirdDB.calculatePhenotype(geno, b.sex);
-                        } else if (b.observed?.baseColor) {
+                        if (b.observed?.baseColor) {
                             colorLabel = keyToLabel(b.observed.baseColor);
+                        } else if (b.phenotype) {
+                            colorLabel = b.phenotype;
                         } else {
-                            colorLabel = b.phenotype || '?';
+                            colorLabel = '?';
                         }
                         const opt = document.createElement('option');
                         opt.value = b.id;
                         opt.textContent = `${b.name || b.id} - ${colorLabel}`;
-                    select.appendChild(opt);
-                });
+                        select.appendChild(opt);
+                    });
                 
                 // POST後の選択状態を復元
                 const savedValue = parent === 'f' 
