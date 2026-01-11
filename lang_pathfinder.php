@@ -532,6 +532,15 @@ $pf_de = [
     'pf_final_note' => 'Für Ziel: alle Gene homozygot erforderlich',
     'pf_scenario_multi_summary' => '{target} benötigt ca. {gens} Generationen. Gene: {genes}',
     'bp_planned_bird' => 'Geplant',
+
+    // v7.3.10: Marktverfügbarkeit
+    'pf_avail_easy' => 'Leicht',
+    'pf_avail_normal' => 'Mäßig',
+    'pf_avail_difficult' => 'Schwierig',
+    'pf_avail_warning_difficult' => '⚠️ Schwer zu beschaffen',
+    'pf_avail_note_difficult' => 'Die folgenden Farben sind selten und können Zeit zum Erwerben benötigen',
+    'pf_avail_warning_normal' => '※ Mäßig selten',
+    'pf_avail_note_normal' => 'Die folgenden Farben sind bei spezialisierten Züchtern erhältlich, können aber Wartezeit erfordern',
 ];
 
 // ============================================================
@@ -663,6 +672,15 @@ $pf_fr = [
     'pf_final_note' => 'Pour l\'objectif: tous les gènes doivent être homozygotes',
     'pf_scenario_multi_summary' => '{target} nécessite environ {gens} générations. Gènes: {genes}',
     'bp_planned_bird' => 'Planifié',
+
+    // v7.3.10: Disponibilité sur le marché
+    'pf_avail_easy' => 'Facile',
+    'pf_avail_normal' => 'Modéré',
+    'pf_avail_difficult' => 'Difficile',
+    'pf_avail_warning_difficult' => '⚠️ Difficile à obtenir',
+    'pf_avail_note_difficult' => 'Les couleurs suivantes sont rares et peuvent nécessiter du temps pour les acquérir',
+    'pf_avail_warning_normal' => '※ Modérément rare',
+    'pf_avail_note_normal' => 'Les couleurs suivantes sont disponibles chez les éleveurs spécialisés mais peuvent nécessiter un délai d\'attente',
 ];
 
 // ============================================================
@@ -794,6 +812,15 @@ $pf_it = [
     'pf_final_note' => 'Per l\'obiettivo: tutti i geni devono essere omozigoti',
     'pf_scenario_multi_summary' => '{target} richiede circa {gens} generazioni. Geni: {genes}',
     'bp_planned_bird' => 'Pianificato',
+
+    // v7.3.10: Disponibilità sul mercato
+    'pf_avail_easy' => 'Facile',
+    'pf_avail_normal' => 'Moderato',
+    'pf_avail_difficult' => 'Difficile',
+    'pf_avail_warning_difficult' => '⚠️ Difficile da ottenere',
+    'pf_avail_note_difficult' => 'I seguenti colori sono rari e potrebbero richiedere tempo per l\'acquisizione',
+    'pf_avail_warning_normal' => '※ Moderatamente raro',
+    'pf_avail_note_normal' => 'I seguenti colori sono disponibili presso allevatori specializzati ma potrebbero richiedere tempi di attesa',
 ];
 
 // ============================================================
@@ -925,4 +952,13 @@ $pf_es = [
     'pf_final_note' => 'Para el objetivo: todos los genes deben ser homocigotos',
     'pf_scenario_multi_summary' => '{target} requiere aproximadamente {gens} generaciones. Genes: {genes}',
     'bp_planned_bird' => 'Planificado',
+
+    // v7.3.10: Disponibilidad en el mercado
+    'pf_avail_easy' => 'Fácil',
+    'pf_avail_normal' => 'Moderado',
+    'pf_avail_difficult' => 'Difícil',
+    'pf_avail_warning_difficult' => '⚠️ Difícil de obtener',
+    'pf_avail_note_difficult' => 'Los siguientes colores son raros y pueden requerir tiempo para adquirirlos',
+    'pf_avail_warning_normal' => '※ Moderadamente raro',
+    'pf_avail_note_normal' => 'Los siguientes colores están disponibles en criadores especializados pero pueden requerir tiempo de espera',
 ];
