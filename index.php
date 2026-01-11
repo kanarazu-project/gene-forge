@@ -1018,6 +1018,13 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                         </div>
                         <?php endif; ?>
 
+                        <?php // v7.3.17: 近親交配回避のアドバイス ?>
+                        <?php if(!empty($scenario['lineage_advice_key']) && ($scenario['totalGenerations'] ?? 0) >= 3): ?>
+                        <div style="margin-top:1rem;padding:1rem;background:#263238;border-radius:8px;border:1px solid #ffd54f;color:#ffd54f;">
+                            <?= htmlspecialchars(t_pf($scenario['lineage_advice_key'])) ?>
+                        </div>
+                        <?php endif; ?>
+
                     </div>
                     <?php endif; ?>
 

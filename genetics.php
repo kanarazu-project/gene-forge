@@ -4317,6 +4317,7 @@ class PathFinder
                 'gens' => $totalGenerations,
                 'genes' => implode(', ', $geneList),
             ],
+            'lineage_advice_key' => 'pf_lineage_advice',
         ];
     }
 

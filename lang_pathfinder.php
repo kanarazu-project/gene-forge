@@ -202,6 +202,7 @@ $pf_ja = [
     'pf_final_result' => '目標表現型が出現（確率は遺伝子数による）',
     'pf_final_note' => '目標を得るには、全ての必要遺伝子をホモで持つ個体が必要です',
     'pf_scenario_multi_summary' => '{target}の作出には約{gens}世代が必要です。必要遺伝子: {genes}',
+    'pf_lineage_advice' => '💡 近親交配回避のヒント: フェーズ1〜2で父方系統と母方系統の2系統を別々に作り、フェーズ3で合流させることで兄弟婚・従兄弟婚を避けられます。',
 
     // v7.2追加: 計画済み個体
     'bp_planned_bird' => '計画済み',
@@ -425,6 +426,7 @@ $pf_en = [
     'pf_final_result' => 'Target phenotype appears (probability depends on gene count)',
     'pf_final_note' => 'To obtain target, need individuals homozygous for all required genes',
     'pf_scenario_multi_summary' => 'Producing {target} requires approximately {gens} generations. Required genes: {genes}',
+    'pf_lineage_advice' => '💡 Inbreeding avoidance tip: Create 2 separate lineages (sire-line and dam-line) in Phase 1-2, then merge them in Phase 3 to avoid sibling/cousin mating.',
 
     // v7.2: Planned bird
     'bp_planned_bird' => 'Planned',
@@ -605,6 +607,7 @@ $pf_de = [
     'pf_final_result' => 'Zielphänotyp erscheint',
     'pf_final_note' => 'Für Ziel: alle Gene homozygot erforderlich',
     'pf_scenario_multi_summary' => '{target} benötigt ca. {gens} Generationen. Gene: {genes}',
+    'pf_lineage_advice' => '💡 Inzuchtvermeidung: Erstellen Sie 2 separate Linien (Vater- und Mutterlinie) in Phase 1-2, dann führen Sie sie in Phase 3 zusammen, um Geschwister-/Cousinenpaarung zu vermeiden.',
     'bp_planned_bird' => 'Geplant',
 
     // v7.3.10: Marktverfügbarkeit
@@ -783,6 +786,7 @@ $pf_fr = [
     'pf_final_result' => 'Le phénotype cible apparaît',
     'pf_final_note' => 'Pour l\'objectif: tous les gènes doivent être homozygotes',
     'pf_scenario_multi_summary' => '{target} nécessite environ {gens} générations. Gènes: {genes}',
+    'pf_lineage_advice' => '💡 Évitement de la consanguinité: Créez 2 lignées séparées (lignée paternelle et maternelle) en Phase 1-2, puis fusionnez-les en Phase 3 pour éviter l\'accouplement entre frères/sœurs/cousins.',
     'bp_planned_bird' => 'Planifié',
 
     // v7.3.10: Disponibilité sur le marché
@@ -961,6 +965,7 @@ $pf_it = [
     'pf_final_result' => 'Appare il fenotipo obiettivo',
     'pf_final_note' => 'Per l\'obiettivo: tutti i geni devono essere omozigoti',
     'pf_scenario_multi_summary' => '{target} richiede circa {gens} generazioni. Geni: {genes}',
+    'pf_lineage_advice' => '💡 Evitare la consanguineità: Crea 2 linee separate (linea paterna e materna) nella Fase 1-2, poi uniscile nella Fase 3 per evitare accoppiamenti tra fratelli/cugini.',
     'bp_planned_bird' => 'Pianificato',
 
     // v7.3.10: Disponibilità sul mercato
@@ -1139,6 +1144,7 @@ $pf_es = [
     'pf_final_result' => 'Aparece el fenotipo objetivo',
     'pf_final_note' => 'Para el objetivo: todos los genes deben ser homocigotos',
     'pf_scenario_multi_summary' => '{target} requiere aproximadamente {gens} generaciones. Genes: {genes}',
+    'pf_lineage_advice' => '💡 Evitar endogamia: Cree 2 líneas separadas (línea paterna y materna) en la Fase 1-2, luego fusiónelas en la Fase 3 para evitar apareamiento entre hermanos/primos.',
     'bp_planned_bird' => 'Planificado',
 
     // v7.3.10: Disponibilidad en el mercado
