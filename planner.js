@@ -1112,11 +1112,16 @@ const BreedingPlanner = {
             ? this._tp('bp_offspring_with_gene', { gene: requiredFromPrevious }, `${requiredFromPrevious} offspring`)
             : this._t('bp_intermediate_bird', 'Intermediate bird');
 
+        // v7.3.13: 最終世代の近交係数を推定
+        const estimatedIC = this.estimateFinalInbreeding(plan.generations);
+
         // プレースホルダーペアリングを追加
         finalGenPairings.push({
             male: { name: `Gen${currentGen + 1} ${sireDesc} ♂`, isPlanned: true, geneLabel: requiredFromPrevious },
             female: { name: `Gen${currentGen + 1} ${damDesc} ♀`, isPlanned: true, geneLabel: requiredFromPrevious },
             probability: this.calculateFinalProbability(intermediateGoals),
+            inbreedingCoef: estimatedIC,
+            isEstimatedIC: true,
             recommendation: this._tp('bp_select_offspring',
                 { gene: requiredFromPrevious, gen: currentGen + 1 },
                 `Select ${requiredFromPrevious} offspring from Generation ${currentGen + 1}`)
@@ -1218,6 +1223,44 @@ const BreedingPlanner = {
             }
         }
         return prob;
+    },
+
+    /**
+     * v7.3.13: 最終世代の近交係数を推定
+     * 中間世代のペアリングから、最終世代の交配が
+     * 半兄弟婚（同父異母/同母異父）になるか推定
+     */
+    estimateFinalInbreeding(generations) {
+        // 中間世代（最終世代の親を作る世代）のペアリングを取得
+        const intermediateGen = generations.find(g => g.genNumber === 2);
+        if (!intermediateGen || !intermediateGen.pairings) return 0;
+
+        const pairings = intermediateGen.pairings.filter(p => p.male && p.female && !p.male.isPlanned);
+        if (pairings.length < 2) return 0;
+
+        // 共通の親がいるかチェック
+        const maleIds = new Set();
+        const femaleIds = new Set();
+
+        for (const p of pairings) {
+            if (p.male && p.male.id) maleIds.add(p.male.id);
+            if (p.female && p.female.id) femaleIds.add(p.female.id);
+        }
+
+        // 全ペアリングが同じオスを使用 → 子同士は半兄弟（F=12.5%）
+        if (maleIds.size === 1 && pairings.length > 1) {
+            return 0.125;
+        }
+        // 全ペアリングが同じメスを使用 → 子同士は半兄弟（F=12.5%）
+        if (femaleIds.size === 1 && pairings.length > 1) {
+            return 0.125;
+        }
+        // 全ペアリングが同じ両親 → 子同士は全兄弟（F=25%）
+        if (maleIds.size === 1 && femaleIds.size === 1) {
+            return 0.25;
+        }
+
+        return 0;
     },
 
     /**
@@ -1553,7 +1596,8 @@ function runPlanner() {
 
                         html += `<div class="pairing-card" style="background: #f8f9fa !important; padding: 10px; margin: 5px 0; border-radius: 5px; color: #333 !important;">`;
                         html += `<div class="pairing-header" style="color: #333 !important; font-weight: bold;">#${i+1} ♂${p.male.name} × ♀${p.female.name}</div>`;
-                        html += `<div class="pairing-stats" style="color: #333 !important;">${_t('bp_probability', 'Probability')}: ${((p.probability || 0)*100).toFixed(1)}% | <span style="color: ${icColor} !important; font-weight: bold;">${_t('bp_f_value', 'F-value')}: ${icPercent}%</span></div>`;
+                        const icLabel = p.isEstimatedIC ? `${_t('bp_f_value', 'F-value')}: ${icPercent}% (${_t('bp_estimated', '推定')})` : `${_t('bp_f_value', 'F-value')}: ${icPercent}%`;
+                        html += `<div class="pairing-stats" style="color: #333 !important;">${_t('bp_probability', 'Probability')}: ${((p.probability || 0)*100).toFixed(1)}% | <span style="color: ${icColor} !important; font-weight: bold;">${icLabel}</span></div>`;
                         if (p.recommendation) {
                             html += `<div class="pairing-recommendation" style="color: #495057 !important;">${p.recommendation}</div>`;
                         }
