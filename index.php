@@ -704,6 +704,78 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                                     <select id="birdDam"><option value=""><?= t('unknown_or_external') ?></option></select>
                                 </div>
                             </div>
+
+                            <!-- v7.3.13: ユーザーモード用拡張血統編集 -->
+                            <details id="extendedPedigreeSection" class="pedigree-extended" style="margin-top:1rem;">
+                                <summary style="cursor:pointer;color:var(--accent-turquoise);">
+                                    📋 <?= $lang === 'ja' ? '詳細血統情報を編集（祖父母・曾祖父母）' : 'Edit Extended Pedigree (Grandparents/Great-grandparents)' ?>
+                                </summary>
+                                <div style="margin-top:0.5rem;padding:0.5rem;background:rgba(0,0,0,0.2);border-radius:6px;">
+                                    <p style="font-size:0.8rem;color:#aaa;margin-bottom:0.5rem;">
+                                        <?= $lang === 'ja' ? '個体IDを直接入力できます。空欄は不明として扱われます。' : 'Enter bird IDs directly. Empty fields are treated as unknown.' ?>
+                                    </p>
+
+                                    <!-- 祖父母 -->
+                                    <h5 style="font-size:0.85rem;color:#ccc;margin:0.8rem 0 0.4rem;"><?= t('grandparents') ?></h5>
+                                    <div class="form-grid" style="grid-template-columns:repeat(4,1fr);gap:0.4rem;">
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.75rem;"><?= t('paternal_gf') ?></label>
+                                            <input type="text" id="pedigree_sire_sire" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.75rem;"><?= t('paternal_gm') ?></label>
+                                            <input type="text" id="pedigree_sire_dam" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.75rem;"><?= t('maternal_gf') ?></label>
+                                            <input type="text" id="pedigree_dam_sire" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.75rem;"><?= t('maternal_gm') ?></label>
+                                            <input type="text" id="pedigree_dam_dam" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                    </div>
+
+                                    <!-- 曾祖父母 -->
+                                    <h5 style="font-size:0.85rem;color:#ccc;margin:0.8rem 0 0.4rem;"><?= t('great_grandparents') ?></h5>
+                                    <div class="form-grid" style="grid-template-columns:repeat(4,1fr);gap:0.4rem;">
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gf_father') ?> (<?= t('sire') ?>)</label>
+                                            <input type="text" id="pedigree_sire_sire_sire" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gf_mother') ?> (<?= t('sire') ?>)</label>
+                                            <input type="text" id="pedigree_sire_sire_dam" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gm_father') ?> (<?= t('sire') ?>)</label>
+                                            <input type="text" id="pedigree_sire_dam_sire" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gm_mother') ?> (<?= t('sire') ?>)</label>
+                                            <input type="text" id="pedigree_sire_dam_dam" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                    </div>
+                                    <div class="form-grid" style="grid-template-columns:repeat(4,1fr);gap:0.4rem;margin-top:0.4rem;">
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gf_father') ?> (<?= t('dam') ?>)</label>
+                                            <input type="text" id="pedigree_dam_sire_sire" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gf_mother') ?> (<?= t('dam') ?>)</label>
+                                            <input type="text" id="pedigree_dam_sire_dam" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gm_father') ?> (<?= t('dam') ?>)</label>
+                                            <input type="text" id="pedigree_dam_dam_sire" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                        <div class="form-group" style="margin-bottom:0.3rem;">
+                                            <label class="form-label" style="font-size:0.7rem;"><?= t('gm_mother') ?> (<?= t('dam') ?>)</label>
+                                            <input type="text" id="pedigree_dam_dam_dam" placeholder="ID" style="padding:0.4rem;font-size:0.8rem;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </details>
                             <h4 class="section-title"><?= t('genotype_info') ?></h4>
                             <div class="form-grid genotype-grid" id="genotypeFields"></div>
                             <div class="form-group">
@@ -1744,7 +1816,7 @@ function editBird(id) {
     if (typeof BirdDB === 'undefined') return;
     var bird = BirdDB.getBird(id);
     if (!bird) { alert(T.bird_not_found || 'Bird not found'); return; }
-    
+
     document.getElementById('birdModalTitle').textContent = T.edit || 'Edit';
     document.getElementById('birdName').value = bird.name || '';
     document.getElementById('birdCode').value = bird.code || '';
@@ -1755,7 +1827,7 @@ function editBird(id) {
     document.getElementById('birdNotes').value = bird.notes || '';
     document.getElementById('birdSire').value = bird.sireId || '';
     document.getElementById('birdDam').value = bird.damId || '';
-    
+
     if (bird.observed) {
         var bcSelect = document.querySelector('[name="bird_baseColor"]');
         var ecSelect = document.querySelector('[name="bird_eyeColor"]');
@@ -1764,7 +1836,19 @@ function editBird(id) {
         if (ecSelect) ecSelect.value = bird.observed.eyeColor || 'black';
         if (dkSelect) dkSelect.value = bird.observed.darkness || 'none';
     }
-    
+
+    // v7.3.13: 拡張血統情報をロード
+    var pedigree = bird.pedigree || {};
+    var pedigreeFields = [
+        'sire_sire', 'sire_dam', 'dam_sire', 'dam_dam',
+        'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam',
+        'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'
+    ];
+    pedigreeFields.forEach(function(field) {
+        var el = document.getElementById('pedigree_' + field);
+        if (el) el.value = pedigree[field] || '';
+    });
+
     document.getElementById('birdForm').dataset.editId = id;
     document.getElementById('birdModal').classList.add('active');
 }
@@ -1799,6 +1883,18 @@ function openBirdForm() {
     document.getElementById('birdModalTitle').textContent = T.add_bird || 'Add Bird';
     document.getElementById('birdForm').reset();
     document.getElementById('birdForm').dataset.editId = '';
+
+    // v7.3.13: 拡張血統フィールドをクリア
+    var pedigreeFields = [
+        'sire_sire', 'sire_dam', 'dam_sire', 'dam_dam',
+        'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam',
+        'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'
+    ];
+    pedigreeFields.forEach(function(field) {
+        var el = document.getElementById('pedigree_' + field);
+        if (el) el.value = '';
+    });
+
     document.getElementById('birdModal').classList.add('active');
 }
 

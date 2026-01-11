@@ -344,6 +344,29 @@ function saveBird(event) {
         }
     }
 
+    // v7.3.13: 拡張血統情報を取得
+    const getPedigreeField = (fieldId) => {
+        const el = document.getElementById(fieldId);
+        return el ? el.value.trim() || null : null;
+    };
+
+    const pedigree = {
+        sire: sireId || null,
+        dam: damId || null,
+        sire_sire: getPedigreeField('pedigree_sire_sire'),
+        sire_dam: getPedigreeField('pedigree_sire_dam'),
+        dam_sire: getPedigreeField('pedigree_dam_sire'),
+        dam_dam: getPedigreeField('pedigree_dam_dam'),
+        sire_sire_sire: getPedigreeField('pedigree_sire_sire_sire'),
+        sire_sire_dam: getPedigreeField('pedigree_sire_sire_dam'),
+        sire_dam_sire: getPedigreeField('pedigree_sire_dam_sire'),
+        sire_dam_dam: getPedigreeField('pedigree_sire_dam_dam'),
+        dam_sire_sire: getPedigreeField('pedigree_dam_sire_sire'),
+        dam_sire_dam: getPedigreeField('pedigree_dam_sire_dam'),
+        dam_dam_sire: getPedigreeField('pedigree_dam_dam_sire'),
+        dam_dam_dam: getPedigreeField('pedigree_dam_dam_dam')
+    };
+
     const birdData = {
         name,
         code: document.getElementById('birdCode').value.trim(),
@@ -354,7 +377,8 @@ function saveBird(event) {
         phase: document.getElementById('birdPhase').value,
         notes: document.getElementById('birdNotes').value.trim(),
         sire: sireId ? { id: sireId, ...BirdDB.getBird(sireId) } : null,
-        dam: damId ? { id: damId, ...BirdDB.getBird(damId) } : null
+        dam: damId ? { id: damId, ...BirdDB.getBird(damId) } : null,
+        pedigree: pedigree
     };
 
     if (currentEditBirdId) {

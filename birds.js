@@ -183,7 +183,7 @@ const BirdDB = {
         // ============================================================
         // v7.0 ヘルパー: 個体生成関数
         // ============================================================
-        const createBird = (id, name, sex, colorKey, genotype, pedigree = null, generation = 0) => {
+        const createBird = (id, name, sex, colorKey, genotype, pedigree = null, generation = 0, lineage = 'Demo familyA') => {
             const isMale = sex === 'male';
             const colorDef = (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) || {};
             const eyeColor = colorDef.eye || 'black';
@@ -198,7 +198,7 @@ const BirdDB = {
                 birthDate: `202${generation}-01-01`,
                 sire: null,
                 dam: null,
-                lineage: 'Demo Family',
+                lineage: lineage,
                 observed: {
                     baseColor: colorKey,
                     eyeColor: eyeColor,
@@ -689,7 +689,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: '+' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Bella: Dilute Aqua - ダイリュートアクア
         const bella = createBird('b0_f1', 'Bella', 'female', 'dilute_aqua', {
@@ -705,7 +705,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Couple 2: Carl × Daisy (Fallow Pale導入)
         // Carl: Fallow Green /tq - フォローペール+ターコイズ潜性
@@ -722,7 +722,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: '+' },
                 chr2: { dark: 'd', parblue: 'tq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Daisy: Fallow Turquoise - フォローターコイズ
         const daisy = createBird('b0_f2', 'Daisy', 'female', 'fallow_turquoise', {
@@ -738,7 +738,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'tq' },
                 chr2: { dark: 'd', parblue: 'tq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Couple 3: Edward × Flora (Edged + Bronze Fallow導入)
         // Edward: Edged Green /aq /fallow_bronze - エッジド+ブロンズフォロー潜性
@@ -755,7 +755,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: '+' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Flora: Edged Aqua - エッジドアクア
         const flora = createBird('b0_f3', 'Flora', 'female', 'edged_aqua', {
@@ -771,7 +771,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Couple 4: Gary × Holly (Orangeface + Pale Headed導入)
         // Gary: Orangeface Green /aq /pale_headed - オレンジフェイス+ペールヘッド潜性
@@ -788,7 +788,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: '+' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Holly: Pale Headed Aqua - ペールヘッドアクア
         const holly = createBird('b0_f4', 'Holly', 'female', 'pale_headed_aqua', {
@@ -804,7 +804,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, null, 0);
+        }, null, 0, 'Demo familyB');
 
         // Family B G0を追加
         birds.push(aaron, bella, carl, daisy, edward, flora, gary, holly);
@@ -830,7 +830,7 @@ const BirdDB = {
         }, {
             ...this.createEmptyPedigree(),
             sire: 'b0_m1', dam: 'b0_f1'
-        }, 1);
+        }, 1, 'Demo familyB');
 
         // Jane: Carl × Daisy の娘 → Fallow Seagreen
         const jane = createBird('b1_f1', 'Jane', 'female', 'fallow_seagreen', {
@@ -849,7 +849,7 @@ const BirdDB = {
         }, {
             ...this.createEmptyPedigree(),
             sire: 'b0_m2', dam: 'b0_f2'
-        }, 1);
+        }, 1, 'Demo familyB');
 
         // Kyle: Edward × Flora の息子 → Edged Aqua /fallow_bronze
         const kyle = createBird('b1_m2', 'Kyle', 'male', 'edged_aqua', {
@@ -868,7 +868,7 @@ const BirdDB = {
         }, {
             ...this.createEmptyPedigree(),
             sire: 'b0_m3', dam: 'b0_f3'
-        }, 1);
+        }, 1, 'Demo familyB');
 
         // Lisa: Gary × Holly の娘 → Orangeface Pale Headed Aqua
         const lisa = createBird('b1_f2', 'Lisa', 'female', 'orangeface_pale_headed_aqua', {
@@ -887,7 +887,7 @@ const BirdDB = {
         }, {
             ...this.createEmptyPedigree(),
             sire: 'b0_m4', dam: 'b0_f4'
-        }, 1);
+        }, 1, 'Demo familyB');
 
         // Family B G1を追加
         birds.push(ian, jane, kyle, lisa);
@@ -915,7 +915,7 @@ const BirdDB = {
             sire: 'b1_m1', dam: 'b1_f1',
             sire_sire: 'b0_m1', sire_dam: 'b0_f1',
             dam_sire: 'b0_m2', dam_dam: 'b0_f2'
-        }, 2);
+        }, 2, 'Demo familyB');
 
         // Nina: Kyle × Lisa の娘 → Edged Aqua /orangeface /pale_headed
         const nina = createBird('b2_f1', 'Nina', 'female', 'edged_aqua', {
@@ -936,7 +936,7 @@ const BirdDB = {
             sire: 'b1_m2', dam: 'b1_f2',
             sire_sire: 'b0_m3', sire_dam: 'b0_f3',
             dam_sire: 'b0_m4', dam_dam: 'b0_f4'
-        }, 2);
+        }, 2, 'Demo familyB');
 
         // Family B G2を追加
         birds.push(mike, nina);
@@ -970,7 +970,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'tq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 2: Bonnie ♀ Fallow Aqua /dilute
         const bonnie = createBird('b3_02', 'Bonnie', 'female', 'fallow_aqua', {
@@ -986,7 +986,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 3: Cody ♂ Edged Seagreen /dilute /fallow
         const cody = createBird('b3_03', 'Cody', 'male', 'edged_seagreen', {
@@ -1002,7 +1002,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'tq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 4: Dawn ♀ Dilute Aqua /fallow /edged
         const dawn = createBird('b3_04', 'Dawn', 'female', 'dilute_aqua', {
@@ -1018,7 +1018,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 5: Ethan ♂ Seagreen /dilute /fallow /edged /orangeface
         const ethan = createBird('b3_05', 'Ethan', 'male', 'seagreen', {
@@ -1034,7 +1034,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'tq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 6: Grace ♀ Orangeface Aqua /dilute /fallow
         const grace = createBird('b3_06', 'Grace', 'female', 'orangeface_aqua', {
@@ -1050,7 +1050,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 7: Henry ♂ Turquoise /dilute /fallow /edged
         const henry = createBird('b3_07', 'Henry', 'male', 'turquoise', {
@@ -1066,7 +1066,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'tq' },
                 chr2: { dark: 'd', parblue: 'tq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 8: Iris ♀ Pale Headed Seagreen /dilute /fallow
         const iris = createBird('b3_08', 'Iris', 'female', 'pale_headed_seagreen', {
@@ -1082,7 +1082,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'tq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 9: Jake ♂ Aqua /dilute /fallow /edged /pale_headed
         const jake = createBird('b3_09', 'Jake', 'male', 'aqua', {
@@ -1098,7 +1098,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Child 10: Kate ♀ Bronze Fallow Aqua /dilute /edged
         const kate = createBird('b3_10', 'Kate', 'female', 'fallow_bronze_aqua', {
@@ -1114,7 +1114,7 @@ const BirdDB = {
                 chr1: { dark: 'd', parblue: 'aq' },
                 chr2: { dark: 'd', parblue: 'aq' }
             }
-        }, fullPedigreeB, 3);
+        }, fullPedigreeB, 3, 'Demo familyB');
 
         // Family B G3を追加
         birds.push(andy, bonnie, cody, dawn, ethan, grace, henry, iris, jake, kate);
@@ -1165,7 +1165,7 @@ const BirdDB = {
                 birthDate: `202${generation}-01-01`,
                 sire: null,
                 dam: null,
-                lineage: 'Demo Family C (Inference)',
+                lineage: 'Demo familyC',
                 observed: {
                     baseColor: colorKey,
                     eyeColor: eyeColor,
@@ -1387,15 +1387,15 @@ const BirdDB = {
         if (family === 'C') {
             ids = idsC;
             offspringIds = offspringC;
-            familyName = 'Demo Family C (For Inference)';
+            familyName = 'Demo familyC';
         } else if (family === 'B') {
             ids = idsB;
             offspringIds = offspringB;
-            familyName = 'Demo Family B (Dilute/Fallow)';
+            familyName = 'Demo familyB';
         } else {
             ids = idsA;
             offspringIds = offspringA;
-            familyName = 'Demo Family A (INO/Opaline)';
+            familyName = 'Demo familyA';
         }
 
         return {
