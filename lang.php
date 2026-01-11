@@ -62,9 +62,10 @@ foreach ($pf_translations as $langCode => $pfDict) {
 
 /**
  * PathFinder用翻訳関数（パラメータ置換対応）
+ * v7.3.2: 全プレースホルダー汎用置換対応
  *
  * @param string $key 翻訳キー
- * @param array $params プレースホルダー置換用パラメータ（例: ['locus' => 'opaline', 'gen' => 2]）
+ * @param array $params プレースホルダー置換用パラメータ（例: ['locus' => 'opaline', 'n' => 2]）
  * @return string 翻訳済みテキスト
  */
 function t_pf(string $key, array $params = []): string {
@@ -80,9 +81,14 @@ function t_pf(string $key, array $params = []): string {
         if ($paramKey === 'locus') {
             $locusName = $translations[$lang][$value] ?? $translations['ja'][$value] ?? ucfirst($value);
             $text = str_replace('{locus_name}', $locusName, $text);
+            // {locus} も直接置換
+            $text = str_replace('{locus}', (string)$value, $text);
         }
-        // 汎用置換: {key} → value
-        $text = str_replace('{' . $paramKey . '}', (string)$value, $text);
+        // 汎用置換: {paramKey} → value (全てのプレースホルダーに対応)
+        $placeholder = '{' . $paramKey . '}';
+        if (strpos($text, $placeholder) !== false) {
+            $text = str_replace($placeholder, (string)$value, $text);
+        }
     }
 
     return $text;
