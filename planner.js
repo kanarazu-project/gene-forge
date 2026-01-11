@@ -116,15 +116,114 @@ const BreedingPlanner = {
         // フォールバック: キーをそのまま返す
         return colorKey;
     },
-    
+
+    /**
+     * v7.0: COLOR_MASTERから動的に要件を生成
+     * TARGET_REQUIREMENTSにない色でもCOLOR_MASTERから計算可能
+     * @param {string} colorKey - 色キー
+     * @returns {object|null} 要件オブジェクト
+     */
+    generateRequirementsFromMaster(colorKey) {
+        if (typeof COLOR_MASTER === 'undefined' || !COLOR_MASTER[colorKey]) {
+            return null;
+        }
+        const colorDef = COLOR_MASTER[colorKey];
+        const genotype = colorDef.genotype || {};
+
+        // 常染色体要件を構築
+        const required = {};
+        const slr = {};
+
+        // parblue
+        if (genotype.parblue) {
+            required.parblue = [genotype.parblue];
+        }
+        // dark
+        if (genotype.dark) {
+            required.dark = [genotype.dark];
+        }
+        // violet
+        if (genotype.violet && genotype.violet !== 'vv') {
+            required.violet = [genotype.violet];
+        }
+        // pied_rec
+        if (genotype.pied_rec && genotype.pied_rec !== '++') {
+            required.pied_rec = [genotype.pied_rec];
+        }
+        // pied_dom
+        if (genotype.pied_dom && genotype.pied_dom !== '++') {
+            required.pied_dom = [genotype.pied_dom];
+        }
+        // dilute
+        if (genotype.dilute && genotype.dilute !== '++') {
+            required.dilute = [genotype.dilute];
+        }
+        // edged
+        if (genotype.edged && genotype.edged !== '++') {
+            required.edged = [genotype.edged];
+        }
+        // orangeface
+        if (genotype.orangeface && genotype.orangeface !== '++') {
+            required.orangeface = [genotype.orangeface];
+        }
+        // pale_headed
+        if (genotype.pale_headed && genotype.pale_headed !== '++') {
+            required.pale_headed = [genotype.pale_headed];
+        }
+        // fallow_pale
+        if (genotype.fallow_pale && genotype.fallow_pale !== '++') {
+            required.fallow_pale = [genotype.fallow_pale];
+        }
+        // fallow_bronze
+        if (genotype.fallow_bronze && genotype.fallow_bronze !== '++') {
+            required.fallow_bronze = [genotype.fallow_bronze];
+        }
+
+        // 伴性遺伝要件
+        if (genotype.ino && genotype.ino !== '++' && genotype.ino !== '+W') {
+            slr.ino = [genotype.ino, genotype.ino.replace(/(.+)\1/, '$1W')]; // ホモ + ヘミ
+        }
+        if (genotype.opaline && genotype.opaline !== '++' && genotype.opaline !== '+W') {
+            slr.op = [genotype.opaline, genotype.opaline.replace(/(.+)\1/, '$1W')];
+        }
+        if (genotype.cinnamon && genotype.cinnamon !== '++' && genotype.cinnamon !== '+W') {
+            slr.cin = [genotype.cinnamon, genotype.cinnamon.replace(/(.+)\1/, '$1W')];
+        }
+
+        // 難易度と世代数を推定
+        const locusCount = Object.keys(required).length + Object.keys(slr).length;
+        let difficulty = 'low';
+        let minGen = 1;
+        if (locusCount >= 4) { difficulty = 'extreme'; minGen = 5; }
+        else if (locusCount >= 3) { difficulty = 'high'; minGen = 4; }
+        else if (locusCount >= 2) { difficulty = 'mid'; minGen = 2; }
+
+        // INO/Pallid系は近親交配制限
+        const hasIno = slr.ino && (slr.ino.includes('inoino') || slr.ino.includes('pldpld'));
+        const inbreedingLimit = hasIno ? 2 : undefined;
+
+        return {
+            required,
+            slr,
+            minGen,
+            difficulty,
+            inbreedingLimit,
+            tier: colorDef.tier || 1
+        };
+    },
+
     // v7.0: 翻訳対応plan関数
     plan(targetKey) {
-        const target = this.TARGET_REQUIREMENTS[targetKey];
-        if (!target) return { error: this._t('bp_unsupported_target', '未対応の目標形質です') };
+        // TARGET_REQUIREMENTSを優先、なければCOLOR_MASTERから動的生成
+        let target = this.TARGET_REQUIREMENTS[targetKey];
+        if (!target) {
+            target = this.generateRequirementsFromMaster(targetKey);
+        }
+        if (!target) return { error: this._t('bp_unsupported_target', 'Unsupported target trait') };
         const birds = typeof BirdDB !== 'undefined' ? BirdDB.getAllBirds() : [];
-        if (birds.length === 0) return { error: this._t('bp_no_birds', '個体が登録されていません'), suggestion: this._t('bp_register_hint', '「個体管理」タブで手持ち個体を登録してください') };
+        if (birds.length === 0) return { error: this._t('bp_no_birds', 'No birds registered'), suggestion: this._t('bp_register_hint', 'Register birds in the Bird Management tab first') };
         const males = birds.filter(b => b.sex === 'male'), females = birds.filter(b => b.sex === 'female');
-        if (males.length === 0 || females.length === 0) return { error: this._t('bp_need_both_sex', 'オスとメスが両方必要です'), suggestion: this._tp('bp_current_count', { m: males.length, f: females.length }, `現在: オス ${males.length}羽, メス ${females.length}羽`) };
+        if (males.length === 0 || females.length === 0) return { error: this._t('bp_need_both_sex', 'Both males and females are required'), suggestion: this._tp('bp_current_count', { m: males.length, f: females.length }, `Current: ${males.length} males, ${females.length} females`) };
 
         let pairings = [];
         males.forEach(m => females.forEach(f => pairings.push(this.evaluatePairing(m, f, target, targetKey))));
@@ -137,8 +236,8 @@ const BreedingPlanner = {
         // v6.7.4: フィルタリング後に候補がない場合
         if (pairings.length === 0) {
             return {
-                error: this._t('bp_no_ethical_pairs', '倫理基準を満たすペアがありません'),
-                suggestion: this._t('bp_introduce_new_blood', '近交係数12.5%未満のペアが存在しません。別血統の個体を導入してください。'),
+                error: this._t('bp_no_ethical_pairs', 'No pairs meet ethical standards'),
+                suggestion: this._t('bp_introduce_new_blood', 'No pairs with inbreeding coefficient below 12.5%. Introduce unrelated bloodlines.'),
                 filteredOut: true
             };
         }
@@ -276,15 +375,15 @@ const BreedingPlanner = {
         // v7.0: 翻訳対応推奨メッセージ
         let recommendation;
         if (!canBreed) {
-            recommendation = '🚫 ' + this._t('bp_breeding_prohibited', '繁殖禁止');
+            recommendation = '🚫 ' + this._t('bp_breeding_prohibited', 'Breeding prohibited');
         } else if (inbreedingCoef >= this.INBREEDING_THRESHOLD) {
-            recommendation = '⚠️ ' + this._t('bp_ethics_warning', '競走馬では禁忌とされる配合');
+            recommendation = '⚠️ ' + this._t('bp_ethics_warning', 'Prohibited in thoroughbred breeding');
         } else if (prob >= 0.5) {
-            recommendation = '🌟 ' + this._t('bp_optimal_pair', '最適ペア');
+            recommendation = '🌟 ' + this._t('bp_optimal_pair', 'Optimal pair');
         } else if (prob > 0) {
-            recommendation = '✓ ' + this._t('bp_possible', '可能');
+            recommendation = '✓ ' + this._t('bp_possible', 'Possible');
         } else {
-            recommendation = '✗ ' + this._t('bp_low_contribution', '目標への貢献度低');
+            recommendation = '✗ ' + this._t('bp_low_contribution', 'Low contribution to target');
         }
 
         // v7.0: 連鎖遺伝に関する推奨
@@ -347,10 +446,10 @@ const BreedingPlanner = {
     
     // v7.0: 翻訳対応
     generateRoadmap(topPairing, target, targetKey, missingGenes) {
-        if (!topPairing) return [{ generation: 0, action: this._t('bp_no_breedable_pair', '繁殖可能なペアがありません'), goal: this._t('bp_introduce_healthy', '健康リスクの低い個体を導入してください') }];
+        if (!topPairing) return [{ generation: 0, action: this._t('bp_no_breedable_pair', 'No breedable pairs available'), goal: this._t('bp_introduce_healthy', 'Introduce birds with low health risk') }];
         // v6.7.5: COLOR_LABELSから色名取得
         const targetName = this.getColorName(targetKey);
-        const goalText = this._tp('bp_goal_produce', { name: targetName }, targetName + 'の作出');
+        const goalText = this._tp('bp_goal_produce', { name: targetName }, 'Produce ' + targetName);
         return [{ generation: 1, action: `${topPairing.male.name} × ${topPairing.female.name}`, goal: goalText, probability: `${(topPairing.probability * 100).toFixed(1)}%` }];
     },
 
@@ -622,7 +721,7 @@ function runPlanner() {
     const targetSelect = document.getElementById('plannerTarget'), resultPanel = document.getElementById('plannerResult');
     if (!targetSelect || !resultPanel) return;
     const targetKey = targetSelect.value;
-    if (!targetKey) { alert(_t('bp_select_target', '目標形質を選択してください')); return; }
+    if (!targetKey) { alert(_t('bp_select_target', 'Please select a target trait')); return; }
     const result = BreedingPlanner.plan(targetKey);
 
     if (result.error) {
@@ -630,7 +729,7 @@ function runPlanner() {
         if (result.suggestion) errorHtml += `<p>${result.suggestion}</p>`;
         // v6.7.4: フィルタリングによる候補なしの場合の追加メッセージ
         if (result.filteredOut) {
-            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ ${_t('bp_filtered_note', '近交係数12.5%以上のペアは倫理基準により候補から除外されています')}</p>`;
+            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ ${_t('bp_filtered_note', 'Pairs with IC ≥12.5% are excluded per ethical standards')}</p>`;
         }
         errorHtml += '</div>';
         resultPanel.innerHTML = errorHtml;
@@ -641,8 +740,8 @@ function runPlanner() {
     // v6.7.5: targetNameはresultから取得（SSOT対応）
     const targetName = result.targetName;
 
-    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} ${_t('bp_production_plan', '作出計画')}</span></div>`;
-    html += `<h4>🏆 ${_t('bp_recommended_top5', '推奨ペアリング TOP5')}</h4><div class="pairing-list">`;
+    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} ${_t('bp_production_plan', 'Production Plan')}</span></div>`;
+    html += `<h4>🏆 ${_t('bp_recommended_top5', 'Recommended Pairings TOP5')}</h4><div class="pairing-list">`;
     result.topPairings.forEach((p, i) => {
         // v6.7.4: 近交係数表示の強化
         const icPercent = (p.inbreedingCoef * 100).toFixed(2);
@@ -650,7 +749,7 @@ function runPlanner() {
 
         html += `<div class="pairing-card ${p.canBreed ? '' : 'pairing-blocked'}">`;
         html += `<div class="pairing-header">#${i+1} ♂${p.male.name} × ♀${p.female.name} ${!p.canBreed ? '🚫' : ''}</div>`;
-        html += `<div class="pairing-stats">${_t('bp_probability', '確率')}: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">${_t('bp_f_value', 'F値')}: ${icPercent}%</span></div>`;
+        html += `<div class="pairing-stats">${_t('bp_probability', 'Probability')}: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">${_t('bp_f_value', 'F-value')}: ${icPercent}%</span></div>`;
         html += `<div class="pairing-recommendation">${p.recommendation}</div>`;
         if (p.warnings.length > 0) {
             html += `<div class="pairing-warnings">${p.warnings.join('<br>')}</div>`;
@@ -661,7 +760,7 @@ function runPlanner() {
 
     // v6.7.4: 倫理基準の説明を追加
     html += `<div class="ethics-note" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 0.85em;">`;
-    html += `<p>📋 <strong>${_t('bp_ethics_standard', '倫理基準')}:</strong> ${_t('bp_ethics_description', '近交係数12.5%以上のペアは候補から除外されています（サラブレッド規則準拠）')}</p>`;
+    html += `<p>📋 <strong>${_t('bp_ethics_standard', 'Ethical Standards')}:</strong> ${_t('bp_ethics_description', 'Pairs with IC ≥12.5% are excluded (Thoroughbred rules)')}</p>`;
     html += `</div>`;
     
     resultPanel.innerHTML = html; 
