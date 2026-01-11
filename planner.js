@@ -718,10 +718,15 @@ function runPlanner() {
     const T = window.T || {};
     const _t = (key, fallback) => T[key] || fallback;
 
-    const targetSelect = document.getElementById('plannerTarget'), resultPanel = document.getElementById('plannerResult');
+    const targetSelect = document.getElementById('plannerTarget');
+    const resultPanel = document.getElementById('plannerResult');
+    const emptyPanel = document.getElementById('plannerEmpty');
     if (!targetSelect || !resultPanel) return;
     const targetKey = targetSelect.value;
     if (!targetKey) { alert(_t('bp_select_target', 'Please select a target trait')); return; }
+
+    // v7.0: 空パネルを非表示
+    if (emptyPanel) emptyPanel.style.display = 'none';
     const result = BreedingPlanner.plan(targetKey);
 
     if (result.error) {
