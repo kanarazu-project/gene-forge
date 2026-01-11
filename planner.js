@@ -110,16 +110,20 @@ const BreedingPlanner = {
     },
     
     /**
-     * v6.7.5: 色名取得ヘルパー（SSOT対応）
-     * COLOR_LABELSから取得、なければキーをそのまま返す
+     * v7.3: 色名取得ヘルパー（keyToLabel対応）
+     * 動的変換で任意のカラーキーをローカライズ
      * @param {string} colorKey - 色キー
      * @returns {string} 表示用色名
      */
     getColorName(colorKey) {
+        // v7.3: keyToLabel関数でローカライズ（動的変換対応）
+        if (typeof keyToLabel === 'function') {
+            return keyToLabel(colorKey);
+        }
+        // フォールバック
         if (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) {
             return COLOR_LABELS[colorKey];
         }
-        // フォールバック: キーをそのまま返す
         return colorKey;
     },
 

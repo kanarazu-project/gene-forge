@@ -822,6 +822,75 @@ final class AgapornisLoci
     }
 
     /**
+     * 任意のカラーキーをローカライズされたラベルに変換
+     * COLOR_DEFINITIONSに存在しないキーも動的に変換する
+     *
+     * @param string $key カラーキー（例: 'cinnamon_violet_aqua'）
+     * @param bool $isJa 日本語フラグ
+     * @return string ローカライズされたラベル
+     */
+    public static function keyToLabel(string $key, bool $isJa = true): string
+    {
+        // 1. COLOR_DEFINITIONSに存在すればそれを返す
+        if (isset(self::COLOR_DEFINITIONS[$key])) {
+            return $isJa ? self::COLOR_DEFINITIONS[$key]['ja'] : self::COLOR_DEFINITIONS[$key]['en'];
+        }
+
+        // 2. キーを分解してパーツごとに変換
+        // 英語キー部品 → 日本語/英語ラベル変換マップ
+        $partMap = [
+            // 基本色
+            'green' => ['ja' => 'グリーン', 'en' => 'Green'],
+            'darkgreen' => ['ja' => 'ダークグリーン', 'en' => 'Dark Green'],
+            'dark' => ['ja' => 'ダーク', 'en' => 'Dark'],
+            'olive' => ['ja' => 'オリーブ', 'en' => 'Olive'],
+            'aqua' => ['ja' => 'アクア', 'en' => 'Aqua'],
+            'turquoise' => ['ja' => 'ターコイズ', 'en' => 'Turquoise'],
+            'seagreen' => ['ja' => 'シーグリーン', 'en' => 'Seagreen'],
+            // INO系
+            'lutino' => ['ja' => 'ルチノー', 'en' => 'Lutino'],
+            'creamino' => ['ja' => 'クリーミノ', 'en' => 'Creamino'],
+            'pure' => ['ja' => 'ピュア', 'en' => 'Pure'],
+            'white' => ['ja' => 'ホワイト', 'en' => 'White'],
+            'ino' => ['ja' => 'イノ', 'en' => 'Ino'],
+            // 変異
+            'opaline' => ['ja' => 'オパーリン', 'en' => 'Opaline'],
+            'cinnamon' => ['ja' => 'シナモン', 'en' => 'Cinnamon'],
+            'pallid' => ['ja' => 'パリッド', 'en' => 'Pallid'],
+            'fallow' => ['ja' => 'ファロー', 'en' => 'Fallow'],
+            'pale' => ['ja' => 'ペール', 'en' => 'Pale'],
+            'bronze' => ['ja' => 'ブロンズ', 'en' => 'Bronze'],
+            'dilute' => ['ja' => 'ダイリュート', 'en' => 'Dilute'],
+            'edged' => ['ja' => 'エッジド', 'en' => 'Edged'],
+            'violet' => ['ja' => 'バイオレット', 'en' => 'Violet'],
+            'pied' => ['ja' => 'パイド', 'en' => 'Pied'],
+            'rec' => ['ja' => 'レセッシブ', 'en' => 'Recessive'],
+            'dom' => ['ja' => 'ドミナント', 'en' => 'Dominant'],
+            'orangeface' => ['ja' => 'オレンジフェイス', 'en' => 'Orangefaced'],
+            'yellowface' => ['ja' => 'イエローフェイス', 'en' => 'Yellowfaced'],
+            'headed' => ['ja' => 'ヘッド', 'en' => 'Headed'],
+            'sf' => ['ja' => 'SF', 'en' => 'SF'],
+            'df' => ['ja' => 'DF', 'en' => 'DF'],
+        ];
+
+        // キーをアンダースコアで分割
+        $parts = explode('_', $key);
+        $result = [];
+
+        foreach ($parts as $part) {
+            $partLower = strtolower($part);
+            if (isset($partMap[$partLower])) {
+                $result[] = $isJa ? $partMap[$partLower]['ja'] : $partMap[$partLower]['en'];
+            } else {
+                // 未知のパーツはそのまま（先頭大文字化）
+                $result[] = ucfirst($part);
+            }
+        }
+
+        return implode($isJa ? '' : ' ', $result);
+    }
+
+    /**
      * ラベル→キー逆引き
      */
     public static function labelToKey(bool $isJa = true): array

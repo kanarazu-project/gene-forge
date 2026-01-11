@@ -51,9 +51,13 @@ const PedigreeGenerator = {
     },
     
     /**
-     * 色名を取得
+     * 色名を取得（v7.3: keyToLabel対応）
      */
     getColorLabel(colorKey, lang = 'ja') {
+        // v7.3: keyToLabel関数でローカライズ（動的変換対応）
+        if (typeof keyToLabel === 'function') {
+            return keyToLabel(colorKey);
+        }
         if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) {
             return COLOR_MASTER[colorKey][lang] || COLOR_MASTER[colorKey]['en'] || colorKey;
         }

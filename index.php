@@ -468,6 +468,63 @@ if ($action === 'calculate') {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
+    const LANG = '<?= $lang ?>';
+
+    /**
+     * 任意のカラーキーをローカライズされたラベルに変換
+     * COLOR_LABELSに存在しないキーも動的に変換する
+     */
+    function keyToLabel(key) {
+        if (!key) return '';
+        // 1. COLOR_LABELSに存在すればそれを返す
+        if (COLOR_LABELS[key]) return COLOR_LABELS[key];
+
+        // 2. キーを分解してパーツごとに変換
+        const isJa = LANG === 'ja';
+        const partMap = {
+            // 基本色
+            'green': { ja: 'グリーン', en: 'Green' },
+            'darkgreen': { ja: 'ダークグリーン', en: 'Dark Green' },
+            'dark': { ja: 'ダーク', en: 'Dark' },
+            'olive': { ja: 'オリーブ', en: 'Olive' },
+            'aqua': { ja: 'アクア', en: 'Aqua' },
+            'turquoise': { ja: 'ターコイズ', en: 'Turquoise' },
+            'seagreen': { ja: 'シーグリーン', en: 'Seagreen' },
+            // INO系
+            'lutino': { ja: 'ルチノー', en: 'Lutino' },
+            'creamino': { ja: 'クリーミノ', en: 'Creamino' },
+            'pure': { ja: 'ピュア', en: 'Pure' },
+            'white': { ja: 'ホワイト', en: 'White' },
+            'ino': { ja: 'イノ', en: 'Ino' },
+            // 変異
+            'opaline': { ja: 'オパーリン', en: 'Opaline' },
+            'cinnamon': { ja: 'シナモン', en: 'Cinnamon' },
+            'pallid': { ja: 'パリッド', en: 'Pallid' },
+            'fallow': { ja: 'ファロー', en: 'Fallow' },
+            'pale': { ja: 'ペール', en: 'Pale' },
+            'bronze': { ja: 'ブロンズ', en: 'Bronze' },
+            'dilute': { ja: 'ダイリュート', en: 'Dilute' },
+            'edged': { ja: 'エッジド', en: 'Edged' },
+            'violet': { ja: 'バイオレット', en: 'Violet' },
+            'pied': { ja: 'パイド', en: 'Pied' },
+            'rec': { ja: 'レセッシブ', en: 'Recessive' },
+            'dom': { ja: 'ドミナント', en: 'Dominant' },
+            'orangeface': { ja: 'オレンジフェイス', en: 'Orangefaced' },
+            'yellowface': { ja: 'イエローフェイス', en: 'Yellowfaced' },
+            'headed': { ja: 'ヘッド', en: 'Headed' },
+            'sf': { ja: 'SF', en: 'SF' },
+            'df': { ja: 'DF', en: 'DF' },
+        };
+
+        const parts = key.split('_');
+        const result = parts.map(part => {
+            const p = part.toLowerCase();
+            if (partMap[p]) return isJa ? partMap[p].ja : partMap[p].en;
+            return part.charAt(0).toUpperCase() + part.slice(1);
+        });
+
+        return isJa ? result.join('') : result.join(' ');
+    }
 const GENOTYPE_OPTIONS = <?= json_encode(AgapornisLoci::GENOTYPE_OPTIONS) ?>;
 const UI_GENOTYPE_LOCI = <?= json_encode(AgapornisLoci::UI_GENOTYPE_LOCI) ?>;
 // v7.0: 連鎖遺伝用定数
@@ -1226,10 +1283,10 @@ $mPh = $_POST['m_ph'] ?? '++';
                 }
             }
                 /**
-                 * v6.7.3: 32色対応ラベル（ALBS準拠）
+                 * v7.3: 色名取得（keyToLabel対応）
                  */
                 function getColorLabel(color, isJa) {
-                    return COLOR_LABELS[color] || color || '?';
+                    return keyToLabel(color) || color || '?';
                 }
                 function loadBirdToForm(parent, birdId) {
                     const prefix = (parent === 'father' || parent === 'f') ? 'f' : 'm';
@@ -1579,7 +1636,7 @@ function refreshBirdList() {
                     '<button type="button" class="btn btn-tiny" data-action="delete" data-id="' + safeId + '">🗑️</button>' +
                 '</div>' +
             '</div>' +
-            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + escapeHtml((bird.observed && bird.observed.baseColor && COLOR_LABELS[bird.observed.baseColor]) || bird.phenotype || '') + '</div>' +
+            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + escapeHtml((bird.observed && bird.observed.baseColor) ? keyToLabel(bird.observed.baseColor) : (bird.phenotype || '')) + '</div>' +
         '</div>';
     }).join('');
     // イベント委譲: data属性を使用してXSSを防止

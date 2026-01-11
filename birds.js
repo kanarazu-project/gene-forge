@@ -194,7 +194,7 @@ const BirdDB = {
                 genotype: genotype,
                 pedigree: pedigree || this.createEmptyPedigree(),
                 phase: genotype.Z_linked ? 'v7_haplotype' : 'independent',
-                phenotype: (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) || colorKey,
+                phenotype: (typeof keyToLabel === 'function') ? keyToLabel(colorKey) : ((typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) || colorKey),
                 inbreedingGen: generation > 0 ? generation - 1 : 0,
                 notes: `Demo G${generation}`,
                 createdAt: now,
@@ -1161,7 +1161,7 @@ const BirdDB = {
                 genotype: {},  // 空 - Family Inference で推論する
                 pedigree: pedigree || this.createEmptyPedigree(),
                 phase: 'unknown',  // 推論対象
-                phenotype: (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) || colorKey,
+                phenotype: (typeof keyToLabel === 'function') ? keyToLabel(colorKey) : ((typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) || colorKey),
                 notes: `Demo G${generation} - For Inference`,
                 createdAt: now,
                 updatedAt: now
@@ -1875,41 +1875,12 @@ const BirdDB = {
     },
 
     getColorLabel(colorKey, lang = 'ja') {
-        const labels = {
-            green: lang === 'ja' ? 'グリーン' : 'Green',
-            darkgreen: lang === 'ja' ? 'ダークグリーン' : 'Dark Green',
-            olive: lang === 'ja' ? 'オリーブ' : 'Olive',
-            aqua: lang === 'ja' ? 'アクア' : 'Aqua',
-            aqua_dark: lang === 'ja' ? 'アクアダーク' : 'Aqua Dark',
-            aqua_dd: lang === 'ja' ? 'アクアDD' : 'Aqua DD',
-            turquoise: lang === 'ja' ? 'ターコイズ' : 'Turquoise',
-            turquoise_dark: lang === 'ja' ? 'ターコイズダーク' : 'Turquoise Dark',
-            seagreen: lang === 'ja' ? 'シーグリーン' : 'Sea Green',
-            seagreen_dark: lang === 'ja' ? 'シーグリーンダーク' : 'Sea Green Dark',
-            lutino: lang === 'ja' ? 'ルチノー' : 'Lutino',
-            creamino: lang === 'ja' ? 'クリーミノ' : 'Creamino',
-            pure_white: lang === 'ja' ? 'ピュアホワイト' : 'Pure White',
-            creamino_seagreen: lang === 'ja' ? 'クリーミノシーグリーン' : 'Creamino Sea Green',
-            pallid_green: lang === 'ja' ? 'パリッドグリーン' : 'Pallid Green',
-            pallid_aqua: lang === 'ja' ? 'パリッドアクア' : 'Pallid Aqua',
-            pallid_turquoise: lang === 'ja' ? 'パリッドターコイズ' : 'Pallid Turquoise',
-            pallid_seagreen: lang === 'ja' ? 'パリッドシーグリーン' : 'Pallid Sea Green',
-            cinnamon_green: lang === 'ja' ? 'シナモングリーン' : 'Cinnamon Green',
-            cinnamon_aqua: lang === 'ja' ? 'シナモンアクア' : 'Cinnamon Aqua',
-            cinnamon_turquoise: lang === 'ja' ? 'シナモンターコイズ' : 'Cinnamon Turquoise',
-            cinnamon_seagreen: lang === 'ja' ? 'シナモンシーグリーン' : 'Cinnamon Sea Green',
-            opaline_green: lang === 'ja' ? 'オパーリングリーン' : 'Opaline Green',
-            opaline_aqua: lang === 'ja' ? 'オパーリンアクア' : 'Opaline Aqua',
-            opaline_turquoise: lang === 'ja' ? 'オパーリンターコイズ' : 'Opaline Turquoise',
-            opaline_seagreen: lang === 'ja' ? 'オパーリンシーグリーン' : 'Opaline Sea Green',
-            fallow_green: lang === 'ja' ? 'フォローグリーン' : 'Fallow Green',
-            fallow_aqua: lang === 'ja' ? 'フォローアクア' : 'Fallow Aqua',
-            pied_green: lang === 'ja' ? 'パイドグリーン' : 'Pied Green',
-            pied_aqua: lang === 'ja' ? 'パイドアクア' : 'Pied Aqua',
-            pied_turquoise: lang === 'ja' ? 'パイドターコイズ' : 'Pied Turquoise',
-            pied_seagreen: lang === 'ja' ? 'パイドシーグリーン' : 'Pied Sea Green',
-        };
-        return labels[colorKey] || colorKey || '?';
+        // v7.3: keyToLabel関数でローカライズ（動的変換対応）
+        if (typeof keyToLabel === 'function') {
+            return keyToLabel(colorKey);
+        }
+        // フォールバック
+        return colorKey || '?';
     },
 
     getAncestors(id, generations = 3) {

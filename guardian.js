@@ -449,19 +449,12 @@ const HealthGuardian = {
             colorKey = 'lutino';
         }
         
-        // v6.7.5: COLOR_LABELSから取得（SSOT）
-        if (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) {
-            return COLOR_LABELS[colorKey];
+        // v7.3: keyToLabel関数でローカライズ（動的変換対応）
+        if (typeof keyToLabel === 'function') {
+            return keyToLabel(colorKey);
         }
-        
-        // フォールバック（COLOR_LABELS未定義時）
-        const fallback = {
-            'pure_white': 'Pure White',
-            'creamino': 'Creamino',
-            'creamino_seagreen': 'Creamino Seagreen',
-            'lutino': 'Lutino'
-        };
-        return fallback[colorKey] || colorKey;
+        // フォールバック
+        return colorKey;
     },
     
     // v7.0: 正しい座位名を使用（LOCI準拠）
