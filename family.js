@@ -408,8 +408,42 @@ const FamilyMap = {
             alert(isJa ? '事実モードでは遺伝推定は利用できません' : 'Genetic estimation is not available in Fact Mode');
             return;
         }
+
+        const previousTarget = this.targetPosition;
         this.targetPosition = position;
-        this.renderUI();
+
+        // v7.3.11: renderUI()を呼ばず、部分更新のみでスクロール位置を保持
+        // 前のターゲットからtarget/activeクラスを除去
+        if (previousTarget) {
+            const prevCard = document.querySelector(`[data-position="${previousTarget}"]`);
+            if (prevCard) {
+                prevCard.classList.remove('target');
+                const prevBtn = prevCard.querySelector('.target-select-btn, .child-target-btn');
+                if (prevBtn) {
+                    prevBtn.classList.remove('active');
+                    const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+                    prevBtn.innerHTML = '🎯 ' + (isJa ? '対象に設定' : 'Set as target');
+                }
+            }
+        }
+
+        // 新しいターゲットにtarget/activeクラスを追加
+        const newCard = document.querySelector(`[data-position="${position}"]`);
+        if (newCard) {
+            newCard.classList.add('target');
+            const newBtn = newCard.querySelector('.target-select-btn, .child-target-btn');
+            if (newBtn) {
+                newBtn.classList.add('active');
+                const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+                // 子供カードの場合は短いテキスト
+                if (newBtn.classList.contains('child-target-btn')) {
+                    newBtn.innerHTML = '🎯' + (isJa ? '対象' : '');
+                } else {
+                    newBtn.innerHTML = '🎯 ' + (isJa ? '推論対象' : 'Target');
+                }
+            }
+        }
+
         const inferBtn = document.getElementById('inferBtn');
         if (inferBtn) inferBtn.disabled = !this.targetPosition || !this.canUseGeneticEstimation();
         const targetDisplay = document.getElementById('targetDisplay');
