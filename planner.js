@@ -1396,8 +1396,8 @@ function runPlanner() {
     const multiGenPlan = BreedingPlanner.planMultiGeneration(targetKey);
 
     if (multiGenPlan.error) {
-        let errorHtml = `<div class="empty-state"><p>⚠️ ${multiGenPlan.error}</p>`;
-        if (multiGenPlan.suggestion) errorHtml += `<p>${multiGenPlan.suggestion}</p>`;
+        let errorHtml = `<div class="empty-state" style="color: #333 !important;"><p style="color: #333 !important;">⚠️ ${multiGenPlan.error}</p>`;
+        if (multiGenPlan.suggestion) errorHtml += `<p style="color: #333 !important;">${multiGenPlan.suggestion}</p>`;
         errorHtml += '</div>';
         resultPanel.innerHTML = errorHtml;
         resultPanel.style.display = 'block';
@@ -1407,14 +1407,14 @@ function runPlanner() {
     const targetName = multiGenPlan.targetName;
     const analysis = multiGenPlan.analysis;
 
-    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} ${_t('bp_production_plan', 'Production Plan')}</span></div>`;
+    let html = `<div class="output-header"><span class="output-title" style="color: #1565c0 !important;">🎯 ${targetName} ${_t('bp_production_plan', 'Production Plan')}</span></div>`;
 
     // v7.1: 遺伝子ギャップ分析を表示
     if (analysis && analysis.missing && analysis.missing.length > 0) {
-        html += `<div class="gene-gap-analysis" style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin-bottom: 15px;">`;
-        html += `<h4 style="margin-top:0; color: #856404;">📊 ${_t('bp_gene_analysis', 'Gene Analysis')}</h4>`;
-        html += `<p><strong>${_t('bp_generations_needed', 'Generations needed')}:</strong> ${multiGenPlan.totalGenerations}</p>`;
-        html += `<p><strong>${_t('bp_missing_genes', 'Missing genes')}:</strong></p><ul style="margin: 5px 0; padding-left: 20px;">`;
+        html += `<div class="gene-gap-analysis" style="background: #fff3cd !important; border: 1px solid #ffc107 !important; padding: 12px; border-radius: 8px; margin-bottom: 15px; color: #333 !important;">`;
+        html += `<h4 style="margin-top:0; color: #856404 !important;">📊 ${_t('bp_gene_analysis', 'Gene Analysis')}</h4>`;
+        html += `<p style="color: #333 !important;"><strong style="color: #333 !important;">${_t('bp_generations_needed', 'Generations needed')}:</strong> ${multiGenPlan.totalGenerations}</p>`;
+        html += `<p style="color: #333 !important;"><strong style="color: #333 !important;">${_t('bp_missing_genes', 'Missing genes')}:</strong></p><ul style="margin: 5px 0; padding-left: 20px; color: #333 !important;">`;
 
         analysis.missing.forEach(m => {
             const locusName = m.locus.toUpperCase();
@@ -1423,31 +1423,31 @@ function runPlanner() {
                 : m.status === 'split_only'
                     ? _t('bp_split_only', 'split males only (can express in 1 gen)')
                     : _t('bp_gene_absent', 'absent (need to introduce)');
-            html += `<li><strong>${locusName}</strong>: ${statusText}</li>`;
+            html += `<li style="color: #333 !important;"><strong style="color: #333 !important;">${locusName}</strong>: ${statusText}</li>`;
         });
         html += `</ul>`;
 
         // v7.1.1: 組み合わせ分析を表示
         if (analysis.combinationAnalysis && analysis.combinationAnalysis.needsCombination) {
             const combo = analysis.combinationAnalysis;
-            html += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ffc107;">`;
-            html += `<p><strong>🔗 ${_t('bp_combination_needed', 'Gene combination needed')}:</strong></p>`;
-            html += `<p style="font-size: 0.9em; color: #856404;">`;
+            html += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ffc107 !important;">`;
+            html += `<p style="color: #333 !important;"><strong style="color: #333 !important;">🔗 ${_t('bp_combination_needed', 'Gene combination needed')}:</strong></p>`;
+            html += `<p style="font-size: 0.9em; color: #856404 !important;">`;
             html += _t('bp_genes_scattered', '{scattered} genes are on different birds. Need {gens} extra generation(s) to combine.')
                 .replace('{scattered}', combo.genesScattered)
                 .replace('{gens}', combo.additionalGenerations);
             html += `</p>`;
             if (combo.bestBird) {
-                html += `<p style="font-size: 0.9em;">`;
-                html += `${_t('bp_best_foundation', 'Best foundation bird')}: <strong>${combo.bestBird}</strong> (${combo.maxGenesInOneBird}/${combo.totalRequired} ${_t('bp_genes', 'genes')})`;
+                html += `<p style="font-size: 0.9em; color: #333 !important;">`;
+                html += `${_t('bp_best_foundation', 'Best foundation bird')}: <strong style="color: #333 !important;">${combo.bestBird}</strong> (${combo.maxGenesInOneBird}/${combo.totalRequired} ${_t('bp_genes', 'genes')})`;
                 html += `</p>`;
             }
             html += `</div>`;
         }
         html += `</div>`;
     } else if (analysis && analysis.canProduceInOneGen) {
-        html += `<div style="background: #d4edda; border: 1px solid #28a745; padding: 10px; border-radius: 8px; margin-bottom: 15px;">`;
-        html += `<p style="margin:0; color: #155724;">✅ ${_t('bp_one_gen_possible', 'Can be produced in 1 generation!')}</p>`;
+        html += `<div style="background: #d4edda !important; border: 1px solid #28a745 !important; padding: 10px; border-radius: 8px; margin-bottom: 15px;">`;
+        html += `<p style="margin:0; color: #155724 !important;">✅ ${_t('bp_one_gen_possible', 'Can be produced in 1 generation!')}</p>`;
         html += `</div>`;
     }
 
@@ -1463,12 +1463,12 @@ function runPlanner() {
                 ? _t('bp_final_generation', 'Final Generation')
                 : _t('bp_generation_n', `Generation ${gen.genNumber}`).replace('{n}', gen.genNumber);
 
-            html += `<div class="generation-card" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; margin-bottom: 10px;">`;
-            html += `<h4 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;">📅 ${genLabel}</h4>`;
-            html += `<p><strong>${_t('bp_goal', 'Goal')}:</strong> ${gen.goal}</p>`;
+            html += `<div class="generation-card" style="border: 1px solid #dee2e6 !important; border-radius: 8px; padding: 12px; margin-bottom: 10px; background: #fff !important; color: #333 !important;">`;
+            html += `<h4 style="margin-top: 0; border-bottom: 1px solid #eee !important; padding-bottom: 8px; color: #333 !important;">📅 ${genLabel}</h4>`;
+            html += `<p style="color: #333 !important;"><strong style="color: #333 !important;">${_t('bp_goal', 'Goal')}:</strong> ${gen.goal}</p>`;
 
             if (gen.note) {
-                html += `<p style="color: #666; font-style: italic;">${gen.note}</p>`;
+                html += `<p style="color: #666 !important; font-style: italic;">${gen.note}</p>`;
             }
 
             if (gen.pairings && gen.pairings.length > 0) {
@@ -1476,18 +1476,19 @@ function runPlanner() {
                 gen.pairings.forEach((p, i) => {
                     if (p.male && p.female) {
                         const icPercent = ((p.inbreedingCoef || 0) * 100).toFixed(2);
-                        const icClass = (p.inbreedingCoef || 0) >= 0.125 ? 'ic-warning' : ((p.inbreedingCoef || 0) >= 0.0625 ? 'ic-caution' : 'ic-safe');
+                        // インラインスタイルでIC値の色を設定（CSSクラスに依存しない）
+                        const icColor = (p.inbreedingCoef || 0) >= 0.125 ? '#d32f2f' : ((p.inbreedingCoef || 0) >= 0.0625 ? '#f57c00' : '#388e3c');
 
-                        html += `<div class="pairing-card" style="background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px;">`;
-                        html += `<div class="pairing-header">#${i+1} ♂${p.male.name} × ♀${p.female.name}</div>`;
-                        html += `<div class="pairing-stats">${_t('bp_probability', 'Probability')}: ${((p.probability || 0)*100).toFixed(1)}% | <span class="${icClass}">${_t('bp_f_value', 'F-value')}: ${icPercent}%</span></div>`;
+                        html += `<div class="pairing-card" style="background: #f8f9fa !important; padding: 10px; margin: 5px 0; border-radius: 5px; color: #333 !important;">`;
+                        html += `<div class="pairing-header" style="color: #333 !important; font-weight: bold;">#${i+1} ♂${p.male.name} × ♀${p.female.name}</div>`;
+                        html += `<div class="pairing-stats" style="color: #333 !important;">${_t('bp_probability', 'Probability')}: ${((p.probability || 0)*100).toFixed(1)}% | <span style="color: ${icColor} !important; font-weight: bold;">${_t('bp_f_value', 'F-value')}: ${icPercent}%</span></div>`;
                         if (p.recommendation) {
-                            html += `<div class="pairing-recommendation" style="color: #495057;">${p.recommendation}</div>`;
+                            html += `<div class="pairing-recommendation" style="color: #495057 !important;">${p.recommendation}</div>`;
                         }
                         html += '</div>';
                     } else if (p.recommendation) {
-                        html += `<div class="pairing-card" style="background: #f8d7da; padding: 10px; margin: 5px 0; border-radius: 5px;">`;
-                        html += `<p style="margin: 0;">${p.recommendation}</p>`;
+                        html += `<div class="pairing-card" style="background: #f8d7da !important; padding: 10px; margin: 5px 0; border-radius: 5px; color: #333 !important;">`;
+                        html += `<p style="margin: 0; color: #333 !important;">${p.recommendation}</p>`;
                         html += '</div>';
                     }
                 });
@@ -1502,7 +1503,7 @@ function runPlanner() {
     // v7.1: FamilyMapで開くボタン
     if (multiGenPlan.familyMapData) {
         html += `<div style="margin-top: 15px; text-align: center;">`;
-        html += `<button onclick="openPlanInFamilyMap()" class="btn btn-primary" style="padding: 10px 20px;">`;
+        html += `<button onclick="openPlanInFamilyMap()" class="btn btn-primary" style="padding: 10px 20px; background: #1565c0 !important; color: #fff !important; border: none;">`;
         html += `📊 ${_t('bp_open_in_familymap', 'Open in FamilyMap')}</button>`;
         html += `</div>`;
 
@@ -1511,8 +1512,8 @@ function runPlanner() {
     }
 
     // v6.7.4: 倫理基準の説明を追加
-    html += `<div class="ethics-note" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 0.85em;">`;
-    html += `<p>📋 <strong>${_t('bp_ethics_standard', 'Ethical Standards')}:</strong> ${_t('bp_ethics_description', 'Pairs with IC ≥12.5% are excluded (Thoroughbred rules)')}</p>`;
+    html += `<div class="ethics-note" style="margin-top: 15px; padding: 10px; background: #f5f5f5 !important; border-radius: 5px; font-size: 0.85em; border: 1px solid #ddd !important; color: #333 !important;">`;
+    html += `<p style="margin: 0; color: #333 !important;">📋 <strong style="color: #333 !important;">${_t('bp_ethics_standard', 'Ethical Standards')}:</strong> ${_t('bp_ethics_description', 'Pairs with IC ≥12.5% are excluded (Thoroughbred rules)')}</p>`;
     html += `</div>`;
 
     resultPanel.innerHTML = html;
