@@ -475,15 +475,26 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
     /**
      * 任意のカラーキーをローカライズされたラベルに変換
      * COLOR_LABELSに存在しないキーも動的に変換する
-     * v7.3.11: SSOT - COLOR_PART_LABELSを使用（ハードコード排除）
+     * v7.3.12: SSOT - COLOR_MASTER優先、キャッシュ対策強化
      */
     function keyToLabel(key) {
         if (!key) return '';
-        // 1. COLOR_LABELSに存在すればそれを返す
-        if (COLOR_LABELS[key]) return COLOR_LABELS[key];
-
-        // 2. キーを分解してパーツごとに変換（SSOT: COLOR_PART_LABELSを使用）
         const isJa = LANG === 'ja';
+
+        // 1. COLOR_MASTERに存在すれば正しい言語で取得（最も信頼性が高い）
+        if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[key]) {
+            return isJa ? COLOR_MASTER[key].ja : COLOR_MASTER[key].en;
+        }
+
+        // 2. COLOR_LABELSに存在すればそれを返す（キャッシュ対策: 言語が一致するか確認）
+        if (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[key]) {
+            return COLOR_LABELS[key];
+        }
+
+        // 3. キーを分解してパーツごとに変換（SSOT: COLOR_PART_LABELSを使用）
+        if (typeof COLOR_PART_LABELS === 'undefined') {
+            return key; // フォールバック
+        }
         const parts = key.split('_');
         const result = parts.map(part => {
             const p = part.toLowerCase();
@@ -1548,11 +1559,11 @@ $mPh = $_POST['m_ph'] ?? '++';
             </details>
         </footer>
     </div>
-    <script src="guardian.js"></script>
-    <script src="birds.js?v=674"></script>
-    <script src="breeding.js"></script>
-    <script src="pedigree.js"></script>
-    <script src="planner.js?v=674"></script>
+    <script src="guardian.js?v=<?= time() ?>"></script>
+    <script src="birds.js?v=<?= time() ?>"></script>
+    <script src="breeding.js?v=<?= time() ?>"></script>
+    <script src="pedigree.js?v=<?= time() ?>"></script>
+    <script src="planner.js?v=<?= time() ?>"></script>
 <script>
 // refreshBirdList をグローバルに定義（フィルター対応版）
 function refreshBirdList() {
@@ -1698,7 +1709,7 @@ function closeBirdForm() {
 
 
     <!-- v7.3.11: showTab()はapp.jsに統合 -->
-<script src="family.js?v=674"></script>
+<script src="family.js?v=<?= time() ?>"></script>
 <script src="app.js?v=<?= time() ?>"></script>
 <script>if(typeof initLang==='function')initLang(T);</script>
 <script>

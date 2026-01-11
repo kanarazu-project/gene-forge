@@ -841,7 +841,18 @@ const BreedingPlanner = {
         if (!target) {
             target = this.generateRequirementsFromMaster(targetKey);
         }
-        if (!target) return { error: 'Unknown target' };
+        if (!target) {
+            // v7.3.12: より詳細なエラーメッセージ
+            if (typeof COLOR_MASTER === 'undefined') {
+                console.error('[Planner] COLOR_MASTER is undefined');
+                return { error: this._t('bp_color_master_undefined', 'System error: COLOR_MASTER not loaded') };
+            }
+            if (!COLOR_MASTER[targetKey]) {
+                console.error('[Planner] Unknown target key:', targetKey, '- Available keys sample:', Object.keys(COLOR_MASTER).slice(0, 5));
+                return { error: this._t('bp_unknown_target', 'Unknown target') + ': ' + targetKey };
+            }
+            return { error: this._t('bp_unknown_target', 'Unknown target') };
+        }
 
         const required = { ...target.required };
         const slr = { ...target.slr };

@@ -19,7 +19,7 @@ const BirdDB = {
     STORAGE_KEY_USER: 'geneforge_birds_user',
     STORAGE_KEY_DEMO: 'geneforge_birds_demo',
     MODE_KEY: 'geneforge_mode',
-    VERSION: '7.0.0',
+    VERSION: '7.3.12',
     
     _currentMode: 'user',
     _initialized: false,
@@ -103,8 +103,10 @@ const BirdDB = {
         if (savedMode === 'demo' || savedMode === 'user') {
             this._currentMode = savedMode;
         }
-        
+
         const data = this.load();
+        const needsVersionUpdate = data && data.version !== this.VERSION;
+
         if (!data) {
             this.save({
                 version: this.VERSION,
@@ -115,26 +117,33 @@ const BirdDB = {
                     codePrefix: this._currentMode === 'demo' ? 'DEMO' : 'GF'
                 }
             });
-        } else if (data.version !== this.VERSION) {
-            data.version = this.VERSION;
-            if (data.birds) {
-                data.birds = data.birds.map(bird => this.migrateBird(bird));
+        } else if (needsVersionUpdate) {
+            // v7.3.12: デモモードではバージョン変更時にデータを完全再生成
+            if (this._currentMode === 'demo') {
+                console.log('[BirdDB] Version changed, regenerating demo data');
+                this.initDemoData();
+            } else {
+                // ユーザーモードでは移行のみ
+                data.version = this.VERSION;
+                if (data.birds) {
+                    data.birds = data.birds.map(bird => this.migrateBird(bird));
+                }
+                this.save(data);
             }
-            this.save(data);
         }
-        
+
         if (this._currentMode === 'demo') {
             const demoData = this.load();
             if (!demoData.birds || demoData.birds.length === 0) {
                 this.initDemoData();
             }
         }
-        
+
         this.updateModeUI();
         this._initialized = true;
-        
+
         console.log('[BirdDB] Initialized, mode:', this._currentMode, ', birds:', this.getAllBirds().length);
-        
+
         return this;
     },
 
