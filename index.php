@@ -1389,8 +1389,8 @@ $mPh = $_POST['m_ph'] ?? '++';
                 <div id="feasibility-result">
                 <?php if ($action === 'calculate' && $result): ?>
                 <?php
-                // v7互換: 結果配列を取得
-                $offspring = $result['results'] ?? $result['phenotype'] ?? $result;
+                // v7: phenotype（表現型別集約）を優先、なければ results（遺伝子型別）
+                $offspring = $result['phenotype'] ?? $result['results'] ?? $result;
                 ?>
                 <div class="output-panel" style="margin-top:1rem;"><div class="offspring-grid">
                     <?php foreach($offspring as $o): ?>
