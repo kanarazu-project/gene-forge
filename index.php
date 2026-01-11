@@ -1005,25 +1005,24 @@ $mPh = $_POST['m_ph'] ?? '++';
                         </div>
                     </div>
 
-                    <!-- v7.0: 連鎖遺伝モード -->
+                    <!-- v7.0: 連鎖遺伝（常時有効） -->
                     <div class="linkage-mode-section" style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
-                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                            <input type="checkbox" name="use_linkage" value="1" id="useLinkageCheck" onchange="toggleLinkageUI()">
-                            <strong>🧬 <?= $lang === 'ja' ? '連鎖遺伝モード (v7.0)' : 'Linkage Mode (v7.0)' ?></strong>
-                        </label>
-                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.5rem 0 0 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <strong>🧬 <?= $lang === 'ja' ? '連鎖遺伝計算 (v7.0)' : 'Linkage Genetics (v7.0)' ?></strong>
+                        </div>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.5rem 0 0 0;">
                             <?= $lang === 'ja'
-                                ? 'cin-ino: 3%, ino-op: 30%, dark-parblue: 7% の組み換え率を適用'
-                                : 'Apply recombination rates: cin-ino: 3%, ino-op: 30%, dark-parblue: 7%' ?>
+                                ? '組み換え率: cin-ino 3%, ino-op 30%, dark-parblue 7%'
+                                : 'Recombination rates: cin-ino 3%, ino-op 30%, dark-parblue 7%' ?>
                         </p>
 
                         <!-- オス用 相(Phase)選択 -->
-                        <div id="fatherPhaseUI" style="display: none; margin-top: 1rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 4px;">
+                        <div id="fatherPhaseUI" style="margin-top: 1rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 4px;">
                             <label style="font-weight: bold;">♂ <?= $lang === 'ja' ? 'Z染色体の相 (Phase)' : 'Z Chromosome Phase' ?></label>
-                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;">
                                 <label><input type="radio" name="f_z_phase" value="unknown" checked> <?= $lang === 'ja' ? '不明' : 'Unknown' ?></label>
-                                <label><input type="radio" name="f_z_phase" value="cis"> Cis (cin-ino連鎖)</label>
-                                <label><input type="radio" name="f_z_phase" value="trans"> Trans (cin/ino分離)</label>
+                                <label><input type="radio" name="f_z_phase" value="cis"> Cis <?= $lang === 'ja' ? '(cin-ino連鎖)' : '(cin-ino linked)' ?></label>
+                                <label><input type="radio" name="f_z_phase" value="trans"> Trans <?= $lang === 'ja' ? '(cin/ino分離)' : '(cin/ino separate)' ?></label>
                             </div>
                             <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">
                                 <?= $lang === 'ja'
@@ -1038,15 +1037,6 @@ $mPh = $_POST['m_ph'] ?? '++';
                 </form>
                 
                 <script>
-                // v7.0: 連鎖遺伝モードUI切り替え
-                function toggleLinkageUI() {
-                    const checked = document.getElementById('useLinkageCheck').checked;
-                    const phaseUI = document.getElementById('fatherPhaseUI');
-                    if (phaseUI) {
-                        phaseUI.style.display = checked ? 'block' : 'none';
-                    }
-                }
-
                 function toggleInputMode(parent) {
                     const mode = document.querySelector(`input[name="${parent}_mode"]:checked`).value;
                     document.getElementById(`${parent}_phenotype_inputs`).style.display = mode === 'phenotype' ? 'block' : 'none';
