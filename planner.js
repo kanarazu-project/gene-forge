@@ -1416,11 +1416,13 @@ const BreedingPlanner = {
      * v7.1.2: 鳥データをFamilyMap用にフォーマット
      */
     birdToFamilyMapFormat(bird, position, isFoundation) {
+        // BirdDBのデータは observed に羽色情報を持つ
+        const phenotype = bird.phenotype || bird.observed || { baseColor: 'unknown' };
         return {
             id: bird.id,
             name: bird.name,
             sex: bird.sex,
-            phenotype: bird.phenotype || { baseColor: 'unknown' },
+            phenotype: phenotype,
             genotype: bird.genotype || {},
             position: position,
             isExisting: true,
