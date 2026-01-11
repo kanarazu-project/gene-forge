@@ -2814,24 +2814,24 @@ class GeneticsCalculator
     private function parseOldFormatToAutosomal1(string $darkVal, string $parblueVal): array
     {
         $parseDark = function(string $val): array {
-            return match($val) {
-                'DD' => ['D', 'D'],
-                'Dd' => ['D', 'd'],
-                'dd' => ['d', 'd'],
-                default => ['d', 'd'],
-            };
+            switch ($val) {
+                case 'DD': return ['D', 'D'];
+                case 'Dd': return ['D', 'd'];
+                case 'dd': return ['d', 'd'];
+                default: return ['d', 'd'];
+            }
         };
 
         $parseParblue = function(string $val): array {
-            return match($val) {
-                '++' => ['+', '+'],
-                '+aq' => ['aq', '+'],
-                '+tq' => ['tq', '+'],
-                'aqaq' => ['aq', 'aq'],
-                'tqtq' => ['tq', 'tq'],
-                'tqaq' => ['tq', 'aq'],
-                default => ['+', '+'],
-            };
+            switch ($val) {
+                case '++': return ['+', '+'];
+                case '+aq': return ['aq', '+'];
+                case '+tq': return ['tq', '+'];
+                case 'aqaq': return ['aq', 'aq'];
+                case 'tqtq': return ['tq', 'tq'];
+                case 'tqaq': return ['tq', 'aq'];
+                default: return ['+', '+'];
+            }
         };
 
         $dark = $parseDark($darkVal);
@@ -3636,7 +3636,7 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
         // 独立座位
         foreach (['vio', 'flp', 'flb', 'pidom', 'pirec', 'dil', 'ed', 'of', 'ph'] as $key) {
             if (isset($geno[$key])) {
-                $mapKey = match($key) {
+                $keyMap = [
                     'vio' => 'violet',
                     'flp' => 'fallow_pale',
                     'flb' => 'fallow_bronze',
@@ -3646,8 +3646,8 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
                     'ed' => 'edged',
                     'of' => 'orangeface',
                     'ph' => 'pale_headed',
-                    default => $key,
-                };
+                ];
+                $mapKey = $keyMap[$key] ?? $key;
                 $result[$mapKey] = str_replace('/', '', $geno[$key]);
             }
         }
