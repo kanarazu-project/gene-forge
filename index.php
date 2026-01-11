@@ -1312,6 +1312,13 @@ $mPh = $_POST['m_ph'] ?? '++';
                         updatePhaseUI(bird);
                     }
 
+                    // DBから選択モードに自動切り替え（既にfromdbでなければ）
+                    const fromdbRadio = document.querySelector(`input[name="${prefix}_mode"][value="fromdb"]`);
+                    if (fromdbRadio && !fromdbRadio.checked) {
+                        fromdbRadio.checked = true;
+                        toggleInputMode(prefix);
+                    }
+
                     return false;
                 }
 
