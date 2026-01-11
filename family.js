@@ -182,14 +182,16 @@ const FamilyMap = {
 
     /**
      * v3.7: デモ用プリセット家系図をロード
+     * v7.0: Family C（推論デモ用）をロード - genotype空、pedigreeあり
      */
     loadDemoPedigree() {
         if (typeof BirdDB !== 'undefined' && BirdDB.getDemoPedigreeForFamilyMap) {
-            const demoData = BirdDB.getDemoPedigreeForFamilyMap();
+            // Family C is designed for inference demo (genotypes are empty, to be inferred)
+            const demoData = BirdDB.getDemoPedigreeForFamilyMap('C');
             if (demoData) {
                 this.data = demoData;
                 this.targetPosition = null;
-                console.log('[FamilyMap] Demo pedigree loaded');
+                console.log('[FamilyMap] Demo pedigree loaded (Family C for inference)');
             }
         }
     },
