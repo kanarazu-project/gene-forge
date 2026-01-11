@@ -387,16 +387,17 @@ const HealthGuardian = {
     },
     _checkInbreedingCoefficient(F, blocks, warnings, risks) {
         const pct = (F * 100).toFixed(1);
+        // v7.0: プレースホルダーを{f}に統一（lang_guardian.phpと一致）
         if (F >= this.F_THRESHOLDS.critical) blocks.push({ type: 'F_CRITICAL', severity: 'critical',
-            message: this._tp('f_critical_message', { pct }, `Inbreeding coefficient F=${pct}% - Breeding prohibited`),
+            message: this._tp('f_critical_message', { f: pct }, `Inbreeding coefficient F=${pct}% - Breeding prohibited`),
             detail: this._t('f_critical_detail', 'Equivalent to parent-child or full siblings'),
             action: this._t('f_critical_action', 'Please introduce individuals from completely different bloodline') });
         else if (F >= this.F_THRESHOLDS.high) warnings.push({ type: 'F_HIGH', severity: 'high',
-            message: this._tp('f_high_message', { pct }, `Inbreeding coefficient F=${pct}% - High risk`),
+            message: this._tp('f_high_message', { f: pct }, `Inbreeding coefficient F=${pct}% - High risk`),
             detail: this._t('f_high_detail', 'Equivalent to half-siblings'),
             action: this._t('f_high_action', 'Strongly recommend introducing different bloodline') });
         else if (F >= this.F_THRESHOLDS.moderate) risks.push({ type: 'F_MODERATE', severity: 'moderate',
-            message: this._tp('f_moderate_message', { pct }, `Inbreeding coefficient F=${pct}%`),
+            message: this._tp('f_moderate_message', { f: pct }, `Inbreeding coefficient F=${pct}%`),
             detail: this._t('f_moderate_detail', 'Equivalent to cousins'),
             action: this._t('f_moderate_action', 'Continuous pedigree management required') });
     },

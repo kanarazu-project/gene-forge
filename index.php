@@ -441,6 +441,8 @@ if ($action === 'calculate') {
     // v6.8修正: T辞書を先に定義（customConfirm等で使用）
     const LANG = '<?= $lang ?>';
     const T = <?= json_encode(getLangDict()) ?>;
+    // v7.0: guardian.js等からwindow.Tでアクセス可能にする
+    window.T = T;
 
     // XSS対策: HTMLエスケープ関数
     function escapeHtml(str) {
