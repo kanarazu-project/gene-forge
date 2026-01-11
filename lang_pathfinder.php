@@ -107,6 +107,12 @@ $pf_ja = [
     'bp_best_foundation' => '最適な基礎個体',
     'bp_genes' => '遺伝子',
 
+    // v7.3.15: 近親交配回避
+    'bp_same_parents_warning' => '全ペアリングが同じ両親を使用。最終世代は全兄弟婚（F=25%）になります。新しい血統の導入が必須です。',
+    'bp_same_parent_warning' => '全ペアリングが同じ{parent}を使用。最終世代は半兄弟婚（F=12.5%）になります。新しい血統の導入を検討してください。',
+    'bp_shared_sire' => '父親',
+    'bp_shared_dam' => '母親',
+
     // ============================================================
     // v7.2: 交配シナリオ翻訳キー
     // ============================================================
@@ -322,6 +328,12 @@ $pf_en = [
     'bp_best_foundation' => 'Best foundation bird',
     'bp_genes' => 'genes',
 
+    // v7.3.15: Inbreeding avoidance
+    'bp_same_parents_warning' => 'All pairings use the same parents. Final generation will be full siblings (F=25%). Must introduce new bloodlines.',
+    'bp_same_parent_warning' => 'All pairings share the same {parent}. Final generation offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.',
+    'bp_shared_sire' => 'sire',
+    'bp_shared_dam' => 'dam',
+
     // ============================================================
     // v7.2: Breeding Scenario Translation Keys
     // ============================================================
@@ -510,6 +522,12 @@ $pf_de = [
     'bp_best_foundation' => 'Bester Grundvogel',
     'bp_genes' => 'Gene',
 
+    // v7.3.15: Inzuchtvermeidung
+    'bp_same_parents_warning' => 'Alle Paarungen verwenden dieselben Eltern. Letzte Generation wird Vollgeschwister (F=25%). Neue Blutlinien müssen eingeführt werden.',
+    'bp_same_parent_warning' => 'Alle Paarungen teilen denselben {parent}. Nachkommen der letzten Generation werden Halbgeschwister (F=12,5%). Erwägen Sie die Einführung neuer Blutlinien.',
+    'bp_shared_sire' => 'Vater',
+    'bp_shared_dam' => 'Mutter',
+
     // v7.2: Zucht-Szenario
     'pf_breeding_scenario' => 'Zuchtszenario',
     'pf_required_genes' => 'Benötigte Gene',
@@ -679,6 +697,12 @@ $pf_fr = [
     'bp_genes_scattered' => '{scattered} gènes sont sur différents oiseaux. {gens} génération(s) supplémentaire(s) nécessaire(s).',
     'bp_best_foundation' => 'Meilleur oiseau de base',
     'bp_genes' => 'gènes',
+
+    // v7.3.15: Évitement de la consanguinité
+    'bp_same_parents_warning' => 'Tous les accouplements utilisent les mêmes parents. La dernière génération sera des frères/sœurs complets (F=25%). De nouvelles lignées doivent être introduites.',
+    'bp_same_parent_warning' => 'Tous les accouplements partagent le même {parent}. Les descendants de la dernière génération seront des demi-frères/sœurs (F=12,5%). Envisagez d\'introduire de nouvelles lignées.',
+    'bp_shared_sire' => 'père',
+    'bp_shared_dam' => 'mère',
 
     // v7.2: Scénario d'élevage
     'pf_breeding_scenario' => 'Scénario d\'élevage',
@@ -850,6 +874,12 @@ $pf_it = [
     'bp_best_foundation' => 'Miglior uccello base',
     'bp_genes' => 'geni',
 
+    // v7.3.15: Evitare la consanguineità
+    'bp_same_parents_warning' => 'Tutti gli accoppiamenti usano gli stessi genitori. L\'ultima generazione sarà fratelli pieni (F=25%). Devono essere introdotte nuove linee di sangue.',
+    'bp_same_parent_warning' => 'Tutti gli accoppiamenti condividono lo stesso {parent}. I discendenti dell\'ultima generazione saranno mezzi fratelli (F=12,5%). Considerare l\'introduzione di nuove linee di sangue.',
+    'bp_shared_sire' => 'padre',
+    'bp_shared_dam' => 'madre',
+
     // v7.2: Scenario di allevamento
     'pf_breeding_scenario' => 'Scenario di allevamento',
     'pf_required_genes' => 'Geni richiesti',
@@ -1019,6 +1049,12 @@ $pf_es = [
     'bp_genes_scattered' => '{scattered} genes están en diferentes aves. {gens} generación(es) extra necesaria(s).',
     'bp_best_foundation' => 'Mejor ave base',
     'bp_genes' => 'genes',
+
+    // v7.3.15: Evitar consanguinidad
+    'bp_same_parents_warning' => 'Todos los apareamientos usan los mismos padres. La última generación serán hermanos completos (F=25%). Se deben introducir nuevas líneas de sangre.',
+    'bp_same_parent_warning' => 'Todos los apareamientos comparten el mismo {parent}. Los descendientes de la última generación serán medio hermanos (F=12,5%). Considere introducir nuevas líneas de sangre.',
+    'bp_shared_sire' => 'padre',
+    'bp_shared_dam' => 'madre',
 
     // v7.2: Escenario de cría
     'pf_breeding_scenario' => 'Escenario de cría',

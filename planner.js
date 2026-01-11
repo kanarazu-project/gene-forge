@@ -1226,40 +1226,46 @@ const BreedingPlanner = {
     },
 
     /**
-     * v7.3.13: 最終世代の近交係数を推定
+     * v7.3.15: 最終世代の近交係数を推定
      * 中間世代のペアリングから、最終世代の交配が
      * 半兄弟婚（同父異母/同母異父）になるか推定
+     *
+     * 重要: sire用ペアリングとdam用ペアリングの最初の2つだけを見る
+     * （3つ目以降は参考表示で、実際の計画では使用しない）
      */
     estimateFinalInbreeding(generations) {
         // 中間世代（最終世代の親を作る世代）のペアリングを取得
         const intermediateGen = generations.find(g => g.genNumber === 2);
         if (!intermediateGen || !intermediateGen.pairings) return 0;
 
-        const pairings = intermediateGen.pairings.filter(p => p.male && p.female && !p.male.isPlanned);
+        const pairings = intermediateGen.pairings.filter(p => p.male && p.female && !p.male.isPlanned && !p.isWarning);
         if (pairings.length < 2) return 0;
 
-        // 共通の親がいるかチェック
-        const maleIds = new Set();
-        const femaleIds = new Set();
+        // v7.3.15: 最初の2つのペアリング（sire用とdam用）だけを見る
+        const sirePairing = pairings[0];
+        const damPairing = pairings[1];
 
-        for (const p of pairings) {
-            if (p.male && p.male.id) maleIds.add(p.male.id);
-            if (p.female && p.female.id) femaleIds.add(p.female.id);
-        }
+        const sireParentMale = sirePairing.male?.id;
+        const sireParentFemale = sirePairing.female?.id;
+        const damParentMale = damPairing.male?.id;
+        const damParentFemale = damPairing.female?.id;
 
-        // 全ペアリングが同じオスを使用 → 子同士は半兄弟（F=12.5%）
-        if (maleIds.size === 1 && pairings.length > 1) {
-            return 0.125;
-        }
-        // 全ペアリングが同じメスを使用 → 子同士は半兄弟（F=12.5%）
-        if (femaleIds.size === 1 && pairings.length > 1) {
-            return 0.125;
-        }
-        // 全ペアリングが同じ両親 → 子同士は全兄弟（F=25%）
-        if (maleIds.size === 1 && femaleIds.size === 1) {
+        // 共通の両親 → 全兄弟（F=25%）
+        if (sireParentMale === damParentMale && sireParentFemale === damParentFemale) {
             return 0.25;
         }
 
+        // 共通のオス親のみ → 同父異母半兄弟（F=12.5%）
+        if (sireParentMale === damParentMale) {
+            return 0.125;
+        }
+
+        // 共通のメス親のみ → 同母異父半兄弟（F=12.5%）
+        if (sireParentFemale === damParentFemale) {
+            return 0.125;
+        }
+
+        // 共通の親なし → F=0%
         return 0;
     },
 
@@ -1345,54 +1351,131 @@ const BreedingPlanner = {
     },
 
     /**
-     * v7.3.13: 最終世代の近親交配を避けるため、異なる親を使ったペアリングを優先選択
-     * 同じオスばかり使うと最終世代が半兄弟婚（F=12.5%）になる
+     * v7.3.15: 最終世代の近親交配を避けるため、異なる親を使ったペアリングを優先選択
+     *
+     * 重要: 最終世代でオス×メスを交配する際、両方の親が同じ祖先を持つと近親交配になる
+     * - 同じオスからの子同士 → 半兄弟（F=12.5%）
+     * - 同じメスからの子同士 → 半兄弟（F=12.5%）
+     *
+     * したがって、sire用ペアリングとdam用ペアリングで共通の親を持たないようにする
      */
     selectDiversifiedPairings(pairings, maxCount) {
         if (pairings.length <= 1) return pairings;
 
+        // v7.3.15: 2つのペアリングを選択 - 共通の親を持たない組み合わせを優先
+        // sire用（最終世代の父を作る）とdam用（最終世代の母を作る）
+        const result = this.selectNonOverlappingPairings(pairings, maxCount);
+
+        return result;
+    },
+
+    /**
+     * v7.3.15: 共通の親を持たないペアリングを選択
+     * 最終世代で半兄弟婚にならないよう、オス親/メス親が重複しない組み合わせを探す
+     */
+    selectNonOverlappingPairings(pairings, maxCount) {
+        if (pairings.length <= 1) return pairings;
+
         const selected = [];
-        const usedMaleIds = new Set();
-        const usedFemaleIds = new Set();
 
-        // 第1パス: 異なるオスを使ったペアリングを優先
-        for (const p of pairings) {
+        // 最初のペアリング（sire用）を選択
+        const firstPair = pairings[0];
+        selected.push(firstPair);
+
+        const firstMaleId = firstPair.male?.id;
+        const firstFemaleId = firstPair.female?.id;
+
+        // 2番目以降のペアリング（dam用）を選択
+        // 条件: 最初のペアリングと親が重複しない
+        let foundNonOverlapping = false;
+
+        for (const p of pairings.slice(1)) {
             if (selected.length >= maxCount) break;
+
             const maleId = p.male?.id;
-            if (maleId && !usedMaleIds.has(maleId)) {
-                selected.push(p);
-                usedMaleIds.add(maleId);
-                if (p.female?.id) usedFemaleIds.add(p.female.id);
-            }
-        }
-
-        // 第2パス: 異なるメスを使ったペアリングを追加
-        for (const p of pairings) {
-            if (selected.length >= maxCount) break;
-            if (selected.includes(p)) continue;
             const femaleId = p.female?.id;
-            if (femaleId && !usedFemaleIds.has(femaleId)) {
+
+            // 共通の親がいないかチェック
+            const sharesMale = maleId && maleId === firstMaleId;
+            const sharesFemale = femaleId && femaleId === firstFemaleId;
+
+            if (!sharesMale && !sharesFemale) {
+                // 共通の親なし → 最終世代で近親交配にならない
                 selected.push(p);
-                usedFemaleIds.add(femaleId);
-                if (p.male?.id) usedMaleIds.add(p.male.id);
+                foundNonOverlapping = true;
+                break;  // dam用は1つで十分
             }
         }
 
-        // 第3パス: 足りない分は元のソート順で補充
+        // 共通親なしのペアが見つからない場合、異なるメスを優先
+        if (!foundNonOverlapping && selected.length < maxCount) {
+            for (const p of pairings.slice(1)) {
+                if (selected.length >= maxCount) break;
+                if (selected.includes(p)) continue;
+
+                const femaleId = p.female?.id;
+
+                // 異なるメスを使ったペアリングを優先
+                if (femaleId && femaleId !== firstFemaleId) {
+                    selected.push(p);
+
+                    // 同じオス・異なるメス → F=0%
+                    // 警告なしで追加
+                    foundNonOverlapping = true;
+                    break;
+                }
+            }
+        }
+
+        // 異なるメスも見つからない場合、異なるオスを試す
+        if (!foundNonOverlapping && selected.length < maxCount) {
+            for (const p of pairings.slice(1)) {
+                if (selected.length >= maxCount) break;
+                if (selected.includes(p)) continue;
+
+                const maleId = p.male?.id;
+
+                // 異なるオスを使ったペアリング
+                if (maleId && maleId !== firstMaleId) {
+                    selected.push(p);
+                    break;
+                }
+            }
+        }
+
+        // 全て同じ両親の場合（最悪ケース）、警告を追加
+        if (selected.length >= 2) {
+            const allSameMale = selected.every(p => p.male?.id === firstMaleId);
+            const allSameFemale = selected.every(p => p.female?.id === firstFemaleId);
+
+            if (allSameMale && allSameFemale) {
+                // 全て同じ両親 → 最終世代は全兄弟婚（F=25%）
+                selected.push({
+                    recommendation: '🚫 ' + this._t('bp_same_parents_warning', 'All pairings use the same parents. Final generation will be full siblings (F=25%). Must introduce new bloodlines.'),
+                    probability: 0,
+                    isWarning: true
+                });
+            } else if (allSameMale || allSameFemale) {
+                // 同じオスまたは同じメス → 最終世代は半兄弟婚（F=12.5%）
+                const sharedParent = allSameMale ?
+                    this._t('bp_shared_sire', 'sire') :
+                    this._t('bp_shared_dam', 'dam');
+                selected.push({
+                    recommendation: '⚠️ ' + this._tp('bp_same_parent_warning',
+                        { parent: sharedParent },
+                        `All pairings share the same ${sharedParent}. Final generation offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.`),
+                    probability: 0,
+                    isWarning: true
+                });
+            }
+        }
+
+        // 残りのスロットを埋める（表示用）
         for (const p of pairings) {
             if (selected.length >= maxCount) break;
-            if (!selected.includes(p)) {
+            if (!selected.includes(p) && !p.isWarning) {
                 selected.push(p);
             }
-        }
-
-        // 全て同じオスの場合、新しい血統導入の警告を追加
-        if (selected.length > 1 && usedMaleIds.size === 1) {
-            selected.push({
-                recommendation: '⚠️ ' + this._t('bp_same_sire_warning', 'All pairings use the same sire. Offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.'),
-                probability: 0,
-                isWarning: true
-            });
         }
 
         return selected;
