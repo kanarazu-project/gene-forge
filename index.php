@@ -1027,6 +1027,7 @@ $mPh = $_POST['m_ph'] ?? '++';
                             <input type="hidden" name="f_db_baseColor" id="f_db_baseColor" value="<?= htmlspecialchars($_POST['f_db_baseColor'] ?? '') ?>">
                             <input type="hidden" name="f_db_eyeColor" id="f_db_eyeColor" value="<?= htmlspecialchars($_POST['f_db_eyeColor'] ?? '') ?>">
                             <input type="hidden" name="f_db_darkness" id="f_db_darkness" value="<?= htmlspecialchars($_POST['f_db_darkness'] ?? '') ?>">
+                            <input type="hidden" name="f_db_genotype" id="f_db_genotype" value="<?= htmlspecialchars($_POST['f_db_genotype'] ?? '') ?>">
 
                         </div>
                         
@@ -1075,9 +1076,10 @@ $mPh = $_POST['m_ph'] ?? '++';
                             <input type="hidden" name="m_db_baseColor" id="m_db_baseColor" value="<?= htmlspecialchars($_POST['m_db_baseColor'] ?? '') ?>">
                             <input type="hidden" name="m_db_eyeColor" id="m_db_eyeColor" value="<?= htmlspecialchars($_POST['m_db_eyeColor'] ?? '') ?>">
                             <input type="hidden" name="m_db_darkness" id="m_db_darkness" value="<?= htmlspecialchars($_POST['m_db_darkness'] ?? '') ?>">
+                            <input type="hidden" name="m_db_genotype" id="m_db_genotype" value="<?= htmlspecialchars($_POST['m_db_genotype'] ?? '') ?>">
 
                         </div>
-                        
+
                         <!-- Phenotype inputs (共通) -->
                         <div id="m_phenotype_inputs" class="input-panel"<?= $mMode === 'genotype' || $mMode === 'fromdb' ? ' style="display:none;"' : '' ?>>
                             <div class="form-group"><label><?= t('base_color_observed') ?></label><?= renderPhenotypeSelect('m', 'baseColor', $lang === 'ja', $mBaseColor) ?></div>
@@ -1189,30 +1191,62 @@ $mPh = $_POST['m_ph'] ?? '++';
                 function loadBirdToForm(parent, birdId) {
                     const prefix = (parent === 'father' || parent === 'f') ? 'f' : 'm';
 
-                    
+
                     if (!birdId || typeof BirdDB === 'undefined') return false;
-                    
+
                     const bird = BirdDB.getBird(birdId);
                     if (!bird) return false;
-                    
+
                     let baseColor = 'green';
                     let eyeColor = 'black';
                     let darkness = 'none';
-                    
+
                     if (bird.observed && bird.observed.baseColor) {
                         baseColor = bird.observed.baseColor;
                         eyeColor = bird.observed.eyeColor || 'black';
                         darkness = bird.observed.darkness || 'none';
                     }
-                    
+
                     const bcEl = document.getElementById(prefix + '_db_baseColor');
                     const ecEl = document.getElementById(prefix + '_db_eyeColor');
                     const dkEl = document.getElementById(prefix + '_db_darkness');
-                    
+                    const genoEl = document.getElementById(prefix + '_db_genotype');
+
                     if (bcEl) bcEl.value = baseColor;
                     if (ecEl) ecEl.value = eyeColor;
                     if (dkEl) dkEl.value = darkness;
-                    
+
+                    // genotype データをJSON形式で設定
+                    if (genoEl && bird.genotype) {
+                        genoEl.value = JSON.stringify(bird.genotype);
+                    } else if (genoEl) {
+                        genoEl.value = '';
+                    }
+
+                    // オス(f)の場合、Z_linkedからPhaseを自動検出
+                    if (prefix === 'f' && bird.genotype && bird.genotype.Z_linked) {
+                        const zLinked = bird.genotype.Z_linked;
+                        const z1 = zLinked.Z1 || {};
+                        const z2 = zLinked.Z2 || {};
+
+                        // Cis: cin と ino が同じ染色体上
+                        const z1HasCin = z1.cinnamon && z1.cinnamon !== '+';
+                        const z1HasIno = z1.ino && z1.ino !== '+';
+                        const z2HasCin = z2.cinnamon && z2.cinnamon !== '+';
+                        const z2HasIno = z2.ino && z2.ino !== '+';
+
+                        let detectedPhase = 'unknown';
+                        if ((z1HasCin && z1HasIno) || (z2HasCin && z2HasIno)) {
+                            detectedPhase = 'cis';
+                        } else if ((z1HasCin && z2HasIno) || (z1HasIno && z2HasCin)) {
+                            detectedPhase = 'trans';
+                        }
+
+                        // Phase ラジオボタンを設定
+                        const phaseRadio = document.querySelector(`input[name="f_z_phase"][value="${detectedPhase}"]`);
+                        if (phaseRadio) phaseRadio.checked = true;
+                    }
+
                     return false;
                 }
 

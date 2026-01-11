@@ -3194,20 +3194,44 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
             foreach ($mGeno as $k => $v) { $input['m_' . $k] = $v; }
         }
 
-        if ($fMode === 'fromdb' && !empty($input['f_db_genotype'])) {
-            $j = json_decode($input['f_db_genotype'], true);
-            if ($j) {
-                foreach ($j as $k => $v) { $input['f_' . $k] = $v; }
-                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
-                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['f_'.$short] = $j[$long]; }
+        if ($fMode === 'fromdb') {
+            $genotypeSet = false;
+            if (!empty($input['f_db_genotype'])) {
+                $j = json_decode($input['f_db_genotype'], true);
+                if ($j && !empty($j)) {
+                    foreach ($j as $k => $v) { $input['f_' . $k] = $v; }
+                    $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                    foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['f_'.$short] = $j[$long]; }
+                    $genotypeSet = true;
+                }
+            }
+            // genotype がない場合は phenotype からの推定にフォールバック
+            if (!$genotypeSet && !empty($input['f_db_baseColor'])) {
+                $input['f_baseColor'] = $input['f_db_baseColor'];
+                $input['f_eyeColor'] = $input['f_db_eyeColor'] ?? 'black';
+                $input['f_darkness'] = $input['f_db_darkness'] ?? 'none';
+                $fGeno = $this->phenotypeToGenotype($input, 'f', 'male');
+                foreach ($fGeno as $k => $v) { $input['f_' . $k] = $v; }
             }
         }
-        if ($mMode === 'fromdb' && !empty($input['m_db_genotype'])) {
-            $j = json_decode($input['m_db_genotype'], true);
-            if ($j) {
-                foreach ($j as $k => $v) { $input['m_' . $k] = $v; }
-                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
-                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['m_'.$short] = $j[$long]; }
+        if ($mMode === 'fromdb') {
+            $genotypeSet = false;
+            if (!empty($input['m_db_genotype'])) {
+                $j = json_decode($input['m_db_genotype'], true);
+                if ($j && !empty($j)) {
+                    foreach ($j as $k => $v) { $input['m_' . $k] = $v; }
+                    $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                    foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['m_'.$short] = $j[$long]; }
+                    $genotypeSet = true;
+                }
+            }
+            // genotype がない場合は phenotype からの推定にフォールバック
+            if (!$genotypeSet && !empty($input['m_db_baseColor'])) {
+                $input['m_baseColor'] = $input['m_db_baseColor'];
+                $input['m_eyeColor'] = $input['m_db_eyeColor'] ?? 'black';
+                $input['m_darkness'] = $input['m_db_darkness'] ?? 'none';
+                $mGeno = $this->phenotypeToGenotype($input, 'm', 'female');
+                foreach ($mGeno as $k => $v) { $input['m_' . $k] = $v; }
             }
         }
 
