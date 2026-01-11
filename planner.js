@@ -1529,10 +1529,22 @@ const BreedingPlanner = {
 
     /**
      * v7.1.2: 鳥データをFamilyMap用にフォーマット
+     * v7.3.13: BirdDBのデータは observed に羽色情報を持つため優先
      */
     birdToFamilyMapFormat(bird, position, isFoundation) {
-        // BirdDBのデータは observed に羽色情報を持つ
-        const phenotype = bird.phenotype || bird.observed || { baseColor: 'unknown' };
+        // BirdDBのデータは observed.baseColor に羽色を持つ
+        // phenotype が文字列の場合もある（旧形式）
+        let phenotype;
+        if (bird.observed && bird.observed.baseColor) {
+            phenotype = bird.observed;
+        } else if (typeof bird.phenotype === 'string') {
+            phenotype = { baseColor: bird.phenotype };
+        } else if (bird.phenotype && bird.phenotype.baseColor) {
+            phenotype = bird.phenotype;
+        } else {
+            phenotype = { baseColor: 'green' };
+        }
+
         return {
             id: bird.id,
             name: bird.name,
