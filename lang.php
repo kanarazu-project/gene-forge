@@ -3,13 +3,14 @@
  * @license CC BY-NC-SA 4.0
  * Commercial use strictly prohibited.
  * NPO/Educational use welcome.
- * 
+ *
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v6.8 - 6言語対応版
+ * Agapornis Gene-Forge v7.3.2 - 6言語対応版
  * @author Shohei Taniguchi
  * @license CC BY-NC-SA 4.0
+ * @updated 2026-01-11 - t_pf() placeholder fix
  */
 
 $translations = [
