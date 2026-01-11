@@ -849,6 +849,37 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                         </div>
                         <?php endif; ?>
 
+                        <?php // v7.3.8: 入手性警告 ?>
+                        <?php if(!empty($scenario['availability'])): ?>
+                        <?php $avail = $scenario['availability']; ?>
+
+                        <?php // 入手困難な祖 ?>
+                        <?php if(!empty($avail['difficult'])): ?>
+                        <div style="margin-bottom:1rem;padding:.75rem;background:#2d1a1a;border-radius:4px;border-left:4px solid #ef5350;color:#ffcdd2;">
+                            <strong style="color:#ef5350;"><?= t_pf('pf_avail_warning_difficult') ?></strong>
+                            <p style="margin:.5rem 0 .25rem;font-size:.85em;color:#b0bec5;"><?= t_pf('pf_avail_note_difficult') ?></p>
+                            <ul style="margin:0;padding-left:1.5rem;color:#fff;">
+                                <?php foreach($avail['difficult'] as $bird): ?>
+                                <li><?= htmlspecialchars($getColorName($bird['colorKey'])) ?> (<?= htmlspecialchars($bird['gene']) ?>)</li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php // やや希少な祖 ?>
+                        <?php if(!empty($avail['normal'])): ?>
+                        <div style="margin-bottom:1rem;padding:.5rem .75rem;background:#1a2520;border-radius:4px;border-left:4px solid #ffc107;color:#fff8e1;">
+                            <strong style="color:#ffc107;"><?= t_pf('pf_avail_warning_normal') ?></strong>
+                            <span style="font-size:.85em;color:#b0bec5;margin-left:.5rem;">
+                                <?php foreach($avail['normal'] as $i => $bird): ?>
+                                <?= $i > 0 ? ', ' : '' ?><?= htmlspecialchars($getColorName($bird['colorKey'])) ?>
+                                <?php endforeach; ?>
+                            </span>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php endif; ?>
+
                         <?php // フェーズごとの表示 ?>
                         <?php foreach($scenario['phases'] ?? [] as $phase): ?>
                         <div style="margin:1rem 0;padding:1rem;background:#151c28;border-radius:8px;border-left:4px solid #69f0ae;color:#e0e0e0;">
@@ -885,10 +916,16 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                                 $maleNote = !empty($pairing['male_note_key'])
                                     ? t_pf_fix(t_pf($pairing['male_note_key'], $pairing['male_note_params'] ?? []), $pairing['male_note_params'] ?? [])
                                     : '';
+                                $maleAvail = $pairing['male_availability'] ?? null;
                                 ?>
                                 <div style="margin:.25rem 0;">
                                     <span style="color:#6cf;">♂</span>
                                     <strong style="color:#fff;"><?= htmlspecialchars($maleName) ?></strong>
+                                    <?php if($maleAvail === 'difficult'): ?>
+                                    <span style="background:#ef5350;color:#fff;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_difficult') ?></span>
+                                    <?php elseif($maleAvail === 'normal'): ?>
+                                    <span style="background:#ffc107;color:#000;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_normal') ?></span>
+                                    <?php endif; ?>
                                     <?php if($maleNote): ?>
                                     <span style="color:#b0bec5;font-size:.9em;"> — <?= htmlspecialchars($maleNote) ?></span>
                                     <?php endif; ?>
@@ -902,10 +939,16 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                                 $femaleNote = !empty($pairing['female_note_key'])
                                     ? t_pf_fix(t_pf($pairing['female_note_key'], $pairing['female_note_params'] ?? []), $pairing['female_note_params'] ?? [])
                                     : '';
+                                $femaleAvail = $pairing['female_availability'] ?? null;
                                 ?>
                                 <div style="margin:.25rem 0;">
                                     <span style="color:#f6c;">♀</span>
                                     <strong style="color:#fff;"><?= htmlspecialchars($femaleName) ?></strong>
+                                    <?php if($femaleAvail === 'difficult'): ?>
+                                    <span style="background:#ef5350;color:#fff;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_difficult') ?></span>
+                                    <?php elseif($femaleAvail === 'normal'): ?>
+                                    <span style="background:#ffc107;color:#000;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_normal') ?></span>
+                                    <?php endif; ?>
                                     <?php if($femaleNote): ?>
                                     <span style="color:#b0bec5;font-size:.9em;"> — <?= htmlspecialchars($femaleNote) ?></span>
                                     <?php endif; ?>

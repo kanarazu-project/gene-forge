@@ -195,6 +195,15 @@ $pf_ja = [
 
     // v7.2追加: 計画済み個体
     'bp_planned_bird' => '計画済み',
+
+    // v7.3.8: 市場入手性
+    'pf_avail_easy' => '容易',
+    'pf_avail_normal' => '普通',
+    'pf_avail_difficult' => '困難',
+    'pf_avail_warning_difficult' => '⚠️ 入手困難な祖',
+    'pf_avail_note_difficult' => '以下の羽色は希少で入手に時間を要する場合があります',
+    'pf_avail_warning_normal' => '※ やや希少な祖',
+    'pf_avail_note_normal' => '以下の羽色は専門ブリーダーで入手可能ですが、多少の待ち時間があるかもしれません',
 ];
 
 // ============================================================
@@ -383,6 +392,15 @@ $pf_en = [
 
     // v7.2: Planned bird
     'bp_planned_bird' => 'Planned',
+
+    // v7.3.8: Market availability
+    'pf_avail_easy' => 'Easy',
+    'pf_avail_normal' => 'Moderate',
+    'pf_avail_difficult' => 'Difficult',
+    'pf_avail_warning_difficult' => '⚠️ Difficult to obtain',
+    'pf_avail_note_difficult' => 'The following colors are rare and may take time to acquire',
+    'pf_avail_warning_normal' => '※ Moderately rare',
+    'pf_avail_note_normal' => 'The following colors are available from specialist breeders but may require some waiting time',
 ];
 
 // ============================================================

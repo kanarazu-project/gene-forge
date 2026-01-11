@@ -237,6 +237,44 @@ final class AgapornisLoci
         'pale_headed',
     ];
 
+    /**
+     * MARKET_AVAILABILITY - 市場での入手性分類（v7.0 SSOT）
+     *
+     * PathFinderで使用。祖となる発現個体の入手難易度を定義。
+     *
+     * 分類:
+     * - 'easy': 容易に入手可能（一般的なブリーダーで常時入手可）
+     * - 'normal': 普通（専門ブリーダーで入手可、やや待ち時間あり）
+     * - 'difficult': 困難（希少、高価、入手に時間を要する）
+     *
+     * キー: 座位または変異を特定するキー
+     *   - 基本: 座位名（例: 'ino', 'opaline'）
+     *   - ダーク: 'dark_sf'（SF）, 'dark_df'（DF）で区別
+     *   - パーブルー: 'parblue_aq'（アクア）, 'parblue_tq'（ターコイズ）で区別
+     */
+    public const MARKET_AVAILABILITY = [
+        // 容易 (easy) - 市場で常時入手可能
+        'green' => 'easy',           // グリーン（野生型）
+        'ino' => 'easy',             // ルチノー
+        'opaline' => 'easy',         // オパーリン
+        'parblue_tq' => 'easy',      // ターコイズ
+        'parblue_aq' => 'easy',      // アクア
+        'dark_sf' => 'easy',         // ダークグリーン（SF）
+        'cinnamon' => 'easy',        // シナモン
+
+        // 普通 (normal) - 専門店で入手可能
+        'pallid' => 'normal',        // パリッド
+        'dark_df' => 'normal',       // オリーブ（DF）
+        'parblue_sg' => 'normal',    // シーグリーン（aq/tq）
+
+        // 困難 (difficult) - 希少、入手に時間を要する
+        'violet' => 'difficult',     // バイオレット
+        'fallow_pale' => 'difficult',    // ペールファロー
+        'fallow_bronze' => 'difficult',  // ブロンズファロー
+        'dilute' => 'difficult',     // ダイリュート
+        'edged' => 'difficult',      // エッジド
+    ];
+
     public const COLOR_DEFINITIONS = [
         // 基底色（12色）
         'green'=>['ja'=>'グリーン','en'=>'Green','albs'=>'Green','genotype'=>['parblue'=>'++','dark'=>'dd'],'eye'=>'black','category'=>'green'],
@@ -4015,6 +4053,55 @@ class PathFinder
     }
 
     /**
+     * 遺伝子/カラーキーの市場入手性を取得
+     *
+     * @param string $locus 座位名
+     * @param string $colorKey カラーキー
+     * @return string 'easy', 'normal', 'difficult' のいずれか
+     */
+    private function getGeneAvailability(string $locus, string $colorKey): string
+    {
+        $avail = AgapornisLoci::MARKET_AVAILABILITY;
+
+        // 座位別の特殊処理
+        switch ($locus) {
+            case 'parblue':
+                // アクア、ターコイズ、シーグリーンを区別
+                if (strpos($colorKey, 'seagreen') !== false) {
+                    return $avail['parblue_sg'] ?? 'normal';
+                } elseif (strpos($colorKey, 'turquoise') !== false) {
+                    return $avail['parblue_tq'] ?? 'easy';
+                } else {
+                    return $avail['parblue_aq'] ?? 'easy';
+                }
+
+            case 'dark':
+                // SF(Dd)とDF(DD)を区別
+                $genotype = AgapornisLoci::COLOR_DEFINITIONS[$colorKey]['genotype'] ?? [];
+                $darkVal = $genotype['dark'] ?? 'dd';
+                if ($darkVal === 'DD') {
+                    return $avail['dark_df'] ?? 'normal';
+                } elseif ($darkVal === 'Dd') {
+                    return $avail['dark_sf'] ?? 'easy';
+                }
+                return 'easy';
+
+            case 'ino':
+                // INO座位: pallid(pld)と lutino(ino)を区別
+                $genotype = AgapornisLoci::COLOR_DEFINITIONS[$colorKey]['genotype'] ?? [];
+                $inoVal = $genotype['ino'] ?? '++';
+                if (strpos($inoVal, 'pld') !== false) {
+                    return $avail['pallid'] ?? 'normal';
+                }
+                return $avail['ino'] ?? 'easy';
+
+            default:
+                // 直接マッピング
+                return $avail[$locus] ?? 'easy';
+        }
+    }
+
+    /**
      * 複数遺伝子シナリオ（メイン）
      */
     private function generateMultiGeneScenario(array $requiredGenes, string $targetKey): array
@@ -4026,9 +4113,11 @@ class PathFinder
 
         $geneList = [];
         $colorKeys = [];
+        $availabilities = [];
         foreach ($allGenes as $g) {
             $geneList[] = strtoupper($g['locus']);
             $colorKeys[] = $g['colorKey'];
+            $availabilities[] = $this->getGeneAvailability($g['locus'], $g['colorKey']);
         }
 
         $phases = [];
@@ -4040,25 +4129,26 @@ class PathFinder
         // ============================================
 
         // フェーズ1: 最初の2つの遺伝子を持つ発現個体同士を交配
+        $pairing1 = [
+            'purpose_key' => 'pf_cross_expressing',
+            'male_key' => $colorKeys[0],
+            'male_note_key' => 'pf_expressing_trait',
+            'male_note_params' => ['gene' => $geneList[0]],
+            'male_availability' => $availabilities[0],
+            'female_key' => $colorKeys[1],
+            'female_note_key' => 'pf_expressing_trait',
+            'female_note_params' => ['gene' => $geneList[1]],
+            'female_availability' => $availabilities[1],
+            'result_key' => 'pf_offspring_carry_both',
+            'result_params' => ['gene1' => $geneList[0], 'gene2' => $geneList[1]],
+        ];
         $phases[] = [
             'phase' => $currentPhase,
             'title_key' => 'pf_phase_n_combine_direct',
             'title_params' => ['n' => $currentPhase],
             'description_key' => 'pf_acquire_and_cross_desc',
             'description_params' => ['gene1' => $geneList[0], 'gene2' => $geneList[1]],
-            'pairings' => [
-                [
-                    'purpose_key' => 'pf_cross_expressing',
-                    'male_key' => $colorKeys[0],
-                    'male_note_key' => 'pf_expressing_trait',
-                    'male_note_params' => ['gene' => $geneList[0]],
-                    'female_key' => $colorKeys[1],
-                    'female_note_key' => 'pf_expressing_trait',
-                    'female_note_params' => ['gene' => $geneList[1]],
-                    'result_key' => 'pf_offspring_carry_both',
-                    'result_params' => ['gene1' => $geneList[0], 'gene2' => $geneList[1]],
-                ]
-            ],
+            'pairings' => [$pairing1],
         ];
         $currentPhase++;
 
@@ -4067,27 +4157,28 @@ class PathFinder
             $previousGenes = array_slice($geneList, 0, $i);
             $nextGene = $geneList[$i];
             $nextColorKey = $colorKeys[$i];
+            $nextAvailability = $availabilities[$i];
 
+            $pairingN = [
+                'purpose_key' => 'pf_add_gene_to_line',
+                'purpose_params' => ['gene' => $nextGene],
+                'male_key' => 'prev_gen_carrier',
+                'male_note_key' => 'pf_carrying_genes',
+                'male_note_params' => ['genes' => implode('+', $previousGenes)],
+                'female_key' => $nextColorKey,
+                'female_note_key' => 'pf_expressing_trait',
+                'female_note_params' => ['gene' => $nextGene],
+                'female_availability' => $nextAvailability,
+                'result_key' => 'pf_some_carry_genes',
+                'result_params' => ['genes' => implode('+', array_slice($geneList, 0, $i + 1))],
+            ];
             $phases[] = [
                 'phase' => $currentPhase,
                 'title_key' => 'pf_phase_n_add_gene',
                 'title_params' => ['n' => $currentPhase, 'gene' => $nextGene],
                 'description_key' => 'pf_add_expressing_desc',
                 'description_params' => ['gene' => $nextGene],
-                'pairings' => [
-                    [
-                        'purpose_key' => 'pf_add_gene_to_line',
-                        'purpose_params' => ['gene' => $nextGene],
-                        'male_key' => 'prev_gen_carrier',
-                        'male_note_key' => 'pf_carrying_genes',
-                        'male_note_params' => ['genes' => implode('+', $previousGenes)],
-                        'female_key' => $nextColorKey,
-                        'female_note_key' => 'pf_expressing_trait',
-                        'female_note_params' => ['gene' => $nextGene],
-                        'result_key' => 'pf_some_carry_genes',
-                        'result_params' => ['genes' => implode('+', array_slice($geneList, 0, $i + 1))],
-                    ]
-                ],
+                'pairings' => [$pairingN],
             ];
             $currentPhase++;
         }
@@ -4116,10 +4207,25 @@ class PathFinder
         // 世代数 = フェーズ数
         $totalGenerations = count($phases);
 
+        // 入手困難な祖の警告を収集
+        $difficultBirds = [];
+        $normalBirds = [];
+        for ($i = 0; $i < count($colorKeys); $i++) {
+            if ($availabilities[$i] === 'difficult') {
+                $difficultBirds[] = ['colorKey' => $colorKeys[$i], 'gene' => $geneList[$i]];
+            } elseif ($availabilities[$i] === 'normal') {
+                $normalBirds[] = ['colorKey' => $colorKeys[$i], 'gene' => $geneList[$i]];
+            }
+        }
+
         return [
             'totalGenerations' => $totalGenerations,
             'requiredGenes' => $geneList,
             'phases' => $phases,
+            'availability' => [
+                'difficult' => $difficultBirds,
+                'normal' => $normalBirds,
+            ],
             'summary_key' => 'pf_scenario_multi_summary',
             'summary_params' => [
                 'target' => $targetKey,
