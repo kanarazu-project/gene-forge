@@ -586,9 +586,23 @@ Demo mode includes **72 specimens** (3 families × 24 birds each) for the follow
 |--------|---------|---------------|
 | **Family A** | Breeding simulation (INO/Opaline/Cinnamon/Pied/Violet) | Complete v7.0 haplotypes |
 | **Family B** | Breeding simulation (Dilute/Fallow/Edged/Orangeface) | Complete v7.0 haplotypes |
-| **Family C** | Family Inference demo (genotype unknown) | Empty (for inference practice) |
+| **Family C** | Family Inference demo + Breeding simulation | Empty (for inference practice) |
 
 Each family has 4-generation structure: 8 great-grandparents → 4 grandparents → 2 parents → 10 offspring
+
+### Family C Characteristics (For Inference Demo)
+
+| Property | Family A/B | Family C |
+|----------|------------|----------|
+| `genotype` | Complete v7.0 format | Empty `{}` |
+| `observed` | Yes (baseColor, eyeColor, darkness) | Yes |
+| `pedigree` | Yes (14 ancestor IDs) | Yes |
+| `phase` | `v7_haplotype` | `unknown` |
+| **Primary Use** | Breeding simulation | Family Inference |
+| **Secondary Use** | — | Breeding simulation (with A/B) |
+
+Family C birds can also be used for breeding simulation when paired with Family A/B birds.
+The offspring probabilities will be calculated based on the inferred genotypes from Family Inference.
 
 ### Health Evaluation Tests
 - Sire × Daughter → Critical risk (F ≈ 43.75%, 3-generation pedigree)
