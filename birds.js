@@ -3,11 +3,13 @@
  * 個体データベース管理（localStorage）
  *
  * v7.0 変更点:
- * - 48羽の新デモデータ（2血族 × 24羽）
- *   - Family A: INO/Opaline/Cinnamon/Pied/Violet系
- *   - Family B: Dilute/Fallow/Edged/Orangeface/Pale Headed系
- * - 2血族間の交配で近親婚を回避可能
- * - 全個体にv7.0 Z_linkedハプロタイプ形式を適用
+ * - 72羽の新デモデータ（3血族 × 24羽）
+ *   - Family A: INO/Opaline/Cinnamon/Pied/Violet系（完全な遺伝型あり）
+ *   - Family B: Dilute/Fallow/Edged/Orangeface/Pale Headed系（完全な遺伝型あり）
+ *   - Family C: Family Inference用（遺伝型なし、推論対象）
+ * - Family A/B間の交配で近親婚を回避可能
+ * - Family Cは表現型と血統のみ → Family Inferenceで遺伝型を推論
+ * - 全個体にv7.0 Z_linkedハプロタイプ形式を適用（Family C除く）
  * - 全世代に血統情報（pedigree）を完備（近親交配リスク検証用）
  * - i18n対応強化（デモデータ、エラーメッセージ）
  * - inferObservedFromPhenotype を COLOR_MASTER 参照に変更（SSOT）
@@ -1104,13 +1106,212 @@ const BirdDB = {
         // Family B G3を追加
         birds.push(andy, bonnie, cody, dawn, ethan, grace, henry, iris, jake, kate);
 
+        // ============================================================
+        // FAMILY C: Family Inference デモ用血族
+        // 遺伝型は「空」- 表現型と血統情報から推論する練習用
+        // ============================================================
+        //
+        // 【整合性担保のための内部設計メモ】
+        // この24羽は以下の遺伝型から生成されたが、リリース時は遺伝型を削除する
+        //
+        // G0 (曽祖父母) - 真の遺伝型:
+        // Couple 1: Leo × Maria (Z連鎖cis/trans相推論用)
+        //   Leo: Green ♂ - Z1:{cin:'cin',ino:'ino'} cis, Z2:{+,+} → /cin-ino(cis)
+        //   Maria: Lutino ♀ - Z1:{ino:'ino'}
+        //
+        // Couple 2: Nathan × Olive (Opaline + Parblue推論用)
+        //   Nathan: Opaline Green ♂ - Z1:{op:'op'}, parblue:'+tq' → /op /tq
+        //   Olive: Aqua ♀ - parblue:'aqaq'
+        //
+        // Couple 3: Peter × Rita (Dark-Parblue連鎖推論用)
+        //   Peter: Aqua SF Dark ♂ - autosomal_1:{D-aq, d-aq}
+        //   Rita: Turquoise SF Dark ♀ - autosomal_1:{D-tq, d-tq}
+        //
+        // Couple 4: Simon × Tina (複合形質推論用)
+        //   Simon: Cinnamon Green ♂ - Z1:{cin:'cin'}, parblue:'+aq', violet:'Vv'
+        //   Tina: Violet Aqua ♀ - parblue:'aqaq', dark:'Dd', violet:'Vv'
+        // ============================================================
+
+        // Family C用ヘルパー: 遺伝型なし（推論用）で個体生成
+        const createInferenceBird = (id, name, sex, colorKey, pedigree = null, generation = 0) => {
+            const colorDef = (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) || {};
+            const eyeColor = colorDef.eye || 'black';
+            // ダーク因子は表現型名から推測
+            let darkness = 'none';
+            if (colorKey.includes('_olive') || colorKey.includes('_df')) {
+                darkness = 'df';
+            } else if (colorKey.includes('_dark') || colorKey.includes('violet')) {
+                darkness = 'sf';
+            }
+
+            return {
+                id: id,
+                name: name,
+                code: id.toUpperCase().replace('_', ''),
+                sex: sex,
+                birthDate: `202${generation}-01-01`,
+                sire: null,
+                dam: null,
+                lineage: 'Demo Family C (Inference)',
+                observed: {
+                    baseColor: colorKey,
+                    eyeColor: eyeColor,
+                    darkness: darkness
+                },
+                genotype: {},  // 空 - Family Inference で推論する
+                pedigree: pedigree || this.createEmptyPedigree(),
+                phase: 'unknown',  // 推論対象
+                phenotype: (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) || colorKey,
+                notes: `Demo G${generation} - For Inference`,
+                createdAt: now,
+                updatedAt: now
+            };
+        };
+
+        // ============================================================
+        // Family C - G0: 曾祖父母 8羽（4カップル）
+        // ============================================================
+
+        // Couple 1: Leo × Maria (Z連鎖cis相推論)
+        const leo = createInferenceBird('c0_m1', 'Leo', 'male', 'green', null, 0);
+        const maria = createInferenceBird('c0_f1', 'Maria', 'female', 'lutino', null, 0);
+
+        // Couple 2: Nathan × Olive (Opaline + Parblue推論)
+        const nathan = createInferenceBird('c0_m2', 'Nathan', 'male', 'opaline_green', null, 0);
+        const olive = createInferenceBird('c0_f2', 'Olive', 'female', 'aqua', null, 0);
+
+        // Couple 3: Peter × Rita (Dark-Parblue連鎖推論)
+        const peter = createInferenceBird('c0_m3', 'Peter', 'male', 'aqua_dark', null, 0);
+        const rita = createInferenceBird('c0_f3', 'Rita', 'female', 'turquoise_dark', null, 0);
+
+        // Couple 4: Simon × Tina (複合形質推論)
+        const simon = createInferenceBird('c0_m4', 'Simon', 'male', 'cinnamon_green', null, 0);
+        const tina = createInferenceBird('c0_f4', 'Tina', 'female', 'violet_aqua', null, 0);
+
+        birds.push(leo, maria, nathan, olive, peter, rita, simon, tina);
+
+        // ============================================================
+        // Family C - G1: 祖父母 4羽（2カップル）
+        // ============================================================
+
+        // Warren: Leo × Maria の息子 → Lutino /cin (Z1からcin-ino cis継承)
+        // 【推論ポイント】表現型はLutinoだが、子孫にCinnamonが出れば/cinが推論できる
+        const warren = createInferenceBird('c1_m1', 'Warren', 'male', 'lutino', {
+            ...this.createEmptyPedigree(),
+            sire: 'c0_m1', dam: 'c0_f1'
+        }, 1);
+
+        // Yolanda: Nathan × Olive の娘 → Opaline Seagreen
+        // 【推論ポイント】父がOpaline Green/tqなら、tqを継承+母のaqでSeagreen
+        const yolanda = createInferenceBird('c1_f1', 'Yolanda', 'female', 'opaline_seagreen', {
+            ...this.createEmptyPedigree(),
+            sire: 'c0_m2', dam: 'c0_f2'
+        }, 1);
+
+        // Zeke: Peter × Rita の息子 → Seagreen SF Dark
+        // 【推論ポイント】Dark-Parblue連鎖から、どの染色体を継承したか推論
+        const zeke = createInferenceBird('c1_m2', 'Zeke', 'male', 'seagreen_dark', {
+            ...this.createEmptyPedigree(),
+            sire: 'c0_m3', dam: 'c0_f3'
+        }, 1);
+
+        // Abby: Simon × Tina の娘 → Cinnamon Violet Aqua
+        // 【推論ポイント】複合形質の推論（cin + violet + aqua）
+        const abby = createInferenceBird('c1_f2', 'Abby', 'female', 'cinnamon_violet_aqua', {
+            ...this.createEmptyPedigree(),
+            sire: 'c0_m4', dam: 'c0_f4'
+        }, 1);
+
+        birds.push(warren, yolanda, zeke, abby);
+
+        // ============================================================
+        // Family C - G2: 父母 2羽（1カップル）
+        // ============================================================
+
+        // Blake: Warren × Yolanda の息子 → Green (多数のスプリット保有)
+        // 【推論ポイント】表現型はGreenだが、子孫の表現型から/cin /ino /op /tqを推論
+        const blake = createInferenceBird('c2_m1', 'Blake', 'male', 'green', {
+            ...this.createEmptyPedigree(),
+            sire: 'c1_m1', dam: 'c1_f1',
+            sire_sire: 'c0_m1', sire_dam: 'c0_f1',
+            dam_sire: 'c0_m2', dam_dam: 'c0_f2'
+        }, 2);
+
+        // Carmen: Zeke × Abby の娘 → Seagreen SF Dark
+        // 【推論ポイント】Violet不発現なのでvvか、Darkなしか推論
+        const carmen = createInferenceBird('c2_f1', 'Carmen', 'female', 'seagreen_dark', {
+            ...this.createEmptyPedigree(),
+            sire: 'c1_m2', dam: 'c1_f2',
+            sire_sire: 'c0_m3', sire_dam: 'c0_f3',
+            dam_sire: 'c0_m4', dam_dam: 'c0_f4'
+        }, 2);
+
+        birds.push(blake, carmen);
+
+        // ============================================================
+        // Family C - G3: 子 10羽（多様な表現型）
+        // Blake × Carmen から遺伝的に可能な子
+        // ============================================================
+
+        const fullPedigreeC = {
+            sire: 'c2_m1', dam: 'c2_f1',
+            sire_sire: 'c1_m1', sire_dam: 'c1_f1',
+            dam_sire: 'c1_m2', dam_dam: 'c1_f2',
+            sire_sire_sire: 'c0_m1', sire_sire_dam: 'c0_f1',
+            sire_dam_sire: 'c0_m2', sire_dam_dam: 'c0_f2',
+            dam_sire_sire: 'c0_m3', dam_sire_dam: 'c0_f3',
+            dam_dam_sire: 'c0_m4', dam_dam_dam: 'c0_f4'
+        };
+
+        // Child 1: Derek ♂ → Green SF Dark
+        // 【推論】表現型Greenだが、血統から/cin /ino等が推論可能
+        const derek = createInferenceBird('c3_01', 'Derek', 'male', 'green_dark', fullPedigreeC, 3);
+
+        // Child 2: Ellie ♀ → Lutino
+        // 【推論】ino発現メス。父Blakeの/inoが証明される
+        const ellie = createInferenceBird('c3_02', 'Ellie', 'female', 'lutino', fullPedigreeC, 3);
+
+        // Child 3: Felix ♂ → Seagreen SF Dark
+        // 【推論】parblueがtqaq、darkがDd
+        const felix = createInferenceBird('c3_03', 'Felix', 'male', 'seagreen_dark', fullPedigreeC, 3);
+
+        // Child 4: Gia ♀ → Opaline Seagreen SF Dark
+        // 【推論】父Blakeの/opが証明される
+        const gia = createInferenceBird('c3_04', 'Gia', 'female', 'opaline_seagreen_dark', fullPedigreeC, 3);
+
+        // Child 5: Harvey ♂ → Turquoise
+        // 【推論】parblue=tqtq、父からtq、母からtq(seagreenのtq側)
+        const harvey_c = createInferenceBird('c3_05', 'Harvey', 'male', 'turquoise', fullPedigreeC, 3);
+
+        // Child 6: Ivy ♀ → Creamino Seagreen
+        // 【推論】ino発現 + seagreen。父の/ino + 両親のparblue
+        const ivy_c = createInferenceBird('c3_06', 'Ivy', 'female', 'creamino_seagreen', fullPedigreeC, 3);
+
+        // Child 7: Jordan ♂ → Green
+        // 【推論】野生型表現だが、多数のスプリット保有
+        const jordan = createInferenceBird('c3_07', 'Jordan', 'male', 'green', fullPedigreeC, 3);
+
+        // Child 8: Kira ♀ → Opaline Turquoise
+        // 【推論】opaline発現 + turquoise
+        const kira = createInferenceBird('c3_08', 'Kira', 'female', 'opaline_turquoise', fullPedigreeC, 3);
+
+        // Child 9: Liam ♂ → Seagreen
+        // 【推論】parblue=tqaq、darkなし
+        const liam = createInferenceBird('c3_09', 'Liam', 'male', 'seagreen', fullPedigreeC, 3);
+
+        // Child 10: Nadia ♀ → Creamino Turquoise
+        // 【推論】ino発現 + turquoise
+        const nadia = createInferenceBird('c3_10', 'Nadia', 'female', 'creamino_turquoise', fullPedigreeC, 3);
+
+        birds.push(derek, ellie, felix, gia, harvey_c, ivy_c, jordan, kira, liam, nadia);
+
         return birds;
     },
 
     /**
      * v7.0: デモ家系図をFamilyMap形式で取得
-     * 48羽の家系図データを返す（2血族 × 24羽）
-     * @param {string} family - 'A' または 'B'（デフォルト: 'A'）
+     * 72羽の家系図データを返す（3血族 × 24羽）
+     * @param {string} family - 'A', 'B', または 'C'（デフォルト: 'A'）
      */
     getDemoPedigreeForFamilyMap(family = 'A') {
         const birds = this.getAllBirds();
@@ -1156,11 +1357,33 @@ const BirdDB = {
         const offspringB = ['b3_01', 'b3_02', 'b3_03', 'b3_04', 'b3_05',
                            'b3_06', 'b3_07', 'b3_08', 'b3_09', 'b3_10'];
 
-        const ids = family === 'B' ? idsB : idsA;
-        const offspringIds = family === 'B' ? offspringB : offspringA;
-        const familyName = family === 'B'
-            ? 'Demo Family B (Dilute/Fallow)'
-            : 'Demo Family A (INO/Opaline)';
+        // Family C IDs (Inference用 - 遺伝型なし)
+        const idsC = {
+            sire_sire_sire: 'c0_m1', sire_sire_dam: 'c0_f1',
+            sire_dam_sire: 'c0_m2', sire_dam_dam: 'c0_f2',
+            dam_sire_sire: 'c0_m3', dam_sire_dam: 'c0_f3',
+            dam_dam_sire: 'c0_m4', dam_dam_dam: 'c0_f4',
+            sire_sire: 'c1_m1', sire_dam: 'c1_f1',
+            dam_sire: 'c1_m2', dam_dam: 'c1_f2',
+            sire: 'c2_m1', dam: 'c2_f1',
+        };
+        const offspringC = ['c3_01', 'c3_02', 'c3_03', 'c3_04', 'c3_05',
+                           'c3_06', 'c3_07', 'c3_08', 'c3_09', 'c3_10'];
+
+        let ids, offspringIds, familyName;
+        if (family === 'C') {
+            ids = idsC;
+            offspringIds = offspringC;
+            familyName = 'Demo Family C (For Inference)';
+        } else if (family === 'B') {
+            ids = idsB;
+            offspringIds = offspringB;
+            familyName = 'Demo Family B (Dilute/Fallow)';
+        } else {
+            ids = idsA;
+            offspringIds = offspringA;
+            familyName = 'Demo Family A (INO/Opaline)';
+        }
 
         return {
             name: (window.T && T.demo_family_name) || familyName,
