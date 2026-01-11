@@ -1,6 +1,12 @@
 /**
- * Agapornis Gene-Forge v7.0
+ * Agapornis Gene-Forge v7.3
  * 目標逆算計画エンジン (Target Breeding Planner)
+ *
+ * v7.3変更点:
+ * - Z_linkedハプロタイプ形式から伴性遺伝子を正しく読み取るよう修正
+ * - getSLRGenotypeFromZLinked()ヘルパー追加
+ * - calculateGeneScore, calculateTargetProbability, analyzeGeneGap対応
+ * - findBestPairingsForGene Z_linked対応
  *
  * v7.0変更点:
  * - 連鎖遺伝対応: 相（Phase: Cis/Trans）を考慮したペアリング評価
@@ -423,24 +429,90 @@ const BreedingPlanner = {
         };
     },
     
+    /**
+     * v7.3: Z_linked形式から伴性遺伝子型を読み取る
+     * TARGET_REQUIREMENTS.slr のキー (ino, cin, op) → Z_linked のキー (ino, cinnamon, opaline)
+     * @param {Object} geno - bird.genotype
+     * @param {string} slrKey - slr座位キー (ino, cin, op)
+     * @param {string} sex - 'male' or 'female'
+     * @returns {string} 遺伝子型 (e.g., 'inoino', '+ino', '+W', '++')
+     */
+    getSLRGenotypeFromZLinked(geno, slrKey, sex) {
+        // slrキー → Z_linkedキー のマッピング
+        const keyMap = {
+            'ino': 'ino',
+            'cin': 'cinnamon',
+            'op': 'opaline'
+        };
+        const zKey = keyMap[slrKey] || slrKey;
+
+        // v7形式の Z_linked がある場合
+        if (geno.Z_linked && geno.Z_linked.Z1) {
+            const z1 = geno.Z_linked.Z1 || {};
+            const z2 = geno.Z_linked.Z2 || null;
+
+            const a1 = z1[zKey] || '+';
+
+            if (sex === 'female') {
+                // メス: ヘミ接合 (ZW)
+                // 変異があれば発現、なければ +W
+                if (a1 !== '+') {
+                    return a1 + 'W';  // e.g., 'inoW', 'cinW', 'opW'
+                }
+                return '+W';
+            } else {
+                // オス: 二倍体 (ZZ)
+                const a2 = z2 ? (z2[zKey] || '+') : '+';
+
+                // ホモ/ヘテロ/野生型の判定
+                if (a1 !== '+' && a2 !== '+') {
+                    // 両方変異: ホモまたは複合ヘテロ
+                    return a1 + a2;  // e.g., 'inoino', 'cinino'
+                } else if (a1 !== '+') {
+                    // 片方変異: スプリット
+                    return '+' + a1;  // e.g., '+ino', '+cin'
+                } else if (a2 !== '+') {
+                    return '+' + a2;
+                }
+                return '++';
+            }
+        }
+
+        // v7形式がない場合、旧形式にフォールバック
+        // 旧形式のキーも試す
+        const oldFormatVal = geno[slrKey] || geno[zKey];
+        if (oldFormatVal) {
+            return oldFormatVal;
+        }
+
+        // デフォルト
+        return sex === 'male' ? '++' : '+W';
+    },
+
     calculateGeneScore(bird, target) {
         let score = 0;
         const geno = bird.genotype || {};
-        for (const [locus, vals] of Object.entries(target.required)) { 
-            if (vals.includes(geno[locus])) score += 100; 
-            else if (geno[locus] && geno[locus] !== '++') score += 50; 
+
+        // 常染色体遺伝子
+        for (const [locus, vals] of Object.entries(target.required)) {
+            if (vals.includes(geno[locus])) score += 100;
+            else if (geno[locus] && geno[locus] !== '++') score += 50;
         }
-        for (const [locus, vals] of Object.entries(target.slr)) { 
-            const v = geno[locus] || (bird.sex === 'male' ? '++' : '+W'); 
-            if (vals.includes(v)) score += 100; 
-            else if (v && v !== '++' && v !== '+W') score += 50; 
+
+        // v7.3: 伴性遺伝子 - Z_linked形式対応
+        for (const [locus, vals] of Object.entries(target.slr)) {
+            const v = this.getSLRGenotypeFromZLinked(geno, locus, bird.sex);
+            if (vals.includes(v)) score += 100;
+            else if (v && v !== '++' && v !== '+W') score += 50;
         }
         return score;
     },
-    
+
     calculateTargetProbability(male, female, target) {
         let prob = 1.0;
         const mGeno = male.genotype || {}, fGeno = female.genotype || {};
+
+        // 常染色体遺伝子
         for (const [locus, vals] of Object.entries(target.required)) {
             const mv = mGeno[locus] || '++', fv = fGeno[locus] || '++';
             if (vals.includes(mv) && vals.includes(fv)) prob *= 1.0;
@@ -448,11 +520,38 @@ const BreedingPlanner = {
             else if (mv !== '++' && fv !== '++') prob *= 0.25;
             else prob *= 0;
         }
+
+        // v7.3: 伴性遺伝子 - Z_linked形式対応
         for (const [locus, vals] of Object.entries(target.slr)) {
-            const mv = mGeno[locus] || '++', fv = fGeno[locus] || '+W';
-            if (vals.includes(mv)) prob *= 0.5;
-            else if (mv !== '++') prob *= 0.25;
-            else prob *= 0;
+            const mv = this.getSLRGenotypeFromZLinked(mGeno, locus, 'male');
+            const fv = this.getSLRGenotypeFromZLinked(fGeno, locus, 'female');
+
+            // 伴性遺伝の確率計算:
+            // オス発現(ホモ) × メス発現(ヘミ) → 100% 子は発現/スプリット
+            // オススプリット × メス発現 → 50% オス発現, 50% メス発現
+            // オススプリット × メス野生 → 50% メス発現, 25% オススプリット
+            if (vals.includes(mv) && vals.includes(fv)) {
+                // 両方発現: 高確率
+                prob *= 1.0;
+            } else if (vals.includes(fv)) {
+                // メスのみ発現
+                if (mv !== '++') {
+                    // オスがスプリット
+                    prob *= 0.5;
+                } else {
+                    // オス野生型: 子オスはスプリット、メスは発現しない
+                    prob *= 0;
+                }
+            } else if (vals.includes(mv)) {
+                // オスのみ発現（ホモ）
+                prob *= 0.5;  // 娘は発現（ヘミ接合）
+            } else if (mv !== '++') {
+                // オスがスプリット
+                prob *= 0.25;  // 娘の半分が発現
+            } else {
+                // 両方野生型
+                prob *= 0;
+            }
         }
         return prob;
     },
@@ -767,13 +866,13 @@ const BreedingPlanner = {
             });
         }
 
-        // 伴性遺伝子
+        // v7.3: 伴性遺伝子 - Z_linked形式対応
         for (const [locus, vals] of Object.entries(slr)) {
             available.slr[locus] = { expressed: [], split: [], absent: [] };
 
             birds.forEach(b => {
                 const geno = b.genotype || {};
-                const val = geno[locus] || (b.sex === 'male' ? '++' : '+W');
+                const val = this.getSLRGenotypeFromZLinked(geno, locus, b.sex);
 
                 if (vals.includes(val)) {
                     available.slr[locus].expressed.push(b);
@@ -890,9 +989,9 @@ const BreedingPlanner = {
                 }
             }
 
-            // 伴性遺伝子
+            // v7.3: 伴性遺伝子 - Z_linked形式対応
             for (const [locus, vals] of Object.entries(slr)) {
-                const val = geno[locus] || (bird.sex === 'male' ? '++' : '+W');
+                const val = this.getSLRGenotypeFromZLinked(geno, locus, bird.sex);
                 if (vals.includes(val) || (val !== '++' && val !== '+W')) {
                     genesPresent++;
                 }
@@ -1110,9 +1209,9 @@ const BreedingPlanner = {
         }
 
         if (goal.strategy === 'split_male_x_wild_female') {
-            // スプリット♂を探す
+            // v7.3: スプリット♂を探す - Z_linked形式対応
             const splitMales = males.filter(b => {
-                const val = (b.genotype || {})[goal.locus] || '++';
+                const val = this.getSLRGenotypeFromZLinked(b.genotype || {}, goal.locus, 'male');
                 return val !== '++' && val !== '+W';
             });
 
