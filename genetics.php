@@ -4105,7 +4105,7 @@ public function estimate(string $sex, string $baseColor, string $eyeColor, strin
         $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$baseColor] ?? null;
         
         if (!$colorDef) {
-            return ['error' => '未対応の色です: ' . $baseColor];
+            return ['error' => 'Unsupported color: ' . $baseColor];
         }
         
         $genotype = $colorDef['genotype'] ?? [];
@@ -4168,20 +4168,20 @@ public function estimate(string $sex, string $baseColor, string $eyeColor, strin
             'success' => true,
             'sex' => $sex,
             'baseColor' => $baseColor,
-            'colorName' => $colorDef['ja'] ?? $baseColor,
+            'colorName' => $isJa ? ($colorDef['ja'] ?? $baseColor) : ($colorDef['en'] ?? $colorDef['albs'] ?? $baseColor),
             'eyeColor' => $colorDef['eye'] ?? $eyeColor,
             'loci' => $results,
-            'splitPossibilities' => $this->calculateSplitPossibilities($genotype, $isFemale),
+            'splitPossibilities' => $this->calculateSplitPossibilities($genotype, $isFemale, $isJa),
         ];
     }
     
     /**
      * スプリットの可能性を計算
      */
-    private function calculateSplitPossibilities(array $genotype, bool $isFemale): array
+    private function calculateSplitPossibilities(array $genotype, bool $isFemale, bool $isJa = true): array
     {
         $possibilities = [];
-        
+
         // 表現型に現れない劣性因子の可能性
         $recessiveLoci = [
             'parblue' => ['aq', 'tq'],
@@ -4193,7 +4193,7 @@ public function estimate(string $sex, string $baseColor, string $eyeColor, strin
             'fallow_pale' => ['flp'],
             'fallow_bronze' => ['flb'],
         ];
-        
+
         // 伴性（オスのみスプリット可能）
         if (!$isFemale) {
             $sexLinkedLoci = [
@@ -4203,22 +4203,27 @@ public function estimate(string $sex, string $baseColor, string $eyeColor, strin
             ];
             $recessiveLoci = array_merge($recessiveLoci, $sexLinkedLoci);
         }
-        
+
+        $noteText = $isJa ? '親の情報があれば確定可能' : 'Can be confirmed with parental info';
+
         foreach ($recessiveLoci as $locus => $alleles) {
             $current = $genotype[$locus] ?? '++';
             // 既にホモ発現していなければスプリットの可能性あり
             foreach ($alleles as $allele) {
                 if (strpos($current, $allele) === false) {
-                    $locusName = AgapornisLoci::LOCI[$locus]['name']['ja'] ?? $locus;
+                    $locusConfig = AgapornisLoci::LOCI[$locus] ?? null;
+                    $locusName = $locusConfig
+                        ? ($isJa ? ($locusConfig['name']['ja'] ?? $locus) : ($locusConfig['name']['en'] ?? $locus))
+                        : $locus;
                     $possibilities[] = [
                         'locus' => $locusName,
                         'allele' => $allele,
-                        'note' => '親の情報があれば確定可能',
+                        'note' => $noteText,
                     ];
                 }
             }
         }
-        
+
         return $possibilities;
     }
 }

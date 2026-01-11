@@ -91,7 +91,8 @@ if ($action === 'calculate') {
         $_POST['sex'] ?? 'male',
         $_POST['est_baseColor'] ?? 'green',
         $_POST['est_eyeColor'] ?? 'black',
-        $_POST['est_darkness'] ?? 'none'
+        $_POST['est_darkness'] ?? 'none',
+        $lang === 'ja'
     );
     $activeTab = 'estimator';
 } elseif ($action === 'family_infer') {
@@ -1230,7 +1231,7 @@ $mPh = $_POST['m_ph'] ?? '++';
 <?php 
     $bgColor = $l['isConfirmed'] ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
     $borderLeft = $l['isConfirmed'] ? '3px solid #4ecdc4' : '3px solid #555';
-    $confidenceLabel = $l['isConfirmed'] ? '✓ ' . t('confirmed') : '? ' . t('estimated');
+    $confidenceLabel = $l['isConfirmed'] ? '✓ ' . t('confirmed') : '(' . t('estimated') . ')';
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
     <strong style="color:#4ecdc4;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
