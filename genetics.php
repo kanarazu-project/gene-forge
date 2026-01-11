@@ -3591,6 +3591,9 @@ class PathFinder
         // v7.0: 連鎖遺伝分析
         $linkageAnalysis = $this->analyzeLinkageRequirements($genotype);
 
+        // v7.2: 人間が読める交配シナリオを生成
+        $scenario = $this->generateBreedingScenario($genotype, $steps, $targetKey);
+
         return [
             'targetKey' => $targetKey,
             'genotype' => $genotype,
@@ -3599,6 +3602,8 @@ class PathFinder
             'minGenerations' => count($steps),
             // v7.0: 連鎖遺伝情報
             'linkage' => $linkageAnalysis,
+            // v7.2: 交配シナリオ
+            'scenario' => $scenario,
         ];
     }
     
@@ -3726,6 +3731,375 @@ class PathFinder
         }
 
         return $warnings;
+    }
+
+    // ========================================
+    // v7.2: 人間が読める交配シナリオ生成
+    // ========================================
+
+    /**
+     * 目標を作出するための具体的な交配シナリオを生成
+     * 「結局どうすればいいのか」を明示する
+     */
+    private function generateBreedingScenario(array $genotype, array $steps, string $targetKey): array
+    {
+        $requiredGenes = $this->categorizeRequiredGenes($genotype);
+        $totalGenes = count($requiredGenes['autosomal']) + count($requiredGenes['slr']);
+
+        // 単純なケース: 遺伝子が1つだけ
+        if ($totalGenes === 0) {
+            return $this->generateWildTypeScenario();
+        }
+
+        if ($totalGenes === 1) {
+            return $this->generateSingleGeneScenario($requiredGenes, $targetKey);
+        }
+
+        // 複数遺伝子: 世代ごとの交配計画を生成
+        return $this->generateMultiGeneScenario($requiredGenes, $targetKey);
+    }
+
+    /**
+     * 必要な遺伝子を常染色体/伴性に分類
+     */
+    private function categorizeRequiredGenes(array $genotype): array
+    {
+        $autosomal = [];
+        $slr = [];
+
+        foreach ($genotype as $locus => $allele) {
+            // 野生型は除外
+            if (in_array($allele, ['++', 'dd', 'vv', '+W'])) continue;
+
+            $locusInfo = AgapornisLoci::LOCI[$locus] ?? null;
+            if (!$locusInfo) continue;
+
+            $isSexLinked = $locusInfo['sex_linked'] ?? false;
+            $type = $locusInfo['type'] ?? 'AR';
+
+            $geneInfo = [
+                'locus' => $locus,
+                'allele' => $allele,
+                'type' => $type,
+                'colorKey' => $this->getAlleleColorKey($locus, $allele),
+            ];
+
+            if ($isSexLinked) {
+                $slr[] = $geneInfo;
+            } else {
+                $autosomal[] = $geneInfo;
+            }
+        }
+
+        return ['autosomal' => $autosomal, 'slr' => $slr];
+    }
+
+    /**
+     * 野生型（グリーン）のシナリオ
+     */
+    private function generateWildTypeScenario(): array
+    {
+        return [
+            'totalGenerations' => 1,
+            'phases' => [
+                [
+                    'phase' => 1,
+                    'title_key' => 'pf_scenario_wildtype',
+                    'description_key' => 'pf_scenario_wildtype_desc',
+                    'pairings' => [
+                        ['male_key' => 'green', 'female_key' => 'green', 'result_key' => 'pf_scenario_green_result']
+                    ],
+                ]
+            ],
+            'summary_key' => 'pf_scenario_wildtype_summary',
+        ];
+    }
+
+    /**
+     * 単一遺伝子のシナリオ
+     */
+    private function generateSingleGeneScenario(array $requiredGenes, string $targetKey): array
+    {
+        $gene = !empty($requiredGenes['autosomal'])
+            ? $requiredGenes['autosomal'][0]
+            : $requiredGenes['slr'][0];
+
+        $isSLR = !empty($requiredGenes['slr']);
+        $type = $gene['type'];
+
+        if ($isSLR) {
+            return $this->generateSLRScenario($gene, $targetKey);
+        } elseif ($type === 'AD' || $type === 'AID') {
+            return $this->generateDominantScenario($gene, $targetKey);
+        } else {
+            return $this->generateRecessiveScenario($gene, $targetKey);
+        }
+    }
+
+    /**
+     * 伴性劣性遺伝シナリオ
+     */
+    private function generateSLRScenario(array $gene, string $targetKey): array
+    {
+        return [
+            'totalGenerations' => 2,
+            'phases' => [
+                [
+                    'phase' => 1,
+                    'title_key' => 'pf_scenario_slr_phase1',
+                    'title_params' => ['locus' => strtoupper($gene['locus'])],
+                    'pairings' => [
+                        [
+                            'male_key' => 'green',
+                            'male_note_key' => 'pf_any_male',
+                            'female_key' => $gene['colorKey'],
+                            'female_note_key' => 'pf_expressing_female',
+                            'result_key' => 'pf_scenario_slr_result1',
+                            'result_params' => ['locus' => strtoupper($gene['locus'])],
+                        ]
+                    ],
+                ],
+                [
+                    'phase' => 2,
+                    'title_key' => 'pf_scenario_slr_phase2',
+                    'title_params' => ['locus' => strtoupper($gene['locus'])],
+                    'pairings' => [
+                        [
+                            'male_key' => 'split_male',
+                            'male_note_key' => 'pf_split_male_from_g1',
+                            'female_key' => 'any_female',
+                            'female_note_key' => 'pf_any_female',
+                            'result_key' => 'pf_scenario_slr_result2',
+                            'result_params' => ['target' => $targetKey],
+                        ]
+                    ],
+                ],
+            ],
+            'summary_key' => 'pf_scenario_slr_summary',
+            'summary_params' => ['target' => $targetKey],
+        ];
+    }
+
+    /**
+     * 優性遺伝シナリオ（Dark, Violet, Pied Dom）
+     */
+    private function generateDominantScenario(array $gene, string $targetKey): array
+    {
+        $isIncomplete = ($gene['type'] === 'AID');
+        $needsHomozygous = in_array($gene['allele'], ['DD', 'VV', 'PiPi']);
+
+        if ($needsHomozygous) {
+            // DD/VVが必要な場合: 2世代
+            return [
+                'totalGenerations' => 2,
+                'phases' => [
+                    [
+                        'phase' => 1,
+                        'title_key' => 'pf_scenario_dom_phase1',
+                        'title_params' => ['locus' => strtoupper($gene['locus'])],
+                        'pairings' => [
+                            [
+                                'male_key' => $gene['colorKey'],
+                                'male_note_key' => $isIncomplete ? 'pf_sf_individual' : 'pf_expressing',
+                                'female_key' => $gene['colorKey'],
+                                'female_note_key' => $isIncomplete ? 'pf_sf_individual' : 'pf_expressing',
+                                'result_key' => 'pf_scenario_dom_result1',
+                                'result_params' => ['locus' => strtoupper($gene['locus'])],
+                            ]
+                        ],
+                    ],
+                    [
+                        'phase' => 2,
+                        'title_key' => 'pf_scenario_dom_phase2',
+                        'pairings' => [
+                            [
+                                'male_key' => 'df_individual',
+                                'male_note_key' => 'pf_df_from_g1',
+                                'female_key' => 'any_female',
+                                'result_key' => 'pf_scenario_dom_result2',
+                                'result_params' => ['target' => $targetKey],
+                            ]
+                        ],
+                    ],
+                ],
+                'summary_key' => 'pf_scenario_dom_summary',
+                'summary_params' => ['target' => $targetKey],
+            ];
+        } else {
+            // Dd/Vvでよい場合: 1世代
+            return [
+                'totalGenerations' => 1,
+                'phases' => [
+                    [
+                        'phase' => 1,
+                        'title_key' => 'pf_scenario_simple',
+                        'pairings' => [
+                            [
+                                'male_key' => $gene['colorKey'],
+                                'female_key' => 'green',
+                                'result_key' => 'pf_scenario_simple_result',
+                                'result_params' => ['target' => $targetKey, 'prob' => '50'],
+                            ]
+                        ],
+                    ],
+                ],
+                'summary_key' => 'pf_scenario_simple_summary',
+                'summary_params' => ['target' => $targetKey],
+            ];
+        }
+    }
+
+    /**
+     * 常染色体劣性遺伝シナリオ
+     */
+    private function generateRecessiveScenario(array $gene, string $targetKey): array
+    {
+        return [
+            'totalGenerations' => 2,
+            'phases' => [
+                [
+                    'phase' => 1,
+                    'title_key' => 'pf_scenario_ar_phase1',
+                    'title_params' => ['locus' => strtoupper($gene['locus'])],
+                    'pairings' => [
+                        [
+                            'male_key' => $gene['colorKey'],
+                            'male_note_key' => 'pf_expressing',
+                            'female_key' => 'green',
+                            'female_note_key' => 'pf_wildtype',
+                            'result_key' => 'pf_scenario_ar_result1',
+                            'result_params' => ['locus' => strtoupper($gene['locus'])],
+                        ]
+                    ],
+                ],
+                [
+                    'phase' => 2,
+                    'title_key' => 'pf_scenario_ar_phase2',
+                    'pairings' => [
+                        [
+                            'male_key' => 'split_from_g1',
+                            'female_key' => 'split_from_g1',
+                            'result_key' => 'pf_scenario_ar_result2',
+                            'result_params' => ['target' => $targetKey],
+                        ]
+                    ],
+                ],
+            ],
+            'summary_key' => 'pf_scenario_ar_summary',
+            'summary_params' => ['target' => $targetKey],
+        ];
+    }
+
+    /**
+     * 複数遺伝子シナリオ（メイン）
+     */
+    private function generateMultiGeneScenario(array $requiredGenes, string $targetKey): array
+    {
+        $autosomal = $requiredGenes['autosomal'];
+        $slr = $requiredGenes['slr'];
+        $totalGenes = count($autosomal) + count($slr);
+
+        // 世代数計算
+        // 各遺伝子を導入 → 組み合わせ → 固定
+        $introGenerations = max(
+            !empty($autosomal) ? 1 : 0,
+            !empty($slr) ? 1 : 0
+        );
+        $fixGenerations = !empty($autosomal) ? 1 : 0; // AR固定に1世代
+        $combineGenerations = ($totalGenes > 1) ? ceil(($totalGenes - 1) / 2) : 0;
+        $totalGenerations = $introGenerations + $fixGenerations + $combineGenerations + 1;
+        $totalGenerations = min($totalGenerations, 4); // 最大4世代
+
+        $phases = [];
+        $currentPhase = 1;
+
+        // フェーズ1: 基礎個体の導入
+        $phase1Pairings = [];
+        $geneList = [];
+
+        foreach ($autosomal as $g) {
+            $geneList[] = strtoupper($g['locus']);
+            $phase1Pairings[] = [
+                'purpose_key' => 'pf_introduce_autosomal',
+                'purpose_params' => ['locus' => strtoupper($g['locus'])],
+                'male_key' => $g['colorKey'],
+                'female_key' => 'green',
+                'result_key' => 'pf_all_split',
+            ];
+        }
+
+        foreach ($slr as $g) {
+            $geneList[] = strtoupper($g['locus']);
+            $phase1Pairings[] = [
+                'purpose_key' => 'pf_introduce_slr_gene',
+                'purpose_params' => ['locus' => strtoupper($g['locus'])],
+                'male_key' => 'green',
+                'female_key' => $g['colorKey'],
+                'result_key' => 'pf_male_split_female_half',
+                'result_params' => ['locus' => strtoupper($g['locus'])],
+            ];
+        }
+
+        $phases[] = [
+            'phase' => $currentPhase,
+            'title_key' => 'pf_phase_intro',
+            'description_key' => 'pf_phase_intro_desc',
+            'description_params' => ['genes' => implode(' + ', $geneList)],
+            'pairings' => $phase1Pairings,
+        ];
+        $currentPhase++;
+
+        // フェーズ2: 遺伝子の組み合わせ
+        if ($totalGenes > 1) {
+            $phases[] = [
+                'phase' => $currentPhase,
+                'title_key' => 'pf_phase_combine',
+                'description_key' => 'pf_phase_combine_desc',
+                'pairings' => [
+                    [
+                        'purpose_key' => 'pf_combine_genes',
+                        'male_key' => 'split_from_phase1',
+                        'male_note_key' => 'pf_with_genes',
+                        'male_note_params' => ['genes' => implode('+', $geneList)],
+                        'female_key' => 'split_from_phase1',
+                        'result_key' => 'pf_combine_result',
+                    ]
+                ],
+            ];
+            $currentPhase++;
+        }
+
+        // フェーズ3: 最終固定・作出
+        $phases[] = [
+            'phase' => $currentPhase,
+            'title_key' => 'pf_phase_final',
+            'description_key' => 'pf_phase_final_desc',
+            'description_params' => ['target' => $targetKey],
+            'pairings' => [
+                [
+                    'purpose_key' => 'pf_final_cross',
+                    'male_key' => 'multi_split',
+                    'male_note_key' => 'pf_all_required_genes',
+                    'female_key' => 'multi_split_or_expressing',
+                    'result_key' => 'pf_final_result',
+                    'result_params' => ['target' => $targetKey],
+                ]
+            ],
+            'final_note_key' => 'pf_final_note',
+            'final_note_params' => ['target' => $targetKey],
+        ];
+
+        return [
+            'totalGenerations' => $totalGenerations,
+            'requiredGenes' => $geneList,
+            'phases' => $phases,
+            'summary_key' => 'pf_scenario_multi_summary',
+            'summary_params' => [
+                'target' => $targetKey,
+                'gens' => $totalGenerations,
+                'genes' => implode(', ', $geneList),
+            ],
+        ];
     }
 
     // ========================================
