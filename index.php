@@ -1693,18 +1693,7 @@ function closeBirdForm() {
 </script>
 
 
-    <script>
-function showTab(id){
-    document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
-    const target = document.getElementById(id);
-    if(target){
-        target.classList.add('active');
-        setTimeout(()=>{
-            target.scrollIntoView({behavior:'smooth', block:'start'});
-        }, 50);
-    }
-}
-</script>
+    <!-- v7.3.11: showTab()はapp.jsに統合 -->
 <script src="family.js?v=674"></script>
 <script src="app.js?v=<?= time() ?>"></script>
 <script>if(typeof initLang==='function')initLang(T);</script>

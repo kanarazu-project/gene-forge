@@ -24,8 +24,14 @@ function showTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.guide-item').forEach(g => g.classList.remove('active'));
     const tab = document.getElementById(tabId);
-    if (tab) tab.classList.add('active');
-    
+    if (tab) {
+        tab.classList.add('active');
+        // v7.3.11: スクロールを復元
+        setTimeout(() => {
+            tab.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }, 50);
+    }
+
     if (tabId === 'birddb') {
         refreshBirdList();
         refreshDBSelectors();
