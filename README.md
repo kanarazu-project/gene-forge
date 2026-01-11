@@ -76,7 +76,7 @@ The "$150k - $500k+" estimate depends on context:
 
 ### 🗂️ Specimen Management
 - **Individual Database**: Centralized management of Name, Sex, Birthday, Pedigree, and Genotype
-- **Demo Data (66 specimens)**: Includes 3 families (22 birds each) for immediate system verification
+- **Demo Data (128 specimens)**: 32 colors × 2 sexes × 2 birds each for immediate system verification
 - **Pedigree Generation**: HTML output for 3-generation and 5-generation pedigree charts
 - **Import / Export**: Full support for JSON and CSV formats
 
@@ -177,7 +177,7 @@ Gene-Forgeでは、**すべての遺伝データが `genetics.php` に一元化*
 | ファイル | タブ/機能 | 主な役割 |
 |---------|----------|---------|
 | **app.js** | 全体 | タブ切り替え、i18n (多言語)、Toast通知、初期化処理 |
-| **birds.js** | 📁 個体管理 | localStorage個体DB、登録/編集/削除、デモデータ66羽、CSV/JSONエクスポート |
+| **birds.js** | 📁 個体管理 | localStorage個体DB、登録/編集/削除、デモデータ128羽、CSV/JSONエクスポート |
 | **family.js** | 👨‍👩‍👧 家系推論 | 家系図UI、ドラッグ&ドロップ、個体入力モーダル、FamilyEstimatorV3呼び出し |
 | **guardian.js** | 🛡️ 健康評価 | 近交係数計算、INO/Pallid警告、世代制限チェック、リスク評価 |
 | **breeding.js** | 🧬 繁殖結果 | 子孫確率計算結果の表示、スプリット表記、カラーカード生成 |
@@ -194,7 +194,7 @@ BirdDB = {
     delete(id)         // 削除
     exportJSON()       // JSONエクスポート
     importCSV(csv)     // CSVインポート
-    loadDemoData()     // デモデータ66羽読み込み
+    loadDemoData()     // デモデータ128羽読み込み
     migrateGenotypeToV7() // v7形式変換 (連鎖遺伝対応)
 }
 ```
@@ -579,7 +579,7 @@ curl -X POST http://localhost:8000/infer.php \
 
 ## 🧪 Demo Data for Verification
 
-Demo mode includes **66 specimens** (3 families × 22 birds each) for the following tests:
+Demo mode includes **128 specimens** (32 colors × 2 sexes × 2 birds) for the following tests:
 
 ### Health Evaluation Tests
 - Sire × Daughter → Critical risk (F ≈ 43.75%, 3-generation pedigree)

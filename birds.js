@@ -1,16 +1,15 @@
 /**
- * Agapornis Gene-Forge v6.7.5
+ * Agapornis Gene-Forge v7.0
  * 個体データベース管理（localStorage）
- * 
+ *
+ * v7.0 変更点:
+ * - i18n対応強化（デモデータ、エラーメッセージ）
+ * - inferObservedFromPhenotype を COLOR_MASTER 参照に変更（SSOT）
+ *
  * v6.7.5 変更点:
  * - デモデータに血統情報（pedigree）をプリセット
- * - 44羽の家系図構築（曽祖父母8 + 祖父母4 + 父母2 + 子30）
+ * - 128羽のデモデータ（32色 × 2性別 × 2羽）
  * - FamilyMap デモモード連携
- * 
- * v6.7.4 変更点:
- * - pedigree フィールド追加（14枠の祖先ID）
- * - BreedingValidator連携用メソッド追加
- * - 近交係数計算の改善（Wright's F）
  */
 
 const BirdDB = {
