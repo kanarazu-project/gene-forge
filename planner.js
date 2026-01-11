@@ -1407,7 +1407,7 @@ function runPlanner() {
     const targetName = multiGenPlan.targetName;
     const analysis = multiGenPlan.analysis;
 
-    let html = `<div class="output-header"><span class="output-title" style="color: #1565c0 !important;">🎯 ${targetName} ${_t('bp_production_plan', 'Production Plan')}</span></div>`;
+    let html = `<div class="output-header"><span class="output-title" style="color: #4fc3f7 !important;">🎯 ${targetName} ${_t('bp_production_plan', 'Production Plan')}</span></div>`;
 
     // v7.1: 遺伝子ギャップ分析を表示
     if (analysis && analysis.missing && analysis.missing.length > 0) {
