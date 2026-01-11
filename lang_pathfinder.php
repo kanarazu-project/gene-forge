@@ -208,6 +208,20 @@ $pf_ja = [
     'pf_avail_note_normal' => '以下の羽色は専門ブリーダーで入手可能ですが、多少の待ち時間があるかもしれません',
     'pf_avail_badge_difficult' => '入手困難',
     'pf_avail_badge_normal' => 'やや希少',
+
+    // v7.3.14: Phase Inference Display (i18n compliant)
+    'phase_inference_title' => '連鎖遺伝の相（Phase）推論',
+    'phase_z_linked' => 'Z染色体連鎖（cin-ino-op）',
+    'phase_result' => '推定結果:',
+    'phase_z_cis' => 'Cis（シス）- cin-ino が同一染色体上',
+    'phase_z_trans' => 'Trans（トランス）- cin と ino が別染色体上',
+    'phase_confidence' => '信頼度:',
+    'phase_evidence' => '根拠:',
+    'phase_z_cis_tip' => 'Cisの場合、Lacewing（cin+ino同時発現）の子が約24%の確率で生まれます',
+    'phase_z_trans_tip' => 'Transの場合、Lacewing子は約1.5%と非常に稀です（組み換えが必要）',
+    'phase_auto_linked' => '常染色体連鎖（dark-parblue）',
+    'phase_auto_cis' => 'Cis - D-aq/d-+ または d-aq/D-+',
+    'phase_auto_trans' => 'Trans - D-+/d-aq',
 ];
 
 // ============================================================
@@ -409,6 +423,20 @@ $pf_en = [
     'pf_avail_note_normal' => 'The following colors are available from specialist breeders but may require some waiting time',
     'pf_avail_badge_difficult' => 'Hard to get',
     'pf_avail_badge_normal' => 'Uncommon',
+
+    // v7.3.14: Phase Inference Display (i18n compliant)
+    'phase_inference_title' => 'Linkage Phase Inference',
+    'phase_z_linked' => 'Z-Linked (cin-ino-op)',
+    'phase_result' => 'Result:',
+    'phase_z_cis' => 'Cis - cin-ino on same chromosome',
+    'phase_z_trans' => 'Trans - cin and ino on separate chromosomes',
+    'phase_confidence' => 'Confidence:',
+    'phase_evidence' => 'Evidence:',
+    'phase_z_cis_tip' => 'With Cis, ~24% chance of Lacewing offspring (cin+ino co-expression)',
+    'phase_z_trans_tip' => 'With Trans, Lacewing offspring are rare (~1.5%, requires recombination)',
+    'phase_auto_linked' => 'Autosomal Linkage (dark-parblue)',
+    'phase_auto_cis' => 'Cis - D-aq/d-+ or d-aq/D-+',
+    'phase_auto_trans' => 'Trans - D-+/d-aq',
 ];
 
 // ============================================================
@@ -553,6 +581,20 @@ $pf_de = [
     'pf_avail_note_normal' => 'Die folgenden Farben sind bei spezialisierten Züchtern erhältlich, können aber Wartezeit erfordern',
     'pf_avail_badge_difficult' => 'Schwer erhältlich',
     'pf_avail_badge_normal' => 'Selten',
+
+    // v7.3.14: Phase Inference Display (i18n compliant)
+    'phase_inference_title' => 'Kopplungsphase-Inferenz',
+    'phase_z_linked' => 'Z-gebunden (cin-ino-op)',
+    'phase_result' => 'Ergebnis:',
+    'phase_z_cis' => 'Cis - cin-ino auf demselben Chromosom',
+    'phase_z_trans' => 'Trans - cin und ino auf verschiedenen Chromosomen',
+    'phase_confidence' => 'Konfidenz:',
+    'phase_evidence' => 'Nachweis:',
+    'phase_z_cis_tip' => 'Bei Cis: ~24% Chance auf Lacewing-Nachkommen (cin+ino Ko-Expression)',
+    'phase_z_trans_tip' => 'Bei Trans: Lacewing-Nachkommen sind selten (~1,5%, Rekombination erforderlich)',
+    'phase_auto_linked' => 'Autosomale Kopplung (dark-parblue)',
+    'phase_auto_cis' => 'Cis - D-aq/d-+ oder d-aq/D-+',
+    'phase_auto_trans' => 'Trans - D-+/d-aq',
 ];
 
 // ============================================================
@@ -697,6 +739,20 @@ $pf_fr = [
     'pf_avail_note_normal' => 'Les couleurs suivantes sont disponibles chez les éleveurs spécialisés mais peuvent nécessiter un délai d\'attente',
     'pf_avail_badge_difficult' => 'Rare',
     'pf_avail_badge_normal' => 'Peu courant',
+
+    // v7.3.14: Phase Inference Display (i18n compliant)
+    'phase_inference_title' => 'Inférence de Phase de Liaison',
+    'phase_z_linked' => 'Liaison Z (cin-ino-op)',
+    'phase_result' => 'Résultat:',
+    'phase_z_cis' => 'Cis - cin-ino sur le même chromosome',
+    'phase_z_trans' => 'Trans - cin et ino sur des chromosomes différents',
+    'phase_confidence' => 'Confiance:',
+    'phase_evidence' => 'Preuve:',
+    'phase_z_cis_tip' => 'Avec Cis: ~24% de chance d\'obtenir des descendants Lacewing (co-expression cin+ino)',
+    'phase_z_trans_tip' => 'Avec Trans: les descendants Lacewing sont rares (~1,5%, recombinaison nécessaire)',
+    'phase_auto_linked' => 'Liaison Autosomale (dark-parblue)',
+    'phase_auto_cis' => 'Cis - D-aq/d-+ ou d-aq/D-+',
+    'phase_auto_trans' => 'Trans - D-+/d-aq',
 ];
 
 // ============================================================
@@ -841,6 +897,20 @@ $pf_it = [
     'pf_avail_note_normal' => 'I seguenti colori sono disponibili presso allevatori specializzati ma potrebbero richiedere tempi di attesa',
     'pf_avail_badge_difficult' => 'Raro',
     'pf_avail_badge_normal' => 'Non comune',
+
+    // v7.3.14: Phase Inference Display (i18n compliant)
+    'phase_inference_title' => 'Inferenza della Fase di Linkage',
+    'phase_z_linked' => 'Linkage Z (cin-ino-op)',
+    'phase_result' => 'Risultato:',
+    'phase_z_cis' => 'Cis - cin-ino sullo stesso cromosoma',
+    'phase_z_trans' => 'Trans - cin e ino su cromosomi diversi',
+    'phase_confidence' => 'Confidenza:',
+    'phase_evidence' => 'Evidenza:',
+    'phase_z_cis_tip' => 'Con Cis: ~24% di probabilità di ottenere discendenti Lacewing (co-espressione cin+ino)',
+    'phase_z_trans_tip' => 'Con Trans: i discendenti Lacewing sono rari (~1,5%, richiede ricombinazione)',
+    'phase_auto_linked' => 'Linkage Autosomico (dark-parblue)',
+    'phase_auto_cis' => 'Cis - D-aq/d-+ o d-aq/D-+',
+    'phase_auto_trans' => 'Trans - D-+/d-aq',
 ];
 
 // ============================================================
@@ -985,4 +1055,18 @@ $pf_es = [
     'pf_avail_note_normal' => 'Los siguientes colores están disponibles en criadores especializados pero pueden requerir tiempo de espera',
     'pf_avail_badge_difficult' => 'Raro',
     'pf_avail_badge_normal' => 'Poco común',
+
+    // v7.3.14: Phase Inference Display (i18n compliant)
+    'phase_inference_title' => 'Inferencia de Fase de Ligamiento',
+    'phase_z_linked' => 'Ligamiento Z (cin-ino-op)',
+    'phase_result' => 'Resultado:',
+    'phase_z_cis' => 'Cis - cin-ino en el mismo cromosoma',
+    'phase_z_trans' => 'Trans - cin e ino en cromosomas diferentes',
+    'phase_confidence' => 'Confianza:',
+    'phase_evidence' => 'Evidencia:',
+    'phase_z_cis_tip' => 'Con Cis: ~24% de probabilidad de obtener descendientes Lacewing (co-expresión cin+ino)',
+    'phase_z_trans_tip' => 'Con Trans: los descendientes Lacewing son raros (~1,5%, requiere recombinación)',
+    'phase_auto_linked' => 'Ligamiento Autosómico (dark-parblue)',
+    'phase_auto_cis' => 'Cis - D-aq/d-+ o d-aq/D-+',
+    'phase_auto_trans' => 'Trans - D-+/d-aq',
 ];
