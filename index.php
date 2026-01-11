@@ -1395,8 +1395,10 @@ $mPh = $_POST['m_ph'] ?? '++';
                 <div class="output-panel" style="margin-top:1rem;"><div class="offspring-grid">
                     <?php foreach($offspring as $o): ?>
                     <?php
+                    // v7は'probability'、旧形式は'prob'を使用
+                    $rawProb = $o['prob'] ?? $o['probability'] ?? 0;
                     // probが1以上ならパーセント値、1未満なら小数
-                    $probValue = $o['prob'] > 1 ? $o['prob'] : $o['prob'] * 100;
+                    $probValue = $rawProb > 1 ? $rawProb : $rawProb * 100;
                     ?>
                     <div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($probValue, 1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype'] ?? $o['displayName'] ?? '') ?></div></div><?php endforeach; ?>
                 </div></div>
