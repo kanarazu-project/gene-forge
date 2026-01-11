@@ -4024,16 +4024,19 @@ class PathFinder
         $totalGenes = count($autosomal) + count($slr);
 
         $geneList = [];
+        $allGenes = array_merge($autosomal, $slr);
         foreach ($autosomal as $g) { $geneList[] = strtoupper($g['locus']); }
         foreach ($slr as $g) { $geneList[] = strtoupper($g['locus']); }
 
         $phases = [];
         $currentPhase = 1;
 
+        // ============================================
         // フェーズ1: 基礎個体の導入（各遺伝子を個別に導入）
+        // ============================================
         $phase1Pairings = [];
 
-        foreach ($autosomal as $g) {
+        foreach ($autosomal as $idx => $g) {
             $phase1Pairings[] = [
                 'purpose_key' => 'pf_introduce_autosomal',
                 'purpose_params' => ['locus' => strtoupper($g['locus'])],
@@ -4043,7 +4046,7 @@ class PathFinder
             ];
         }
 
-        foreach ($slr as $g) {
+        foreach ($slr as $idx => $g) {
             $phase1Pairings[] = [
                 'purpose_key' => 'pf_introduce_slr_gene',
                 'purpose_params' => ['locus' => strtoupper($g['locus'])],
@@ -4056,86 +4059,85 @@ class PathFinder
 
         $phases[] = [
             'phase' => $currentPhase,
-            'title_key' => 'pf_phase_intro',
+            'title_key' => 'pf_phase_n_intro',
+            'title_params' => ['n' => $currentPhase],
             'description_key' => 'pf_phase_intro_desc',
             'description_params' => ['genes' => implode(' + ', $geneList)],
             'pairings' => $phase1Pairings,
         ];
         $currentPhase++;
 
-        // フェーズ2以降: 遺伝子を段階的に組み合わせ
-        // 2つの遺伝子の場合: 1回の交配で組み合わせ
-        // 3つ以上の場合: 段階的に組み合わせ
-        if ($totalGenes === 2) {
-            // 2遺伝子: フェーズ1の異なる系統から1羽ずつ交配
-            $phases[] = [
-                'phase' => $currentPhase,
-                'title_key' => 'pf_phase_combine',
-                'description_key' => 'pf_phase_combine_desc_2gene',
-                'pairings' => [
-                    [
-                        'purpose_key' => 'pf_combine_two_lines',
-                        'male_key' => 'split_line_a',
-                        'male_note_key' => 'pf_from_pairing_1',
-                        'male_note_params' => ['gene' => $geneList[0]],
-                        'female_key' => 'split_line_b',
-                        'female_note_key' => 'pf_from_pairing_2',
-                        'female_note_params' => ['gene' => $geneList[1]],
-                        'result_key' => 'pf_some_have_both',
-                        'result_params' => ['genes' => implode('+', $geneList)],
-                    ]
-                ],
-            ];
-            $currentPhase++;
-        } elseif ($totalGenes >= 3) {
-            // 3遺伝子以上: 段階的に組み合わせ
-            // まず2系統を交配
-            $phases[] = [
-                'phase' => $currentPhase,
-                'title_key' => 'pf_phase_combine_step1',
-                'description_key' => 'pf_phase_combine_desc_first',
-                'pairings' => [
-                    [
-                        'purpose_key' => 'pf_combine_first_two',
-                        'male_key' => 'split_line_a',
-                        'male_note_key' => 'pf_from_pairing_1',
-                        'male_note_params' => ['gene' => $geneList[0]],
-                        'female_key' => 'split_line_b',
-                        'female_note_key' => 'pf_from_pairing_2',
-                        'female_note_params' => ['gene' => $geneList[1]],
-                        'result_key' => 'pf_some_have_two',
-                        'result_params' => ['gene1' => $geneList[0], 'gene2' => $geneList[1]],
-                    ]
-                ],
-            ];
-            $currentPhase++;
+        // ============================================
+        // フェーズ2〜N-1: 遺伝子を段階的に組み合わせ
+        // 1世代につき1つの系統を追加していく
+        // ============================================
 
-            // 次に3つ目を追加
-            $phases[] = [
-                'phase' => $currentPhase,
-                'title_key' => 'pf_phase_combine_step2',
-                'description_key' => 'pf_phase_combine_desc_third',
-                'pairings' => [
-                    [
-                        'purpose_key' => 'pf_add_third_gene',
-                        'male_key' => 'dual_split',
-                        'male_note_key' => 'pf_with_two_genes',
-                        'male_note_params' => ['gene1' => $geneList[0], 'gene2' => $geneList[1]],
-                        'female_key' => 'split_line_c',
-                        'female_note_key' => 'pf_from_pairing_3',
-                        'female_note_params' => ['gene' => $geneList[2]],
-                        'result_key' => 'pf_some_have_all',
-                        'result_params' => ['genes' => implode('+', $geneList)],
-                    ]
-                ],
-            ];
+        // 組み合わせが必要な回数 = 遺伝子数 - 1
+        // 例: 3遺伝子 → 2回の組み合わせ (A+B, then AB+C)
+        // 例: 4遺伝子 → 3回の組み合わせ (A+B, AB+C, ABC+D)
+
+        for ($combineStep = 0; $combineStep < $totalGenes - 1; $combineStep++) {
+            if ($combineStep === 0) {
+                // 最初の組み合わせ: 系統1 × 系統2
+                $phases[] = [
+                    'phase' => $currentPhase,
+                    'title_key' => 'pf_phase_n_combine',
+                    'title_params' => ['n' => $currentPhase],
+                    'description_key' => 'pf_combine_two_lines_desc',
+                    'description_params' => ['gene1' => $geneList[0], 'gene2' => $geneList[1]],
+                    'pairings' => [
+                        [
+                            'purpose_key' => 'pf_cross_lines',
+                            'purpose_params' => ['line1' => 1, 'line2' => 2],
+                            'male_key' => 'g1_line1',
+                            'male_note_key' => 'pf_from_line_n',
+                            'male_note_params' => ['n' => 1, 'gene' => $geneList[0]],
+                            'female_key' => 'g1_line2',
+                            'female_note_key' => 'pf_from_line_n',
+                            'female_note_params' => ['n' => 2, 'gene' => $geneList[1]],
+                            'result_key' => 'pf_some_carry_genes',
+                            'result_params' => ['genes' => $geneList[0] . '+' . $geneList[1]],
+                        ]
+                    ],
+                ];
+            } else {
+                // 2回目以降: 前世代の複合個体 × 次の系統
+                $nextGeneIdx = $combineStep + 1;
+                $previousGenes = array_slice($geneList, 0, $nextGeneIdx);
+                $nextGene = $geneList[$nextGeneIdx];
+
+                $phases[] = [
+                    'phase' => $currentPhase,
+                    'title_key' => 'pf_phase_n_add_gene',
+                    'title_params' => ['n' => $currentPhase, 'gene' => $nextGene],
+                    'description_key' => 'pf_add_next_gene_desc',
+                    'description_params' => ['gene' => $nextGene],
+                    'pairings' => [
+                        [
+                            'purpose_key' => 'pf_add_gene_to_line',
+                            'purpose_params' => ['gene' => $nextGene],
+                            'male_key' => 'prev_gen_multi',
+                            'male_note_key' => 'pf_carrying_genes',
+                            'male_note_params' => ['genes' => implode('+', $previousGenes)],
+                            'female_key' => 'g1_line_n',
+                            'female_note_key' => 'pf_from_line_n',
+                            'female_note_params' => ['n' => $nextGeneIdx + 1, 'gene' => $nextGene],
+                            'result_key' => 'pf_some_carry_genes',
+                            'result_params' => ['genes' => implode('+', array_slice($geneList, 0, $nextGeneIdx + 1))],
+                        ]
+                    ],
+                ];
+            }
             $currentPhase++;
         }
 
+        // ============================================
         // 最終フェーズ: ホモ化・作出
+        // ============================================
         $phases[] = [
             'phase' => $currentPhase,
-            'title_key' => 'pf_phase_final',
+            'title_key' => 'pf_phase_n_final',
+            'title_params' => ['n' => $currentPhase],
             'description_key' => 'pf_phase_final_desc',
             'description_params' => ['target' => $targetKey],
             'pairings' => [
@@ -4152,7 +4154,7 @@ class PathFinder
             'final_note_params' => ['target' => $targetKey],
         ];
 
-        // 世代数計算（フェーズ数）
+        // 世代数 = フェーズ数
         $totalGenerations = count($phases);
 
         return [
