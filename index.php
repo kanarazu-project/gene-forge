@@ -1117,8 +1117,8 @@ $mPh = $_POST['m_ph'] ?? '++';
                                 : 'Recombination rates: cin-ino 3%, ino-op 30%, dark-parblue 7%' ?>
                         </p>
 
-                        <!-- オス用 相(Phase)選択 -->
-                        <div id="fatherPhaseUI" style="margin-top: 1rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 4px;">
+                        <!-- オス用 相(Phase)選択 - 複数伴性変異かつ相が不明な場合のみ表示 -->
+                        <div id="fatherPhaseUI" style="display: none; margin-top: 1rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 4px;">
                             <label style="font-weight: bold;">♂ <?= $lang === 'ja' ? 'Z染色体の相 (Phase)' : 'Z Chromosome Phase' ?></label>
                             <div style="display: flex; gap: 1rem; margin-top: 0.5rem; flex-wrap: wrap;">
                                 <label><input type="radio" name="f_z_phase" value="unknown" checked> <?= $lang === 'ja' ? '不明' : 'Unknown' ?></label>
@@ -1223,31 +1223,84 @@ $mPh = $_POST['m_ph'] ?? '++';
                         genoEl.value = '';
                     }
 
-                    // オス(f)の場合、Z_linkedからPhaseを自動検出
-                    if (prefix === 'f' && bird.genotype && bird.genotype.Z_linked) {
-                        const zLinked = bird.genotype.Z_linked;
-                        const z1 = zLinked.Z1 || {};
-                        const z2 = zLinked.Z2 || {};
-
-                        // Cis: cin と ino が同じ染色体上
-                        const z1HasCin = z1.cinnamon && z1.cinnamon !== '+';
-                        const z1HasIno = z1.ino && z1.ino !== '+';
-                        const z2HasCin = z2.cinnamon && z2.cinnamon !== '+';
-                        const z2HasIno = z2.ino && z2.ino !== '+';
-
-                        let detectedPhase = 'unknown';
-                        if ((z1HasCin && z1HasIno) || (z2HasCin && z2HasIno)) {
-                            detectedPhase = 'cis';
-                        } else if ((z1HasCin && z2HasIno) || (z1HasIno && z2HasCin)) {
-                            detectedPhase = 'trans';
-                        }
-
-                        // Phase ラジオボタンを設定
-                        const phaseRadio = document.querySelector(`input[name="f_z_phase"][value="${detectedPhase}"]`);
-                        if (phaseRadio) phaseRadio.checked = true;
+                    // オス(f)の場合、Phase UI の表示/非表示を制御
+                    if (prefix === 'f') {
+                        updatePhaseUI(bird);
                     }
 
                     return false;
+                }
+
+                /**
+                 * Phase UI の表示/非表示を制御
+                 * - 複数の伴性変異を持つオスのみ対象
+                 * - 相が確定している場合は非表示（自動設定）
+                 * - 相が不明な場合のみ選択UIを表示
+                 */
+                function updatePhaseUI(bird) {
+                    const phaseUI = document.getElementById('fatherPhaseUI');
+                    if (!phaseUI) return;
+
+                    // デフォルトは非表示
+                    phaseUI.style.display = 'none';
+
+                    // オスでない、またはgenotype/Z_linkedがない場合は非表示
+                    if (!bird || bird.sex !== 'male' || !bird.genotype) {
+                        return;
+                    }
+
+                    const zLinked = bird.genotype.Z_linked;
+                    if (!zLinked) return;
+
+                    const z1 = zLinked.Z1 || {};
+                    const z2 = zLinked.Z2 || {};
+
+                    // 各伴性座位の変異をカウント
+                    const z1HasCin = z1.cinnamon && z1.cinnamon !== '+';
+                    const z1HasIno = z1.ino && z1.ino !== '+';
+                    const z1HasOp = z1.opaline && z1.opaline !== '+';
+                    const z2HasCin = z2.cinnamon && z2.cinnamon !== '+';
+                    const z2HasIno = z2.ino && z2.ino !== '+';
+                    const z2HasOp = z2.opaline && z2.opaline !== '+';
+
+                    // 異なる座位の変異数をカウント（同じ座位のホモは1つとカウント）
+                    const hasCin = z1HasCin || z2HasCin;
+                    const hasIno = z1HasIno || z2HasIno;
+                    const hasOp = z1HasOp || z2HasOp;
+                    const mutationCount = (hasCin ? 1 : 0) + (hasIno ? 1 : 0) + (hasOp ? 1 : 0);
+
+                    // 複数の伴性変異がない場合は Phase 無関係
+                    if (mutationCount < 2) {
+                        // unknownにリセット
+                        const unknownRadio = document.querySelector('input[name="f_z_phase"][value="unknown"]');
+                        if (unknownRadio) unknownRadio.checked = true;
+                        return;
+                    }
+
+                    // 相が確定しているかチェック
+                    // Cis: cin と ino が同じ染色体上にある
+                    const isCis = (z1HasCin && z1HasIno) || (z2HasCin && z2HasIno);
+                    // Trans: cin と ino が別々の染色体上にある
+                    const isTrans = (z1HasCin && z2HasIno) || (z1HasIno && z2HasCin);
+
+                    if (isCis) {
+                        // 相が確定(Cis) → UI非表示、自動設定
+                        const cisRadio = document.querySelector('input[name="f_z_phase"][value="cis"]');
+                        if (cisRadio) cisRadio.checked = true;
+                        return;
+                    }
+
+                    if (isTrans) {
+                        // 相が確定(Trans) → UI非表示、自動設定
+                        const transRadio = document.querySelector('input[name="f_z_phase"][value="trans"]');
+                        if (transRadio) transRadio.checked = true;
+                        return;
+                    }
+
+                    // 複数変異あり + 相が不明 → UI表示
+                    phaseUI.style.display = 'block';
+                    const unknownRadio = document.querySelector('input[name="f_z_phase"][value="unknown"]');
+                    if (unknownRadio) unknownRadio.checked = true;
                 }
 
                 // グローバル関数（BirdDB.setMode()から呼ばれる）
