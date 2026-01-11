@@ -1532,8 +1532,11 @@ $mPh = $_POST['m_ph'] ?? '++';
                     $rawProb = $o['prob'] ?? $o['probability'] ?? 0;
                     // probが1以上ならパーセント値、1未満なら小数
                     $probValue = $rawProb > 1 ? $rawProb : $rawProb * 100;
+                    // v7.3.14: 言語に応じた羽色名を選択（非日本語はen）
+                    $langKey = ($lang === 'ja') ? 'ja' : 'en';
+                    $phenoDisplay = $o['phenotype_' . $langKey] ?? $o['phenotype'] ?? $o['displayName'] ?? '';
                     ?>
-                    <div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($probValue, 1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype'] ?? $o['displayName'] ?? '') ?></div></div><?php endforeach; ?>
+                    <div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($probValue, 1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($phenoDisplay) ?></div></div><?php endforeach; ?>
                 </div></div>
                 <?php endif; ?>
                 </div>

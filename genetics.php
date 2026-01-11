@@ -3429,7 +3429,10 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
 
             $genotype = $this->convertToGenotypeArrayV7($geno, $sex);
             $colorInfo = AgapornisLoci::resolveColor($genotype);
-            $colorName = $colorInfo['ja'] ?? 'Unknown';
+            // v7.3.14: 両言語を保存し、表示層で選択できるようにする
+            $colorNameJa = $colorInfo['ja'] ?? 'Unknown';
+            $colorNameEn = $colorInfo['en'] ?? 'Unknown';
+            $colorName = $colorNameJa; // 内部集約用キーは日本語維持
 
             $splits = $this->extractSplitsV7($geno, $sex);
             $splitStr = !empty($splits) ? ' /' . implode(',', $splits) : '';
@@ -3437,7 +3440,9 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
             $phenoKey = $colorName . '|' . $sex;
             if (!isset($phenotypeAggregated[$phenoKey])) {
                 $phenotypeAggregated[$phenoKey] = [
-                    'phenotype' => $colorName,
+                    'phenotype' => $colorNameJa,
+                    'phenotype_ja' => $colorNameJa,
+                    'phenotype_en' => $colorNameEn,
                     'sex' => $sex,
                     'probability' => 0,
                     'splits' => [],
@@ -3460,7 +3465,9 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
                     'genotype' => $geno,
                     'sex' => $sex,
                     'probability' => 0,
-                    'phenotype' => $colorName,
+                    'phenotype' => $colorNameJa,
+                    'phenotype_ja' => $colorNameJa,
+                    'phenotype_en' => $colorNameEn,
                 ];
             }
             $genotypeAggregated[$genoKey]['probability'] += $prob;
