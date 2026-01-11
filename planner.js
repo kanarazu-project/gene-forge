@@ -1083,11 +1083,37 @@ const BreedingPlanner = {
             currentGen--;
         }
 
-        // 最終世代（目標作出）
+        // 最終世代（目標作出）- より具体的な説明を追加
+        const finalGenPairings = [];
+
+        // 中間世代で作出する遺伝子型の説明を生成
+        const requiredFromPrevious = intermediateGoals.map(g => g.locus.toUpperCase()).join(' + ');
+
+        // 最終世代で必要な親の説明
+        const sireDesc = requiredFromPrevious
+            ? this._tp('bp_offspring_with_gene', { gene: requiredFromPrevious }, `${requiredFromPrevious} offspring`)
+            : this._t('bp_intermediate_bird', 'Intermediate bird');
+        const damDesc = requiredFromPrevious
+            ? this._tp('bp_offspring_with_gene', { gene: requiredFromPrevious }, `${requiredFromPrevious} offspring`)
+            : this._t('bp_intermediate_bird', 'Intermediate bird');
+
+        // プレースホルダーペアリングを追加
+        finalGenPairings.push({
+            male: { name: `Gen${currentGen + 1} ${sireDesc} ♂`, isPlanned: true, geneLabel: requiredFromPrevious },
+            female: { name: `Gen${currentGen + 1} ${damDesc} ♀`, isPlanned: true, geneLabel: requiredFromPrevious },
+            probability: this.calculateFinalProbability(intermediateGoals),
+            recommendation: this._tp('bp_select_offspring',
+                { gene: requiredFromPrevious, gen: currentGen + 1 },
+                `Select ${requiredFromPrevious} offspring from Generation ${currentGen + 1}`)
+        });
+
         plan.generations.push({
             genNumber: 1,
             goal: this._tp('bp_goal_produce', { name: targetName }, `Produce ${targetName}`),
-            note: this._t('bp_use_intermediate', 'Use birds from previous generations'),
+            note: this._tp('bp_final_breeding_note',
+                { gene: requiredFromPrevious, gen: currentGen + 1 },
+                `Breed ${requiredFromPrevious} individuals from Gen ${currentGen + 1} together`),
+            pairings: finalGenPairings,
             probability: 'Variable'
         });
 
@@ -1160,6 +1186,23 @@ const BreedingPlanner = {
         goals.sort((a, b) => b.generationOffset - a.generationOffset);
 
         return goals;
+    },
+
+    /**
+     * v7.3.2: 最終世代の確率を計算
+     * 各中間目標の確率を掛け合わせる
+     */
+    calculateFinalProbability(intermediateGoals) {
+        if (!intermediateGoals || intermediateGoals.length === 0) return 1.0;
+
+        // 各段階の確率を掛け合わせる
+        let prob = 1.0;
+        for (const goal of intermediateGoals) {
+            if (goal.probability > 0) {
+                prob *= goal.probability;
+            }
+        }
+        return prob;
     },
 
     /**
@@ -1286,13 +1329,25 @@ const BreedingPlanner = {
         if (gen1 && gen1.pairings && gen1.pairings.length > 0) {
             const topPair = gen1.pairings[0];
             if (topPair.male) {
-                data.sire = this.birdToFamilyMapFormat(topPair.male, 'sire', false);
+                // v7.3.2: isPlanned フラグをチェック
+                if (topPair.male.isPlanned) {
+                    data.sire = this.createPlannedBird('sire', topPair.male.geneLabel || gen1.targetGene, '♂', 1);
+                    data.sire.name = topPair.male.name || data.sire.name;
+                } else {
+                    data.sire = this.birdToFamilyMapFormat(topPair.male, 'sire', false);
+                }
             } else {
                 // 中間個体（まだ作出されていない）
                 data.sire = this.createPlannedBird('sire', gen1.targetGene, '♂', 1);
             }
             if (topPair.female) {
-                data.dam = this.birdToFamilyMapFormat(topPair.female, 'dam', false);
+                // v7.3.2: isPlanned フラグをチェック
+                if (topPair.female.isPlanned) {
+                    data.dam = this.createPlannedBird('dam', topPair.female.geneLabel || gen1.targetGene, '♀', 1);
+                    data.dam.name = topPair.female.name || data.dam.name;
+                } else {
+                    data.dam = this.birdToFamilyMapFormat(topPair.female, 'dam', false);
+                }
             } else {
                 data.dam = this.createPlannedBird('dam', gen1.targetGene, '♀', 1);
             }
