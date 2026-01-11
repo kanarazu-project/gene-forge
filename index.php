@@ -922,9 +922,9 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                                     <span style="color:#6cf;">♂</span>
                                     <strong style="color:#fff;"><?= htmlspecialchars($maleName) ?></strong>
                                     <?php if($maleAvail === 'difficult'): ?>
-                                    <span style="background:#ef5350;color:#fff;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_difficult') ?></span>
+                                    <span style="background:#ef5350;color:#fff;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_badge_difficult') ?></span>
                                     <?php elseif($maleAvail === 'normal'): ?>
-                                    <span style="background:#ffc107;color:#000;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_normal') ?></span>
+                                    <span style="background:#ffc107;color:#000;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_badge_normal') ?></span>
                                     <?php endif; ?>
                                     <?php if($maleNote): ?>
                                     <span style="color:#b0bec5;font-size:.9em;"> — <?= htmlspecialchars($maleNote) ?></span>
@@ -945,9 +945,9 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                                     <span style="color:#f6c;">♀</span>
                                     <strong style="color:#fff;"><?= htmlspecialchars($femaleName) ?></strong>
                                     <?php if($femaleAvail === 'difficult'): ?>
-                                    <span style="background:#ef5350;color:#fff;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_difficult') ?></span>
+                                    <span style="background:#ef5350;color:#fff;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_badge_difficult') ?></span>
                                     <?php elseif($femaleAvail === 'normal'): ?>
-                                    <span style="background:#ffc107;color:#000;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_normal') ?></span>
+                                    <span style="background:#ffc107;color:#000;font-size:.7em;padding:1px 4px;border-radius:3px;margin-left:4px;"><?= t_pf('pf_avail_badge_normal') ?></span>
                                     <?php endif; ?>
                                     <?php if($femaleNote): ?>
                                     <span style="color:#b0bec5;font-size:.9em;"> — <?= htmlspecialchars($femaleNote) ?></span>

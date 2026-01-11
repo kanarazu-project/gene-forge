@@ -204,6 +204,8 @@ $pf_ja = [
     'pf_avail_note_difficult' => '以下の羽色は希少で入手に時間を要する場合があります',
     'pf_avail_warning_normal' => '※ やや希少な祖',
     'pf_avail_note_normal' => '以下の羽色は専門ブリーダーで入手可能ですが、多少の待ち時間があるかもしれません',
+    'pf_avail_badge_difficult' => '入手困難',
+    'pf_avail_badge_normal' => 'やや希少',
 ];
 
 // ============================================================
@@ -401,6 +403,8 @@ $pf_en = [
     'pf_avail_note_difficult' => 'The following colors are rare and may take time to acquire',
     'pf_avail_warning_normal' => '※ Moderately rare',
     'pf_avail_note_normal' => 'The following colors are available from specialist breeders but may require some waiting time',
+    'pf_avail_badge_difficult' => 'Hard to get',
+    'pf_avail_badge_normal' => 'Uncommon',
 ];
 
 // ============================================================
@@ -541,6 +545,8 @@ $pf_de = [
     'pf_avail_note_difficult' => 'Die folgenden Farben sind selten und können Zeit zum Erwerben benötigen',
     'pf_avail_warning_normal' => '※ Mäßig selten',
     'pf_avail_note_normal' => 'Die folgenden Farben sind bei spezialisierten Züchtern erhältlich, können aber Wartezeit erfordern',
+    'pf_avail_badge_difficult' => 'Schwer erhältlich',
+    'pf_avail_badge_normal' => 'Selten',
 ];
 
 // ============================================================
@@ -681,6 +687,8 @@ $pf_fr = [
     'pf_avail_note_difficult' => 'Les couleurs suivantes sont rares et peuvent nécessiter du temps pour les acquérir',
     'pf_avail_warning_normal' => '※ Modérément rare',
     'pf_avail_note_normal' => 'Les couleurs suivantes sont disponibles chez les éleveurs spécialisés mais peuvent nécessiter un délai d\'attente',
+    'pf_avail_badge_difficult' => 'Rare',
+    'pf_avail_badge_normal' => 'Peu courant',
 ];
 
 // ============================================================
@@ -821,6 +829,8 @@ $pf_it = [
     'pf_avail_note_difficult' => 'I seguenti colori sono rari e potrebbero richiedere tempo per l\'acquisizione',
     'pf_avail_warning_normal' => '※ Moderatamente raro',
     'pf_avail_note_normal' => 'I seguenti colori sono disponibili presso allevatori specializzati ma potrebbero richiedere tempi di attesa',
+    'pf_avail_badge_difficult' => 'Raro',
+    'pf_avail_badge_normal' => 'Non comune',
 ];
 
 // ============================================================
@@ -961,4 +971,6 @@ $pf_es = [
     'pf_avail_note_difficult' => 'Los siguientes colores son raros y pueden requerir tiempo para adquirirlos',
     'pf_avail_warning_normal' => '※ Moderadamente raro',
     'pf_avail_note_normal' => 'Los siguientes colores están disponibles en criadores especializados pero pueden requerir tiempo de espera',
+    'pf_avail_badge_difficult' => 'Raro',
+    'pf_avail_badge_normal' => 'Poco común',
 ];
