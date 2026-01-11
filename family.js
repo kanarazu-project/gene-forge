@@ -106,6 +106,35 @@ const FamilyMap = {
         return options;
     },
 
+    /**
+     * v7.3.13: COLOR_MASTERから色ラベルを取得（SSOT準拠）
+     * baseColorOptionsに含まれない色も正しく表示できるようにする
+     */
+    getColorLabel(colorKey) {
+        if (!colorKey) return '?';
+        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+
+        // 1. COLOR_MASTERから直接取得（SSOT）
+        if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorKey]) {
+            return isJa ? COLOR_MASTER[colorKey].ja : COLOR_MASTER[colorKey].en;
+        }
+
+        // 2. keyToLabel関数があれば使用
+        if (typeof keyToLabel === 'function') {
+            const label = keyToLabel(colorKey);
+            if (label && label !== colorKey) return label;
+        }
+
+        // 3. COLOR_LABELSにあれば使用
+        if (typeof COLOR_LABELS !== 'undefined' && COLOR_LABELS[colorKey]) {
+            return COLOR_LABELS[colorKey];
+        }
+
+        // 4. フォールバック: キーをそのまま返す（デバッグ用に明示）
+        console.warn(`[FamilyMap] Unknown color key: ${colorKey}`);
+        return colorKey;
+    },
+
     get darknessOptions() {
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
         return [
@@ -366,7 +395,7 @@ const FamilyMap = {
             const pheno = bird.phenotype || {}, geno = bird.genotype || {};
             let colorLabel;
             if (Object.keys(geno).length > 0 && typeof BirdDB !== 'undefined' && BirdDB.calculatePhenotype) colorLabel = BirdDB.calculatePhenotype(geno, bird.sex);
-            else colorLabel = this.baseColorOptions.find(o => o.value === pheno.baseColor)?.label || '?';
+            else colorLabel = this.getColorLabel(pheno.baseColor);
             const idDisplay = bird.dbId ? `<span class="bird-id">#${bird.dbId}</span>` : '';
             content = `<div class="card-filled"><span class="sex-icon">${bird.sex === 'male' ? '♂' : '♀'}</span><span class="pheno-color">${colorLabel}</span>${bird.name ? `<span class="bird-name">${bird.name}</span>` : ''}${idDisplay}</div>`;
         }
@@ -391,7 +420,7 @@ const FamilyMap = {
             const pheno = bird.phenotype || {}, geno = bird.genotype || {};
             let colorLabel;
             if (Object.keys(geno).length > 0 && typeof BirdDB !== 'undefined' && BirdDB.calculatePhenotype) colorLabel = BirdDB.calculatePhenotype(geno, bird.sex);
-            else colorLabel = this.baseColorOptions.find(o => o.value === pheno.baseColor)?.label || '?';
+            else colorLabel = this.getColorLabel(pheno.baseColor);
             const idDisplay = bird.dbId ? `<span class="bird-id">#${bird.dbId}</span>` : '';
             html += `<div class="child-card ${isTarget ? 'target' : ''}" data-position="offspring_${idx}">
                 <div class="child-header" onclick="FamilyMap.selectSlot('offspring_${idx}')"><span>${T.child}${idx + 1}</span><button class="act-btn del" onclick="event.stopPropagation(); FamilyMap.removeOffspring(${idx})">×</button></div>

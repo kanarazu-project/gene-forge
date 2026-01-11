@@ -19,7 +19,7 @@ const BirdDB = {
     STORAGE_KEY_USER: 'geneforge_birds_user',
     STORAGE_KEY_DEMO: 'geneforge_birds_demo',
     MODE_KEY: 'geneforge_mode',
-    VERSION: '7.3.12',
+    VERSION: '7.3.13',
     
     _currentMode: 'user',
     _initialized: false,
@@ -1228,9 +1228,9 @@ const BirdDB = {
             sire: 'c0_m3', dam: 'c0_f3'
         }, 1);
 
-        // Abby: Simon × Tina の娘 → Cinnamon Violet Aqua
-        // 【推論ポイント】複合形質の推論（cin + violet + aqua）
-        const abby = createInferenceBird('c1_f2', 'Abby', 'female', 'cinnamon_violet_aqua', {
+        // Abby: Simon × Tina の娘 → Cinnamon Aqua (Violetはモディファイア)
+        // 【推論ポイント】複合形質の推論（cin + aqua）
+        const abby = createInferenceBird('c1_f2', 'Abby', 'female', 'cinnamon_aqua', {
             ...this.createEmptyPedigree(),
             sire: 'c0_m4', dam: 'c0_f4'
         }, 1);
@@ -1276,9 +1276,9 @@ const BirdDB = {
             dam_dam_sire: 'c0_m4', dam_dam_dam: 'c0_f4'
         };
 
-        // Child 1: Derek ♂ → Green SF Dark
-        // 【推論】表現型Greenだが、血統から/cin /ino等が推論可能
-        const derek = createInferenceBird('c3_01', 'Derek', 'male', 'green_dark', fullPedigreeC, 3);
+        // Child 1: Derek ♂ → Dark Green (SF Dark)
+        // 【推論】表現型Dark Greenだが、血統から/cin /ino等が推論可能
+        const derek = createInferenceBird('c3_01', 'Derek', 'male', 'darkgreen', fullPedigreeC, 3);
 
         // Child 2: Ellie ♀ → Lutino
         // 【推論】ino発現メス。父Blakeの/inoが証明される
@@ -1312,9 +1312,9 @@ const BirdDB = {
         // 【推論】parblue=tqaq、darkなし
         const liam = createInferenceBird('c3_09', 'Liam', 'male', 'seagreen', fullPedigreeC, 3);
 
-        // Child 10: Nadia ♀ → Creamino Turquoise
-        // 【推論】ino発現 + turquoise
-        const nadia = createInferenceBird('c3_10', 'Nadia', 'female', 'creamino_turquoise', fullPedigreeC, 3);
+        // Child 10: Nadia ♀ → Pure White (Turquoise + INO)
+        // 【推論】ino発現 + turquoise = pure_white
+        const nadia = createInferenceBird('c3_10', 'Nadia', 'female', 'pure_white', fullPedigreeC, 3);
 
         birds.push(derek, ellie, felix, gia, harvey_c, ivy_c, jordan, kira, liam, nadia);
 
