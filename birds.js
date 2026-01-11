@@ -1837,41 +1837,46 @@ const BirdDB = {
     },
 
     calculatePhenotype(geno, sex, observed) {
-        // v7.0: 現在の言語設定を使用
-        const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
-        if (observed?.baseColor) return this.getColorLabel(observed.baseColor, lang);
+        // v7.3.11: SSOT - 色キーを構築してkeyToLabelで変換（ハードコード排除）
+        if (observed?.baseColor) return this.getColorLabel(observed.baseColor);
 
-        // SSOT: genetics.phpのLOCI定義に準拠
-        const parts = [];
-        let baseColor = lang === 'ja' ? 'グリーン' : 'Green';
+        // 色キーを構築（英語キー形式: cinnamon_aqua_dark）
+        const keyParts = [];
+        let baseKey = 'green';
 
-        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseColor = lang === 'ja' ? 'アクア' : 'Aqua';
-        else if (geno.parblue === 'tqtq') baseColor = lang === 'ja' ? 'ターコイズ' : 'Turquoise';
-        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseColor = lang === 'ja' ? 'シーグリーン' : 'Sea Green';
+        // パーブルー系列
+        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseKey = 'aqua';
+        else if (geno.parblue === 'tqtq') baseKey = 'turquoise';
+        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseKey = 'seagreen';
 
+        // INO系（特殊な色名を持つ）
         if (['inoino', 'inoW'].includes(geno.ino)) {
-            if (baseColor.includes('アクア') || baseColor.includes('Aqua')) { parts.push(lang === 'ja' ? 'クリーミノ' : 'Creamino'); baseColor = ''; }
-            else if (baseColor.includes('ターコイズ') || baseColor.includes('Turquoise')) { parts.push(lang === 'ja' ? 'ピュアホワイト' : 'Pure White'); baseColor = ''; }
-            else if (baseColor.includes('シーグリーン') || baseColor.includes('Sea Green')) { parts.push(lang === 'ja' ? 'クリーミノシーグリーン' : 'Creamino Sea Green'); baseColor = ''; }
-            else { parts.push(lang === 'ja' ? 'ルチノー' : 'Lutino'); baseColor = ''; }
-        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push(lang === 'ja' ? 'パリッド' : 'Pallid');
+            if (baseKey === 'aqua') { keyParts.push('creamino'); baseKey = ''; }
+            else if (baseKey === 'turquoise') { keyParts.push('pure_white'); baseKey = ''; }
+            else if (baseKey === 'seagreen') { keyParts.push('creamino_seagreen'); baseKey = ''; }
+            else { keyParts.push('lutino'); baseKey = ''; }
+        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) keyParts.push('pallid');
 
-        if (['opop', 'opW'].includes(geno.opaline)) parts.push(lang === 'ja' ? 'オパーリン' : 'Opaline');
-        if (['cincin', 'cinW'].includes(geno.cinnamon)) parts.push(lang === 'ja' ? 'シナモン' : 'Cinnamon');
+        // 性連鎖形質
+        if (['opop', 'opW'].includes(geno.opaline)) keyParts.push('opaline');
+        if (['cincin', 'cinW'].includes(geno.cinnamon)) keyParts.push('cinnamon');
 
+        // ダーク因子
         if (geno.dark === 'DD') {
-            if (baseColor.includes('グリーン') || baseColor === 'Green') baseColor = lang === 'ja' ? 'オリーブ' : 'Olive';
-            else if (baseColor.includes('アクア') || baseColor.includes('Aqua')) baseColor = lang === 'ja' ? 'アクアDD' : 'Aqua DD';
+            if (baseKey === 'green') baseKey = 'olive';
+            else if (baseKey === 'aqua') baseKey = 'aqua_dd';
         } else if (geno.dark === 'Dd') {
-            if (baseColor.includes('グリーン') || baseColor === 'Green') baseColor = lang === 'ja' ? 'ダークグリーン' : 'Dark Green';
-            else if (baseColor.includes('アクア') || baseColor.includes('Aqua')) baseColor = lang === 'ja' ? 'アクアダーク' : 'Aqua Dark';
+            if (baseKey === 'green') baseKey = 'darkgreen';
+            else if (baseKey === 'aqua') baseKey = 'aqua_dark';
         }
 
-        if (['flpflp', 'flfl'].includes(geno.fallow_pale)) parts.push(lang === 'ja' ? 'フォロー' : 'Fallow');
-        if (geno.pied_rec === 'pipi') parts.push(lang === 'ja' ? 'パイド' : 'Pied');
+        // その他の形質
+        if (['flpflp', 'flfl'].includes(geno.fallow_pale)) keyParts.push('fallow');
+        if (geno.pied_rec === 'pipi') keyParts.push('pied');
 
-        let result = parts.length > 0 ? parts.join(' ') + ' ' + baseColor : baseColor;
-        return result.trim();
+        // キーを構築してkeyToLabelで変換
+        const colorKey = baseKey ? [...keyParts, baseKey].join('_') : keyParts.join('_');
+        return this.getColorLabel(colorKey);
     },
 
     getColorLabel(colorKey, lang = 'ja') {

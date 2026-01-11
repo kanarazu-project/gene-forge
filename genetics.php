@@ -651,6 +651,46 @@ final class AgapornisLoci
 ]; // COLOR_DEFINITIONS終了
 
     /**
+     * v7.3.11: 色キー部品の翻訳マップ（SSOT）
+     * keyToLabel関数で使用 - PHPとJavaScript両方から参照
+     */
+    public const COLOR_PART_LABELS = [
+        // 基本色
+        'green' => ['ja' => 'グリーン', 'en' => 'Green'],
+        'darkgreen' => ['ja' => 'ダークグリーン', 'en' => 'Dark Green'],
+        'dark' => ['ja' => 'ダーク', 'en' => 'Dark'],
+        'olive' => ['ja' => 'オリーブ', 'en' => 'Olive'],
+        'aqua' => ['ja' => 'アクア', 'en' => 'Aqua'],
+        'turquoise' => ['ja' => 'ターコイズ', 'en' => 'Turquoise'],
+        'seagreen' => ['ja' => 'シーグリーン', 'en' => 'Seagreen'],
+        // INO系
+        'lutino' => ['ja' => 'ルチノー', 'en' => 'Lutino'],
+        'creamino' => ['ja' => 'クリーミノ', 'en' => 'Creamino'],
+        'pure' => ['ja' => 'ピュア', 'en' => 'Pure'],
+        'white' => ['ja' => 'ホワイト', 'en' => 'White'],
+        'ino' => ['ja' => 'イノ', 'en' => 'Ino'],
+        // 変異
+        'opaline' => ['ja' => 'オパーリン', 'en' => 'Opaline'],
+        'cinnamon' => ['ja' => 'シナモン', 'en' => 'Cinnamon'],
+        'pallid' => ['ja' => 'パリッド', 'en' => 'Pallid'],
+        'fallow' => ['ja' => 'ファロー', 'en' => 'Fallow'],
+        'pale' => ['ja' => 'ペール', 'en' => 'Pale'],
+        'bronze' => ['ja' => 'ブロンズ', 'en' => 'Bronze'],
+        'dilute' => ['ja' => 'ダイリュート', 'en' => 'Dilute'],
+        'edged' => ['ja' => 'エッジド', 'en' => 'Edged'],
+        'violet' => ['ja' => 'バイオレット', 'en' => 'Violet'],
+        'pied' => ['ja' => 'パイド', 'en' => 'Pied'],
+        'rec' => ['ja' => 'レセッシブ', 'en' => 'Recessive'],
+        'dom' => ['ja' => 'ドミナント', 'en' => 'Dominant'],
+        'orangeface' => ['ja' => 'オレンジフェイス', 'en' => 'Orangefaced'],
+        'yellowface' => ['ja' => 'イエローフェイス', 'en' => 'Yellowfaced'],
+        'headed' => ['ja' => 'ヘッド', 'en' => 'Headed'],
+        'sf' => ['ja' => 'SF', 'en' => 'SF'],
+        'df' => ['ja' => 'DF', 'en' => 'DF'],
+        'dd' => ['ja' => 'DD', 'en' => 'DD'],
+    ];
+
+    /**
      * Tier2色を動的生成
      */
     public static function generateTier2Color(array $factors, string $baseKey): array
@@ -836,51 +876,14 @@ final class AgapornisLoci
             return $isJa ? self::COLOR_DEFINITIONS[$key]['ja'] : self::COLOR_DEFINITIONS[$key]['en'];
         }
 
-        // 2. キーを分解してパーツごとに変換
-        // 英語キー部品 → 日本語/英語ラベル変換マップ
-        $partMap = [
-            // 基本色
-            'green' => ['ja' => 'グリーン', 'en' => 'Green'],
-            'darkgreen' => ['ja' => 'ダークグリーン', 'en' => 'Dark Green'],
-            'dark' => ['ja' => 'ダーク', 'en' => 'Dark'],
-            'olive' => ['ja' => 'オリーブ', 'en' => 'Olive'],
-            'aqua' => ['ja' => 'アクア', 'en' => 'Aqua'],
-            'turquoise' => ['ja' => 'ターコイズ', 'en' => 'Turquoise'],
-            'seagreen' => ['ja' => 'シーグリーン', 'en' => 'Seagreen'],
-            // INO系
-            'lutino' => ['ja' => 'ルチノー', 'en' => 'Lutino'],
-            'creamino' => ['ja' => 'クリーミノ', 'en' => 'Creamino'],
-            'pure' => ['ja' => 'ピュア', 'en' => 'Pure'],
-            'white' => ['ja' => 'ホワイト', 'en' => 'White'],
-            'ino' => ['ja' => 'イノ', 'en' => 'Ino'],
-            // 変異
-            'opaline' => ['ja' => 'オパーリン', 'en' => 'Opaline'],
-            'cinnamon' => ['ja' => 'シナモン', 'en' => 'Cinnamon'],
-            'pallid' => ['ja' => 'パリッド', 'en' => 'Pallid'],
-            'fallow' => ['ja' => 'ファロー', 'en' => 'Fallow'],
-            'pale' => ['ja' => 'ペール', 'en' => 'Pale'],
-            'bronze' => ['ja' => 'ブロンズ', 'en' => 'Bronze'],
-            'dilute' => ['ja' => 'ダイリュート', 'en' => 'Dilute'],
-            'edged' => ['ja' => 'エッジド', 'en' => 'Edged'],
-            'violet' => ['ja' => 'バイオレット', 'en' => 'Violet'],
-            'pied' => ['ja' => 'パイド', 'en' => 'Pied'],
-            'rec' => ['ja' => 'レセッシブ', 'en' => 'Recessive'],
-            'dom' => ['ja' => 'ドミナント', 'en' => 'Dominant'],
-            'orangeface' => ['ja' => 'オレンジフェイス', 'en' => 'Orangefaced'],
-            'yellowface' => ['ja' => 'イエローフェイス', 'en' => 'Yellowfaced'],
-            'headed' => ['ja' => 'ヘッド', 'en' => 'Headed'],
-            'sf' => ['ja' => 'SF', 'en' => 'SF'],
-            'df' => ['ja' => 'DF', 'en' => 'DF'],
-        ];
-
-        // キーをアンダースコアで分割
+        // 2. キーを分解してパーツごとに変換（SSOT: COLOR_PART_LABELSを使用）
         $parts = explode('_', $key);
         $result = [];
 
         foreach ($parts as $part) {
             $partLower = strtolower($part);
-            if (isset($partMap[$partLower])) {
-                $result[] = $isJa ? $partMap[$partLower]['ja'] : $partMap[$partLower]['en'];
+            if (isset(self::COLOR_PART_LABELS[$partLower])) {
+                $result[] = $isJa ? self::COLOR_PART_LABELS[$partLower]['ja'] : self::COLOR_PART_LABELS[$partLower]['en'];
             } else {
                 // 未知のパーツはそのまま（先頭大文字化）
                 $result[] = ucfirst($part);

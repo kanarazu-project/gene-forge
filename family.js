@@ -792,9 +792,16 @@ const FamilyMap = {
     },
 
     getColorLabel(colorCode) {
+        // v7.3.11: SSOT - COLOR_MASTER/keyToLabelを使用（ハードコード排除）
+        if (typeof keyToLabel === 'function') {
+            return keyToLabel(colorCode);
+        }
+        // フォールバック: COLOR_MASTERから直接取得
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-        const colorMap = { 'green': isJa ? 'グリーン' : 'Green', 'darkgreen': isJa ? 'ダークグリーン' : 'Dark Green', 'olive': isJa ? 'オリーブ' : 'Olive', 'aqua': isJa ? 'アクア' : 'Aqua', 'aqua_dark': isJa ? 'アクアダーク' : 'Aqua Dark', 'aqua_dd': isJa ? 'アクアDD' : 'Aqua DD', 'turquoise': isJa ? 'ターコイズ' : 'Turquoise', 'turquoise_dark': isJa ? 'ターコイズダーク' : 'Turquoise Dark', 'seagreen': isJa ? 'シーグリーン' : 'Sea Green', 'seagreen_dark': isJa ? 'シーグリーンダーク' : 'Sea Green Dark', 'lutino': isJa ? 'ルチノー' : 'Lutino', 'creamino': isJa ? 'クリーミノ' : 'Creamino', 'pure_white': isJa ? 'ピュアホワイト' : 'Pure White', 'creamino_seagreen': isJa ? 'クリーミノシーグリーン' : 'Creamino Sea Green', 'pallid_green': isJa ? 'パリッドグリーン' : 'Pallid Green', 'pallid_aqua': isJa ? 'パリッドアクア' : 'Pallid Aqua', 'pallid_turquoise': isJa ? 'パリッドターコイズ' : 'Pallid Turquoise', 'pallid_seagreen': isJa ? 'パリッドシーグリーン' : 'Pallid Sea Green', 'cinnamon_green': isJa ? 'シナモングリーン' : 'Cinnamon Green', 'cinnamon_aqua': isJa ? 'シナモンアクア' : 'Cinnamon Aqua', 'cinnamon_turquoise': isJa ? 'シナモンターコイズ' : 'Cinnamon Turquoise', 'cinnamon_seagreen': isJa ? 'シナモンシーグリーン' : 'Cinnamon Sea Green', 'opaline_green': isJa ? 'オパーリングリーン' : 'Opaline Green', 'opaline_aqua': isJa ? 'オパーリンアクア' : 'Opaline Aqua', 'opaline_turquoise': isJa ? 'オパーリンターコイズ' : 'Opaline Turquoise', 'opaline_seagreen': isJa ? 'オパーリンシーグリーン' : 'Opaline Sea Green', 'fallow_green': isJa ? 'フォローグリーン' : 'Fallow Green', 'fallow_aqua': isJa ? 'フォローアクア' : 'Fallow Aqua', 'pied_green': isJa ? 'パイドグリーン' : 'Pied Green', 'pied_aqua': isJa ? 'パイドアクア' : 'Pied Aqua', 'pied_turquoise': isJa ? 'パイドターコイズ' : 'Pied Turquoise', 'pied_seagreen': isJa ? 'パイドシーグリーン' : 'Pied Sea Green', 'blue': isJa ? 'アクア（旧:ブルー）' : 'Aqua (legacy: Blue)', 'cobalt': isJa ? 'アクアダーク（旧:コバルト）' : 'Aqua Dark (legacy: Cobalt)', 'mauve': isJa ? 'アクアDD（旧:モーブ）' : 'Aqua DD (legacy: Mauve)', 'albino': isJa ? 'ピュアホワイト（旧:アルビノ）' : 'Pure White (legacy: Albino)', 'pallid_blue': isJa ? 'パリッドアクア（旧:パリッドブルー）' : 'Pallid Aqua (legacy: Pallid Blue)', 'cinnamon_blue': isJa ? 'シナモンアクア（旧:シナモンブルー）' : 'Cinnamon Aqua (legacy: Cinnamon Blue)', 'opaline_blue': isJa ? 'オパーリンアクア（旧:オパーリンブルー）' : 'Opaline Aqua (legacy: Opaline Blue)', 'fallow_blue': isJa ? 'フォローアクア（旧:フォローブルー）' : 'Fallow Aqua (legacy: Fallow Blue)', 'pied_blue': isJa ? 'パイドアクア（旧:パイドブルー）' : 'Pied Aqua (legacy: Pied Blue)' };
-        return colorMap[colorCode] || colorCode;
+        if (typeof COLOR_MASTER !== 'undefined' && COLOR_MASTER[colorCode]) {
+            return isJa ? COLOR_MASTER[colorCode].ja : COLOR_MASTER[colorCode].en;
+        }
+        return colorCode;
     },
 
     formatGenotypeShort(geno) {

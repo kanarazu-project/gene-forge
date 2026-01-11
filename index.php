@@ -468,58 +468,26 @@ if ($action === 'calculate') {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
+    // v7.3.11: SSOT - 色キー部品翻訳（genetics.phpから注入）
+    const COLOR_PART_LABELS = <?= json_encode(AgapornisLoci::COLOR_PART_LABELS) ?>;
     const LANG = '<?= $lang ?>';
 
     /**
      * 任意のカラーキーをローカライズされたラベルに変換
      * COLOR_LABELSに存在しないキーも動的に変換する
+     * v7.3.11: SSOT - COLOR_PART_LABELSを使用（ハードコード排除）
      */
     function keyToLabel(key) {
         if (!key) return '';
         // 1. COLOR_LABELSに存在すればそれを返す
         if (COLOR_LABELS[key]) return COLOR_LABELS[key];
 
-        // 2. キーを分解してパーツごとに変換
+        // 2. キーを分解してパーツごとに変換（SSOT: COLOR_PART_LABELSを使用）
         const isJa = LANG === 'ja';
-        const partMap = {
-            // 基本色
-            'green': { ja: 'グリーン', en: 'Green' },
-            'darkgreen': { ja: 'ダークグリーン', en: 'Dark Green' },
-            'dark': { ja: 'ダーク', en: 'Dark' },
-            'olive': { ja: 'オリーブ', en: 'Olive' },
-            'aqua': { ja: 'アクア', en: 'Aqua' },
-            'turquoise': { ja: 'ターコイズ', en: 'Turquoise' },
-            'seagreen': { ja: 'シーグリーン', en: 'Seagreen' },
-            // INO系
-            'lutino': { ja: 'ルチノー', en: 'Lutino' },
-            'creamino': { ja: 'クリーミノ', en: 'Creamino' },
-            'pure': { ja: 'ピュア', en: 'Pure' },
-            'white': { ja: 'ホワイト', en: 'White' },
-            'ino': { ja: 'イノ', en: 'Ino' },
-            // 変異
-            'opaline': { ja: 'オパーリン', en: 'Opaline' },
-            'cinnamon': { ja: 'シナモン', en: 'Cinnamon' },
-            'pallid': { ja: 'パリッド', en: 'Pallid' },
-            'fallow': { ja: 'ファロー', en: 'Fallow' },
-            'pale': { ja: 'ペール', en: 'Pale' },
-            'bronze': { ja: 'ブロンズ', en: 'Bronze' },
-            'dilute': { ja: 'ダイリュート', en: 'Dilute' },
-            'edged': { ja: 'エッジド', en: 'Edged' },
-            'violet': { ja: 'バイオレット', en: 'Violet' },
-            'pied': { ja: 'パイド', en: 'Pied' },
-            'rec': { ja: 'レセッシブ', en: 'Recessive' },
-            'dom': { ja: 'ドミナント', en: 'Dominant' },
-            'orangeface': { ja: 'オレンジフェイス', en: 'Orangefaced' },
-            'yellowface': { ja: 'イエローフェイス', en: 'Yellowfaced' },
-            'headed': { ja: 'ヘッド', en: 'Headed' },
-            'sf': { ja: 'SF', en: 'SF' },
-            'df': { ja: 'DF', en: 'DF' },
-        };
-
         const parts = key.split('_');
         const result = parts.map(part => {
             const p = part.toLowerCase();
-            if (partMap[p]) return isJa ? partMap[p].ja : partMap[p].en;
+            if (COLOR_PART_LABELS[p]) return isJa ? COLOR_PART_LABELS[p].ja : COLOR_PART_LABELS[p].en;
             return part.charAt(0).toUpperCase() + part.slice(1);
         });
 
