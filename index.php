@@ -1404,17 +1404,30 @@ $mPh = $_POST['m_ph'] ?? '++';
                     <div class="output-panel" style="margin-top:1rem;">
                         <div class="output-header"><span class="output-title">🧬 <?= t('estimation_result') ?></span></div>
                         <?php foreach($result['loci'] as $l): ?>
-<?php 
-    $bgColor = $l['isConfirmed'] ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
-    $borderLeft = $l['isConfirmed'] ? '3px solid #4ecdc4' : '3px solid #555';
-    $confidenceLabel = $l['isConfirmed'] ? '✓ ' . t('confirmed') : '(' . t('estimated') . ')';
+<?php
+    $isConfirmed = $l['isConfirmed'] ?? false;
+    $bgColor = $isConfirmed ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
+    $borderLeft = $isConfirmed ? '3px solid #4ecdc4' : '3px solid #555';
+    // 確定: 遺伝型を表示、不明: "?" を表示
+    $displayGenotype = $isConfirmed ? htmlspecialchars($l['genotype']) : '?';
+    $confidenceLabel = $isConfirmed ? '✓ ' . t('confirmed') : t('unknown');
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
-    <strong style="color:#4ecdc4;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
-    <span style="color:#e0e0e0;"><?= htmlspecialchars($l['genotype']) ?></span>
+    <strong style="color:<?= $isConfirmed ? '#4ecdc4' : '#888' ?>;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
+    <span style="color:<?= $isConfirmed ? '#e0e0e0' : '#666' ?>;"><?= $displayGenotype ?></span>
     <span style="font-size:0.75rem;color:#888;margin-left:0.5rem;"><?= $confidenceLabel ?></span>
 </div>
 <?php endforeach; ?>
+
+                        <!-- 一族推論への誘導 -->
+                        <div style="margin-top:1rem;padding:1rem;background:rgba(100,150,255,0.1);border-radius:8px;border-left:3px solid #6496ff;">
+                            <strong style="color:#6496ff;">💡 <?= $lang === 'ja' ? 'より詳しい推定' : 'More Detailed Estimation' ?>:</strong>
+                            <p style="font-size:.85rem;color:#b0bec5;margin-top:0.5rem;">
+                                <?= $lang === 'ja'
+                                    ? '「一族推論」ツールを使用すると、親や子の表現型から隠れた遺伝子（スプリット）をより詳しく推論できます。'
+                                    : 'Use the "Family Inference" tool to infer hidden genes (splits) more accurately from parent and offspring phenotypes.' ?>
+                            </p>
+                        </div>
 
                         <?php if(!empty($result['notes'])): ?>
                         <div style="margin-top:1rem;padding:1rem;background:rgba(78,205,196,0.1);border-radius:8px;">
