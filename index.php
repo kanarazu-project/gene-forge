@@ -1020,12 +1020,94 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                     </div>
                     <?php endif; ?>
 
-                    <?php // v7.0 連鎖遺伝情報 ?>
-                    <?php if(!empty($result['linkage']) && !empty($result['linkage']['Z_linked']['needsLinkage'])): ?>
-                    <div style="margin-top:1rem;padding:.75rem;background:#1a2332;border-radius:4px;border:1px solid #69f0ae;color:#e0e0e0;">
-                        <strong style="color:#4fc3f7;">🔗 <?= t('phase') ?></strong>
-                        <p style="margin:.5rem 0;font-size:.9em;color:#b0bec5;"><?= htmlspecialchars($result['linkage']['Z_linked']['note'] ?? '') ?></p>
+                    <?php // v7.3.13 連鎖遺伝の相（Phase）推論結果を表示 ?>
+                    <?php if(!empty($result['linkage'])): ?>
+                    <?php
+                        $zLinked = $result['linkage']['Z_linked'] ?? [];
+                        $auto1 = $result['linkage']['autosomal_1'] ?? [];
+                        $hasZPhase = !empty($zLinked['phase']) && $zLinked['phase'] !== 'unknown' && $zLinked['phase'] !== 'hemizygous' && $zLinked['phase'] !== 'wild';
+                        $hasAutoPhase = !empty($auto1['phase']) && $auto1['phase'] !== 'unknown' && $auto1['phase'] !== 'wild';
+                    ?>
+                    <?php if($hasZPhase || $hasAutoPhase): ?>
+                    <div style="margin-top:1rem;padding:1rem;background:#1a2332;border-radius:8px;border:1px solid #4fc3f7;color:#e0e0e0;">
+                        <h4 style="margin:0 0 .75rem 0;color:#4fc3f7;font-size:1.1em;">🔗 <?= $lang === 'ja' ? '連鎖遺伝の相（Phase）推論' : 'Linkage Phase Inference' ?></h4>
+
+                        <?php if($hasZPhase): ?>
+                        <div style="background:#263238;padding:.75rem;border-radius:6px;margin-bottom:.75rem;">
+                            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+                                <span style="font-weight:bold;color:#81d4fa;">🧬 <?= $lang === 'ja' ? 'Z染色体連鎖（cin-ino-op）' : 'Z-Linked (cin-ino-op)' ?></span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:auto 1fr;gap:.25rem .75rem;font-size:.95em;">
+                                <span style="color:#90a4ae;"><?= $lang === 'ja' ? '推定結果:' : 'Result:' ?></span>
+                                <span style="font-weight:bold;color:<?= $zLinked['phase'] === 'cis' ? '#69f0ae' : '#ffab40' ?>;">
+                                    <?php if($zLinked['phase'] === 'cis'): ?>
+                                        <?= $lang === 'ja' ? 'Cis（シス）- cin-ino が同一染色体上' : 'Cis - cin-ino on same chromosome' ?>
+                                    <?php elseif($zLinked['phase'] === 'trans'): ?>
+                                        <?= $lang === 'ja' ? 'Trans（トランス）- cin と ino が別染色体上' : 'Trans - cin and ino on separate chromosomes' ?>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($zLinked['phase']) ?>
+                                    <?php endif; ?>
+                                </span>
+                                <?php if(!empty($zLinked['confidence'])): ?>
+                                <span style="color:#90a4ae;"><?= $lang === 'ja' ? '信頼度:' : 'Confidence:' ?></span>
+                                <span>
+                                    <span style="display:inline-block;width:100px;height:8px;background:#37474f;border-radius:4px;overflow:hidden;">
+                                        <span style="display:block;height:100%;width:<?= min(100, $zLinked['confidence']) ?>%;background:<?= $zLinked['confidence'] >= 70 ? '#69f0ae' : ($zLinked['confidence'] >= 40 ? '#ffab40' : '#ff5252') ?>;"></span>
+                                    </span>
+                                    <span style="margin-left:.5rem;color:#b0bec5;"><?= number_format($zLinked['confidence'], 0) ?>%</span>
+                                </span>
+                                <?php endif; ?>
+                                <?php if(!empty($zLinked['note'])): ?>
+                                <span style="color:#90a4ae;"><?= $lang === 'ja' ? '根拠:' : 'Evidence:' ?></span>
+                                <span style="color:#b0bec5;"><?= htmlspecialchars($zLinked['note']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                            <?php if($zLinked['phase'] === 'cis'): ?>
+                            <div style="margin-top:.75rem;padding:.5rem;background:#1b5e20;border-radius:4px;font-size:.85em;">
+                                💡 <?= $lang === 'ja' ? 'Cisの場合、Lacewing（cin+ino同時発現）の子が約24%の確率で生まれます' : 'With Cis, ~24% chance of Lacewing offspring (cin+ino co-expression)' ?>
+                            </div>
+                            <?php elseif($zLinked['phase'] === 'trans'): ?>
+                            <div style="margin-top:.75rem;padding:.5rem;background:#e65100;border-radius:4px;font-size:.85em;color:#fff;">
+                                ⚠️ <?= $lang === 'ja' ? 'Transの場合、Lacewing子は約1.5%と非常に稀です（組み換えが必要）' : 'With Trans, Lacewing offspring are rare (~1.5%, requires recombination)' ?>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+
+                        <?php if($hasAutoPhase): ?>
+                        <div style="background:#263238;padding:.75rem;border-radius:6px;">
+                            <div style="display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;">
+                                <span style="font-weight:bold;color:#ce93d8;">🧬 <?= $lang === 'ja' ? '常染色体連鎖（dark-parblue）' : 'Autosomal Linkage (dark-parblue)' ?></span>
+                            </div>
+                            <div style="display:grid;grid-template-columns:auto 1fr;gap:.25rem .75rem;font-size:.95em;">
+                                <span style="color:#90a4ae;"><?= $lang === 'ja' ? '推定結果:' : 'Result:' ?></span>
+                                <span style="font-weight:bold;color:<?= $auto1['phase'] === 'cis' ? '#69f0ae' : '#ffab40' ?>;">
+                                    <?php if($auto1['phase'] === 'cis'): ?>
+                                        <?= $lang === 'ja' ? 'Cis - D-aq/d-+ または d-aq/D-+' : 'Cis - D-aq/d-+ or d-aq/D-+' ?>
+                                    <?php elseif($auto1['phase'] === 'trans'): ?>
+                                        <?= $lang === 'ja' ? 'Trans - D-+/d-aq' : 'Trans - D-+/d-aq' ?>
+                                    <?php else: ?>
+                                        <?= htmlspecialchars($auto1['phase']) ?>
+                                    <?php endif; ?>
+                                </span>
+                                <?php if(!empty($auto1['confidence'])): ?>
+                                <span style="color:#90a4ae;"><?= $lang === 'ja' ? '信頼度:' : 'Confidence:' ?></span>
+                                <span>
+                                    <span style="display:inline-block;width:100px;height:8px;background:#37474f;border-radius:4px;overflow:hidden;">
+                                        <span style="display:block;height:100%;width:<?= min(100, $auto1['confidence']) ?>%;background:<?= $auto1['confidence'] >= 70 ? '#69f0ae' : ($auto1['confidence'] >= 40 ? '#ffab40' : '#ff5252') ?>;"></span>
+                                    </span>
+                                    <span style="margin-left:.5rem;color:#b0bec5;"><?= number_format($auto1['confidence'], 0) ?>%</span>
+                                </span>
+                                <?php endif; ?>
+                                <?php if(!empty($auto1['note'])): ?>
+                                <span style="color:#90a4ae;"><?= $lang === 'ja' ? '根拠:' : 'Evidence:' ?></span>
+                                <span style="color:#b0bec5;"><?= htmlspecialchars($auto1['note']) ?></span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endif; ?>
                     </div>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
                 <?php elseif ($action === 'pathfind' && isset($result['error'])): ?>
