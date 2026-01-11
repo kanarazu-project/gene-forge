@@ -78,6 +78,26 @@ $pf_ja = [
     'bp_male_cis_efficient' => 'オスがCis配置 → 効率的',
     'bp_male_trans_inefficient' => 'オスがTrans配置 → 非効率（Cis個体推奨）',
     'bp_male_phase_unknown' => 'オスの相不明 → テスト交配で確認推奨',
+
+    // v7.1: 多世代計画キー
+    'bp_gene_analysis' => '遺伝子分析',
+    'bp_generations_needed' => '必要世代数',
+    'bp_missing_genes' => '不足遺伝子',
+    'bp_hetero_only' => 'ヘテロのみ（1世代で固定可能）',
+    'bp_split_only' => 'スプリット♂のみ（1世代で発現可能）',
+    'bp_gene_absent' => '未保有（導入が必要）',
+    'bp_one_gen_possible' => '1世代で作出可能！',
+    'bp_final_generation' => '最終世代（目標作出）',
+    'bp_generation_n' => '第{n}世代',
+    'bp_goal' => '目標',
+    'bp_use_intermediate' => '前世代で作出した個体を使用',
+    'bp_need_new_bird' => 'この遺伝子を持つ個体の導入が必要',
+    'bp_fix_gene' => '{gene}を固定（ホモ化）',
+    'bp_introduce_gene' => '{gene}遺伝子を導入',
+    'bp_express_slr' => '{gene}を♀で発現させる',
+    'bp_introduce_slr_gene' => '{gene}（伴性）を導入',
+    'bp_breeding_plan' => '配合計画',
+    'bp_open_in_familymap' => 'FamilyMapで開く',
 ];
 
 // ============================================================
@@ -149,6 +169,26 @@ $pf_en = [
     'bp_male_cis_efficient' => 'Male is Cis → Efficient',
     'bp_male_trans_inefficient' => 'Male is Trans → Inefficient (Cis individual recommended)',
     'bp_male_phase_unknown' => 'Male phase unknown → Test breeding recommended',
+
+    // v7.1: Multi-generation planning keys
+    'bp_gene_analysis' => 'Gene Analysis',
+    'bp_generations_needed' => 'Generations needed',
+    'bp_missing_genes' => 'Missing genes',
+    'bp_hetero_only' => 'heterozygous only (can fix in 1 gen)',
+    'bp_split_only' => 'split males only (can express in 1 gen)',
+    'bp_gene_absent' => 'absent (need to introduce)',
+    'bp_one_gen_possible' => 'Can be produced in 1 generation!',
+    'bp_final_generation' => 'Final Generation (Target)',
+    'bp_generation_n' => 'Generation {n}',
+    'bp_goal' => 'Goal',
+    'bp_use_intermediate' => 'Use birds from previous generations',
+    'bp_need_new_bird' => 'Need to acquire bird with this gene',
+    'bp_fix_gene' => 'Fix {gene} (homozygous)',
+    'bp_introduce_gene' => 'Introduce {gene} gene',
+    'bp_express_slr' => 'Express {gene} in female',
+    'bp_introduce_slr_gene' => 'Introduce {gene} (sex-linked)',
+    'bp_breeding_plan' => 'Breeding Plan',
+    'bp_open_in_familymap' => 'Open in FamilyMap',
 ];
 
 // ============================================================
@@ -193,6 +233,26 @@ $pf_de = [
     'bp_ethics_warning' => 'In der Vollblutzucht verboten',
     'bp_ethics_standard' => 'Ethische Standards',
     'bp_ethics_description' => 'Paare mit IC ≥12,5% werden ausgeschlossen (Vollblutregeln)',
+
+    // v7.1: Mehrgenerationenplanung
+    'bp_gene_analysis' => 'Genanalyse',
+    'bp_generations_needed' => 'Benötigte Generationen',
+    'bp_missing_genes' => 'Fehlende Gene',
+    'bp_hetero_only' => 'nur heterozygot (in 1 Gen fixierbar)',
+    'bp_split_only' => 'nur Spalt-Männchen (in 1 Gen exprimierbar)',
+    'bp_gene_absent' => 'fehlt (Einführung erforderlich)',
+    'bp_one_gen_possible' => 'Kann in 1 Generation produziert werden!',
+    'bp_final_generation' => 'Letzte Generation (Ziel)',
+    'bp_generation_n' => 'Generation {n}',
+    'bp_goal' => 'Ziel',
+    'bp_use_intermediate' => 'Vögel aus vorherigen Generationen verwenden',
+    'bp_need_new_bird' => 'Vogel mit diesem Gen benötigt',
+    'bp_fix_gene' => '{gene} fixieren (homozygot)',
+    'bp_introduce_gene' => '{gene}-Gen einführen',
+    'bp_express_slr' => '{gene} im Weibchen exprimieren',
+    'bp_introduce_slr_gene' => '{gene} (geschlechtsgeb.) einführen',
+    'bp_breeding_plan' => 'Zuchtplan',
+    'bp_open_in_familymap' => 'In FamilyMap öffnen',
 ];
 
 // ============================================================
@@ -237,6 +297,26 @@ $pf_fr = [
     'bp_ethics_warning' => 'Interdit dans l\'élevage pur-sang',
     'bp_ethics_standard' => 'Normes Éthiques',
     'bp_ethics_description' => 'Les paires avec IC ≥12,5% sont exclues (règles pur-sang)',
+
+    // v7.1: Planification multi-génération
+    'bp_gene_analysis' => 'Analyse Génétique',
+    'bp_generations_needed' => 'Générations nécessaires',
+    'bp_missing_genes' => 'Gènes manquants',
+    'bp_hetero_only' => 'hétérozygote seul (fixable en 1 gén)',
+    'bp_split_only' => 'mâles porteurs seul (exprimable en 1 gén)',
+    'bp_gene_absent' => 'absent (introduction nécessaire)',
+    'bp_one_gen_possible' => 'Productible en 1 génération!',
+    'bp_final_generation' => 'Génération Finale (Objectif)',
+    'bp_generation_n' => 'Génération {n}',
+    'bp_goal' => 'Objectif',
+    'bp_use_intermediate' => 'Utiliser les oiseaux des générations précédentes',
+    'bp_need_new_bird' => 'Besoin d\'acquérir un oiseau avec ce gène',
+    'bp_fix_gene' => 'Fixer {gene} (homozygote)',
+    'bp_introduce_gene' => 'Introduire le gène {gene}',
+    'bp_express_slr' => 'Exprimer {gene} chez la femelle',
+    'bp_introduce_slr_gene' => 'Introduire {gene} (lié au sexe)',
+    'bp_breeding_plan' => 'Plan d\'Élevage',
+    'bp_open_in_familymap' => 'Ouvrir dans FamilyMap',
 ];
 
 // ============================================================
@@ -281,6 +361,26 @@ $pf_it = [
     'bp_ethics_warning' => 'Vietato nell\'allevamento purosangue',
     'bp_ethics_standard' => 'Standard Etici',
     'bp_ethics_description' => 'Le coppie con IC ≥12,5% sono escluse (regole purosangue)',
+
+    // v7.1: Pianificazione multi-generazione
+    'bp_gene_analysis' => 'Analisi Genetica',
+    'bp_generations_needed' => 'Generazioni necessarie',
+    'bp_missing_genes' => 'Geni mancanti',
+    'bp_hetero_only' => 'solo eterozigote (fissabile in 1 gen)',
+    'bp_split_only' => 'solo maschi portatori (esprimibile in 1 gen)',
+    'bp_gene_absent' => 'assente (introduzione necessaria)',
+    'bp_one_gen_possible' => 'Producibile in 1 generazione!',
+    'bp_final_generation' => 'Generazione Finale (Obiettivo)',
+    'bp_generation_n' => 'Generazione {n}',
+    'bp_goal' => 'Obiettivo',
+    'bp_use_intermediate' => 'Utilizzare uccelli delle generazioni precedenti',
+    'bp_need_new_bird' => 'Necessario acquisire uccello con questo gene',
+    'bp_fix_gene' => 'Fissare {gene} (omozigote)',
+    'bp_introduce_gene' => 'Introdurre gene {gene}',
+    'bp_express_slr' => 'Esprimere {gene} nella femmina',
+    'bp_introduce_slr_gene' => 'Introdurre {gene} (legato al sesso)',
+    'bp_breeding_plan' => 'Piano di Allevamento',
+    'bp_open_in_familymap' => 'Apri in FamilyMap',
 ];
 
 // ============================================================
@@ -325,4 +425,24 @@ $pf_es = [
     'bp_ethics_warning' => 'Prohibido en la cría de pura sangre',
     'bp_ethics_standard' => 'Normas Éticas',
     'bp_ethics_description' => 'Los pares con IC ≥12,5% son excluidos (reglas pura sangre)',
+
+    // v7.1: Planificación multi-generación
+    'bp_gene_analysis' => 'Análisis Genético',
+    'bp_generations_needed' => 'Generaciones necesarias',
+    'bp_missing_genes' => 'Genes faltantes',
+    'bp_hetero_only' => 'solo heterocigoto (fijable en 1 gen)',
+    'bp_split_only' => 'solo machos portadores (expresable en 1 gen)',
+    'bp_gene_absent' => 'ausente (introducción necesaria)',
+    'bp_one_gen_possible' => '¡Producible en 1 generación!',
+    'bp_final_generation' => 'Generación Final (Objetivo)',
+    'bp_generation_n' => 'Generación {n}',
+    'bp_goal' => 'Objetivo',
+    'bp_use_intermediate' => 'Usar aves de generaciones anteriores',
+    'bp_need_new_bird' => 'Necesario adquirir ave con este gen',
+    'bp_fix_gene' => 'Fijar {gene} (homocigoto)',
+    'bp_introduce_gene' => 'Introducir gen {gene}',
+    'bp_express_slr' => 'Expresar {gene} en hembra',
+    'bp_introduce_slr_gene' => 'Introducir {gene} (ligado al sexo)',
+    'bp_breeding_plan' => 'Plan de Cría',
+    'bp_open_in_familymap' => 'Abrir en FamilyMap',
 ];

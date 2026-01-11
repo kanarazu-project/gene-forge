@@ -720,12 +720,421 @@ const BreedingPlanner = {
         }
 
         return null;
+    },
+
+    // ========================================
+    // v7.1: 多世代計画エンジン
+    // 最大4世代の配合計画を FamilyMap 形式で出力
+    // ========================================
+
+    /**
+     * v7.1: 目標に必要な遺伝子と現在のストック差分を分析
+     * @param {string} targetKey - 目標色キー
+     * @param {Array} birds - 登録鳥リスト
+     * @returns {Object} { required, available, missing, canProduceInOneGen }
+     */
+    analyzeGeneGap(targetKey, birds) {
+        let target = this.TARGET_REQUIREMENTS[targetKey];
+        if (!target) {
+            target = this.generateRequirementsFromMaster(targetKey);
+        }
+        if (!target) return { error: 'Unknown target' };
+
+        const required = { ...target.required };
+        const slr = { ...target.slr };
+
+        // 現在のストックで利用可能な遺伝子を収集
+        const available = { autosomal: {}, slr: {} };
+        const males = birds.filter(b => b.sex === 'male');
+        const females = birds.filter(b => b.sex === 'female');
+
+        // 常染色体遺伝子
+        for (const [locus, vals] of Object.entries(required)) {
+            available.autosomal[locus] = { homozygous: [], heterozygous: [], absent: [] };
+
+            birds.forEach(b => {
+                const geno = b.genotype || {};
+                const val = geno[locus] || '++';
+
+                if (vals.includes(val)) {
+                    available.autosomal[locus].homozygous.push(b);
+                } else if (val !== '++' && val !== 'dd' && val !== 'vv') {
+                    // ヘテロまたはスプリット
+                    available.autosomal[locus].heterozygous.push(b);
+                } else {
+                    available.autosomal[locus].absent.push(b);
+                }
+            });
+        }
+
+        // 伴性遺伝子
+        for (const [locus, vals] of Object.entries(slr)) {
+            available.slr[locus] = { expressed: [], split: [], absent: [] };
+
+            birds.forEach(b => {
+                const geno = b.genotype || {};
+                const val = geno[locus] || (b.sex === 'male' ? '++' : '+W');
+
+                if (vals.includes(val)) {
+                    available.slr[locus].expressed.push(b);
+                } else if (val !== '++' && val !== '+W') {
+                    // スプリット (オス only for SLR)
+                    available.slr[locus].split.push(b);
+                } else {
+                    available.slr[locus].absent.push(b);
+                }
+            });
+        }
+
+        // 不足している遺伝子を特定
+        const missing = [];
+
+        for (const [locus, vals] of Object.entries(required)) {
+            const avail = available.autosomal[locus];
+            if (avail.homozygous.length === 0) {
+                const hasHetero = avail.heterozygous.length > 0;
+                missing.push({
+                    type: 'autosomal',
+                    locus,
+                    required: vals,
+                    status: hasHetero ? 'heterozygous_only' : 'absent',
+                    heteroCount: avail.heterozygous.length,
+                    // Dd × Dd で 25% DD が出る → 2世代で可能
+                    generationsNeeded: hasHetero ? 1 : 2
+                });
+            }
+        }
+
+        for (const [locus, vals] of Object.entries(slr)) {
+            const avail = available.slr[locus];
+            if (avail.expressed.length === 0) {
+                const hasSplit = avail.split.length > 0;
+                missing.push({
+                    type: 'slr',
+                    locus,
+                    required: vals,
+                    status: hasSplit ? 'split_only' : 'absent',
+                    splitCount: avail.split.length,
+                    // スプリット♂ × 野生型♀ → 50%発現♀ (1世代)
+                    generationsNeeded: hasSplit ? 1 : 2
+                });
+            }
+        }
+
+        // 1世代で作出可能か判定
+        const canProduceInOneGen = missing.length === 0;
+        const maxGenerationsNeeded = missing.length === 0 ? 1 :
+            Math.max(...missing.map(m => m.generationsNeeded)) + 1;
+
+        return {
+            target,
+            required,
+            slr,
+            available,
+            missing,
+            canProduceInOneGen,
+            maxGenerationsNeeded: Math.min(maxGenerationsNeeded, 4),
+            totalBirds: birds.length,
+            males: males.length,
+            females: females.length
+        };
+    },
+
+    /**
+     * v7.1: 多世代計画を生成
+     * @param {string} targetKey - 目標色キー
+     * @returns {Object} 多世代計画（FamilyMap互換形式を含む）
+     */
+    planMultiGeneration(targetKey) {
+        const birds = typeof BirdDB !== 'undefined' ? BirdDB.getAllBirds() : [];
+        if (birds.length === 0) {
+            return {
+                error: this._t('bp_no_birds', 'No birds registered'),
+                suggestion: this._t('bp_register_hint', 'Register birds first')
+            };
+        }
+
+        const gap = this.analyzeGeneGap(targetKey, birds);
+        if (gap.error) {
+            return { error: gap.error };
+        }
+
+        const targetName = this.getColorName(targetKey);
+        const plan = {
+            targetKey,
+            targetName,
+            analysis: gap,
+            generations: [],
+            familyMapData: null,
+            totalGenerations: gap.maxGenerationsNeeded
+        };
+
+        // 1世代で可能な場合は従来のplanを使用
+        if (gap.canProduceInOneGen) {
+            const singleGenPlan = this.plan(targetKey);
+            if (!singleGenPlan.error && singleGenPlan.topPairings.length > 0) {
+                plan.generations.push({
+                    genNumber: 1,
+                    goal: this._tp('bp_goal_produce', { name: targetName }, `Produce ${targetName}`),
+                    pairings: singleGenPlan.topPairings,
+                    probability: singleGenPlan.topPairings[0].probability
+                });
+                plan.familyMapData = this.convertToFamilyMapFormat(plan, birds);
+                return plan;
+            }
+        }
+
+        // 多世代計画を構築
+        const intermediateGoals = this.generateIntermediateGoals(gap, targetKey);
+
+        let currentGen = gap.maxGenerationsNeeded;
+
+        for (const intGoal of intermediateGoals) {
+            const genPlan = {
+                genNumber: currentGen,
+                goal: intGoal.description,
+                targetGene: intGoal.locus,
+                targetValue: intGoal.targetValue,
+                strategy: intGoal.strategy,
+                pairings: this.findBestPairingsForGene(intGoal, birds),
+                probability: intGoal.probability
+            };
+            plan.generations.push(genPlan);
+            currentGen--;
+        }
+
+        // 最終世代（目標作出）
+        plan.generations.push({
+            genNumber: 1,
+            goal: this._tp('bp_goal_produce', { name: targetName }, `Produce ${targetName}`),
+            note: this._t('bp_use_intermediate', 'Use birds from previous generations'),
+            probability: 'Variable'
+        });
+
+        // FamilyMap形式に変換
+        plan.familyMapData = this.convertToFamilyMapFormat(plan, birds);
+
+        return plan;
+    },
+
+    /**
+     * v7.1: 中間目標を生成
+     */
+    generateIntermediateGoals(gap, targetKey) {
+        const goals = [];
+
+        for (const m of gap.missing) {
+            if (m.type === 'autosomal') {
+                if (m.status === 'heterozygous_only') {
+                    // Dd × Dd → DD (25%)
+                    goals.push({
+                        locus: m.locus,
+                        targetValue: m.required[0],
+                        description: this._tp('bp_fix_gene', { gene: m.locus.toUpperCase() },
+                            `Fix ${m.locus.toUpperCase()} (homozygous)`),
+                        strategy: 'hetero_x_hetero',
+                        probability: 0.25,
+                        generationOffset: 1
+                    });
+                } else if (m.status === 'absent') {
+                    // 遺伝子そのものがない → 導入が必要
+                    goals.push({
+                        locus: m.locus,
+                        targetValue: m.required[0],
+                        description: this._tp('bp_introduce_gene', { gene: m.locus.toUpperCase() },
+                            `Introduce ${m.locus.toUpperCase()} gene`),
+                        strategy: 'need_introduction',
+                        probability: 0,
+                        generationOffset: 2,
+                        needsNewBlood: true
+                    });
+                }
+            } else if (m.type === 'slr') {
+                if (m.status === 'split_only') {
+                    // スプリット♂ × 野生型♀ → 50%発現♀
+                    goals.push({
+                        locus: m.locus,
+                        targetValue: m.required[0],
+                        description: this._tp('bp_express_slr', { gene: m.locus.toUpperCase() },
+                            `Express ${m.locus.toUpperCase()} in female`),
+                        strategy: 'split_male_x_wild_female',
+                        probability: 0.5,
+                        generationOffset: 1
+                    });
+                } else if (m.status === 'absent') {
+                    goals.push({
+                        locus: m.locus,
+                        targetValue: m.required[0],
+                        description: this._tp('bp_introduce_slr', { gene: m.locus.toUpperCase() },
+                            `Introduce ${m.locus.toUpperCase()} (SLR)`),
+                        strategy: 'need_introduction',
+                        probability: 0,
+                        generationOffset: 2,
+                        needsNewBlood: true
+                    });
+                }
+            }
+        }
+
+        // 優先度でソート（導入が必要なものを先に）
+        goals.sort((a, b) => b.generationOffset - a.generationOffset);
+
+        return goals;
+    },
+
+    /**
+     * v7.1: 特定遺伝子を得るための最適ペアリングを探す
+     */
+    findBestPairingsForGene(goal, birds) {
+        if (goal.needsNewBlood) {
+            return [{
+                recommendation: '🔴 ' + this._t('bp_need_new_bird', 'Need to acquire bird with this gene'),
+                probability: 0
+            }];
+        }
+
+        const males = birds.filter(b => b.sex === 'male');
+        const females = birds.filter(b => b.sex === 'female');
+        const pairings = [];
+
+        if (goal.strategy === 'hetero_x_hetero') {
+            // Dd × Dd を探す
+            const heteroMales = males.filter(b => {
+                const val = (b.genotype || {})[goal.locus] || '++';
+                return val !== '++' && !goal.targetValue.includes(val);
+            });
+            const heteroFemales = females.filter(b => {
+                const val = (b.genotype || {})[goal.locus] || '++';
+                return val !== '++' && !goal.targetValue.includes(val);
+            });
+
+            heteroMales.forEach(m => {
+                heteroFemales.forEach(f => {
+                    // 近交係数チェック
+                    let ic = 0;
+                    if (typeof BreedingValidator !== 'undefined') {
+                        ic = BreedingValidator.calcInbreedingCoefficient(m, f);
+                    }
+                    if (ic < this.INBREEDING_THRESHOLD) {
+                        pairings.push({
+                            male: m,
+                            female: f,
+                            probability: 0.25,
+                            inbreedingCoef: ic,
+                            recommendation: `${m.name} × ${f.name} → 25% ${goal.locus.toUpperCase()}`
+                        });
+                    }
+                });
+            });
+        }
+
+        if (goal.strategy === 'split_male_x_wild_female') {
+            // スプリット♂を探す
+            const splitMales = males.filter(b => {
+                const val = (b.genotype || {})[goal.locus] || '++';
+                return val !== '++' && val !== '+W';
+            });
+
+            splitMales.forEach(m => {
+                females.forEach(f => {
+                    let ic = 0;
+                    if (typeof BreedingValidator !== 'undefined') {
+                        ic = BreedingValidator.calcInbreedingCoefficient(m, f);
+                    }
+                    if (ic < this.INBREEDING_THRESHOLD) {
+                        pairings.push({
+                            male: m,
+                            female: f,
+                            probability: 0.5,
+                            inbreedingCoef: ic,
+                            recommendation: `${m.name} (split) × ${f.name} → 50% ${goal.locus.toUpperCase()} ♀`
+                        });
+                    }
+                });
+            });
+        }
+
+        // スコア順でソート
+        pairings.sort((a, b) => b.probability - a.probability || a.inbreedingCoef - b.inbreedingCoef);
+
+        return pairings.slice(0, 3);
+    },
+
+    /**
+     * v7.1: 計画をFamilyMap形式に変換
+     * FamilyMapで表示可能な形式で出力
+     */
+    convertToFamilyMapFormat(plan, birds) {
+        const data = {
+            name: `${plan.targetName} ${this._t('bp_breeding_plan', 'Breeding Plan')}`,
+            savedAt: new Date().toISOString(),
+            isBreedingPlan: true,
+            targetKey: plan.targetKey,
+            // G0: 目標（作出予定）
+            offspring: [{
+                id: 'plan_target',
+                name: `🎯 ${plan.targetName}`,
+                sex: 'unknown',
+                phenotype: { baseColor: plan.targetKey },
+                genotype: plan.analysis.target.required,
+                isPlanned: true
+            }],
+            // G1: 親（最終交配ペア）
+            sire: null,
+            dam: null,
+            // G2-G3: 祖先（中間世代）
+            sire_sire: null, sire_dam: null,
+            dam_sire: null, dam_dam: null,
+            sire_sire_sire: null, sire_sire_dam: null,
+            sire_dam_sire: null, sire_dam_dam: null,
+            dam_sire_sire: null, dam_sire_dam: null,
+            dam_dam_sire: null, dam_dam_dam: null
+        };
+
+        // 利用可能な世代計画からFamilyMapに配置
+        if (plan.generations.length > 0) {
+            const gen1 = plan.generations.find(g => g.genNumber === 1);
+            if (gen1 && gen1.pairings && gen1.pairings.length > 0) {
+                const topPair = gen1.pairings[0];
+                if (topPair.male) {
+                    data.sire = this.birdToFamilyMapFormat(topPair.male, 'sire');
+                }
+                if (topPair.female) {
+                    data.dam = this.birdToFamilyMapFormat(topPair.female, 'dam');
+                }
+            }
+
+            // 中間世代があれば配置
+            const gen2 = plan.generations.find(g => g.genNumber === 2);
+            if (gen2 && gen2.pairings && gen2.pairings.length > 0) {
+                const pair = gen2.pairings[0];
+                if (pair.male) data.sire_sire = this.birdToFamilyMapFormat(pair.male, 'sire_sire');
+                if (pair.female) data.sire_dam = this.birdToFamilyMapFormat(pair.female, 'sire_dam');
+            }
+        }
+
+        return data;
+    },
+
+    /**
+     * v7.1: 鳥データをFamilyMap用にフォーマット
+     */
+    birdToFamilyMapFormat(bird, position) {
+        return {
+            id: bird.id,
+            name: bird.name,
+            sex: bird.sex,
+            phenotype: bird.phenotype || { baseColor: 'unknown' },
+            genotype: bird.genotype || {},
+            position: position,
+            isExisting: true
+        };
     }
 };
 
 /**
- * v7.0: runPlanner() - 翻訳対応版
- * 表示時はCOLOR_LABELSから色名を取得
+ * v7.1: runPlanner() - 多世代計画対応版
+ * 1世代で不可能な場合は多世代計画を表示
  */
 function runPlanner() {
     const T = window.T || {};
@@ -740,47 +1149,133 @@ function runPlanner() {
 
     // v7.0: 空パネルを非表示
     if (emptyPanel) emptyPanel.style.display = 'none';
-    const result = BreedingPlanner.plan(targetKey);
 
-    if (result.error) {
-        let errorHtml = `<div class="empty-state"><p>⚠️ ${result.error}</p>`;
-        if (result.suggestion) errorHtml += `<p>${result.suggestion}</p>`;
-        // v6.7.4: フィルタリングによる候補なしの場合の追加メッセージ
-        if (result.filteredOut) {
-            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ ${_t('bp_filtered_note', 'Pairs with IC ≥12.5% are excluded per ethical standards')}</p>`;
-        }
+    // v7.1: まず多世代計画を試行
+    const multiGenPlan = BreedingPlanner.planMultiGeneration(targetKey);
+
+    if (multiGenPlan.error) {
+        let errorHtml = `<div class="empty-state"><p>⚠️ ${multiGenPlan.error}</p>`;
+        if (multiGenPlan.suggestion) errorHtml += `<p>${multiGenPlan.suggestion}</p>`;
         errorHtml += '</div>';
         resultPanel.innerHTML = errorHtml;
         resultPanel.style.display = 'block';
         return;
     }
 
-    // v6.7.5: targetNameはresultから取得（SSOT対応）
-    const targetName = result.targetName;
+    const targetName = multiGenPlan.targetName;
+    const analysis = multiGenPlan.analysis;
 
     let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} ${_t('bp_production_plan', 'Production Plan')}</span></div>`;
-    html += `<h4>🏆 ${_t('bp_recommended_top5', 'Recommended Pairings TOP5')}</h4><div class="pairing-list">`;
-    result.topPairings.forEach((p, i) => {
-        // v6.7.4: 近交係数表示の強化
-        const icPercent = (p.inbreedingCoef * 100).toFixed(2);
-        const icClass = p.inbreedingCoef >= 0.125 ? 'ic-warning' : (p.inbreedingCoef >= 0.0625 ? 'ic-caution' : 'ic-safe');
 
-        html += `<div class="pairing-card ${p.canBreed ? '' : 'pairing-blocked'}">`;
-        html += `<div class="pairing-header">#${i+1} ♂${p.male.name} × ♀${p.female.name} ${!p.canBreed ? '🚫' : ''}</div>`;
-        html += `<div class="pairing-stats">${_t('bp_probability', 'Probability')}: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">${_t('bp_f_value', 'F-value')}: ${icPercent}%</span></div>`;
-        html += `<div class="pairing-recommendation">${p.recommendation}</div>`;
-        if (p.warnings.length > 0) {
-            html += `<div class="pairing-warnings">${p.warnings.join('<br>')}</div>`;
-        }
+    // v7.1: 遺伝子ギャップ分析を表示
+    if (analysis && analysis.missing && analysis.missing.length > 0) {
+        html += `<div class="gene-gap-analysis" style="background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 8px; margin-bottom: 15px;">`;
+        html += `<h4 style="margin-top:0; color: #856404;">📊 ${_t('bp_gene_analysis', 'Gene Analysis')}</h4>`;
+        html += `<p><strong>${_t('bp_generations_needed', 'Generations needed')}:</strong> ${multiGenPlan.totalGenerations}</p>`;
+        html += `<p><strong>${_t('bp_missing_genes', 'Missing genes')}:</strong></p><ul style="margin: 5px 0; padding-left: 20px;">`;
+
+        analysis.missing.forEach(m => {
+            const locusName = m.locus.toUpperCase();
+            const statusText = m.status === 'heterozygous_only'
+                ? _t('bp_hetero_only', 'heterozygous only (can fix in 1 gen)')
+                : m.status === 'split_only'
+                    ? _t('bp_split_only', 'split males only (can express in 1 gen)')
+                    : _t('bp_gene_absent', 'absent (need to introduce)');
+            html += `<li><strong>${locusName}</strong>: ${statusText}</li>`;
+        });
+        html += `</ul></div>`;
+    } else if (analysis && analysis.canProduceInOneGen) {
+        html += `<div style="background: #d4edda; border: 1px solid #28a745; padding: 10px; border-radius: 8px; margin-bottom: 15px;">`;
+        html += `<p style="margin:0; color: #155724;">✅ ${_t('bp_one_gen_possible', 'Can be produced in 1 generation!')}</p>`;
+        html += `</div>`;
+    }
+
+    // v7.1: 各世代の計画を表示
+    if (multiGenPlan.generations && multiGenPlan.generations.length > 0) {
+        html += `<div class="generation-plans">`;
+
+        // 世代番号の大きい順（早い世代から）に表示
+        const sortedGens = [...multiGenPlan.generations].sort((a, b) => b.genNumber - a.genNumber);
+
+        sortedGens.forEach(gen => {
+            const genLabel = gen.genNumber === 1
+                ? _t('bp_final_generation', 'Final Generation')
+                : _t('bp_generation_n', `Generation ${gen.genNumber}`).replace('{n}', gen.genNumber);
+
+            html += `<div class="generation-card" style="border: 1px solid #dee2e6; border-radius: 8px; padding: 12px; margin-bottom: 10px;">`;
+            html += `<h4 style="margin-top: 0; border-bottom: 1px solid #eee; padding-bottom: 8px;">📅 ${genLabel}</h4>`;
+            html += `<p><strong>${_t('bp_goal', 'Goal')}:</strong> ${gen.goal}</p>`;
+
+            if (gen.note) {
+                html += `<p style="color: #666; font-style: italic;">${gen.note}</p>`;
+            }
+
+            if (gen.pairings && gen.pairings.length > 0) {
+                html += `<div class="pairing-list">`;
+                gen.pairings.forEach((p, i) => {
+                    if (p.male && p.female) {
+                        const icPercent = ((p.inbreedingCoef || 0) * 100).toFixed(2);
+                        const icClass = (p.inbreedingCoef || 0) >= 0.125 ? 'ic-warning' : ((p.inbreedingCoef || 0) >= 0.0625 ? 'ic-caution' : 'ic-safe');
+
+                        html += `<div class="pairing-card" style="background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px;">`;
+                        html += `<div class="pairing-header">#${i+1} ♂${p.male.name} × ♀${p.female.name}</div>`;
+                        html += `<div class="pairing-stats">${_t('bp_probability', 'Probability')}: ${((p.probability || 0)*100).toFixed(1)}% | <span class="${icClass}">${_t('bp_f_value', 'F-value')}: ${icPercent}%</span></div>`;
+                        if (p.recommendation) {
+                            html += `<div class="pairing-recommendation" style="color: #495057;">${p.recommendation}</div>`;
+                        }
+                        html += '</div>';
+                    } else if (p.recommendation) {
+                        html += `<div class="pairing-card" style="background: #f8d7da; padding: 10px; margin: 5px 0; border-radius: 5px;">`;
+                        html += `<p style="margin: 0;">${p.recommendation}</p>`;
+                        html += '</div>';
+                    }
+                });
+                html += '</div>';
+            }
+            html += '</div>';
+        });
+
         html += '</div>';
-    });
-    html += '</div>';
+    }
+
+    // v7.1: FamilyMapで開くボタン
+    if (multiGenPlan.familyMapData) {
+        html += `<div style="margin-top: 15px; text-align: center;">`;
+        html += `<button onclick="openPlanInFamilyMap()" class="btn btn-primary" style="padding: 10px 20px;">`;
+        html += `📊 ${_t('bp_open_in_familymap', 'Open in FamilyMap')}</button>`;
+        html += `</div>`;
+
+        // グローバルに保存して FamilyMap で使えるように
+        window._currentBreedingPlan = multiGenPlan.familyMapData;
+    }
 
     // v6.7.4: 倫理基準の説明を追加
     html += `<div class="ethics-note" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 0.85em;">`;
     html += `<p>📋 <strong>${_t('bp_ethics_standard', 'Ethical Standards')}:</strong> ${_t('bp_ethics_description', 'Pairs with IC ≥12.5% are excluded (Thoroughbred rules)')}</p>`;
     html += `</div>`;
-    
-    resultPanel.innerHTML = html; 
+
+    resultPanel.innerHTML = html;
     resultPanel.style.display = 'block';
+}
+
+/**
+ * v7.1: 計画をFamilyMapタブで開く
+ */
+function openPlanInFamilyMap() {
+    if (!window._currentBreedingPlan) {
+        alert('No breeding plan available');
+        return;
+    }
+
+    // FamilyMapにデータをロード
+    if (typeof FamilyMap !== 'undefined') {
+        FamilyMap.data = window._currentBreedingPlan;
+        FamilyMap.familyMode = 'plan';
+        FamilyMap.render();
+
+        // FamilyMapタブに切り替え
+        if (typeof showTab === 'function') {
+            showTab('family');
+        }
+    }
 }
