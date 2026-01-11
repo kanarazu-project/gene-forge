@@ -997,11 +997,17 @@ final class AgapornisLoci
                 }
             }
         }
-        $wildTypes = ['++', '+W', 'dd'];
+        // 野生型（表現型に影響しない遺伝子型）
+        // ヘテロ接合（+x）は表現型に影響しないのでワイルドタイプ扱い
+        $wildTypes = ['++', '+W', 'dd', 'vv'];
         foreach ($targetGeno as $locus => $value) {
             if (!isset($defGeno[$locus])) {
                 // INO系なら dark は無視
                 if ($isIno && $locus === 'dark') {
+                    continue;
+                }
+                // ヘテロ接合（+で始まる）は劣性なので表現型に影響しない
+                if (preg_match('/^\+[a-z]+$/', $value)) {
                     continue;
                 }
                 if (!in_array($value, $wildTypes)) {
