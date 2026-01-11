@@ -112,6 +112,8 @@ $pf_ja = [
     'bp_same_parent_warning' => '全ペアリングが同じ{parent}を使用。最終世代は半兄弟婚（F=12.5%）になります。新しい血統の導入を検討してください。',
     'bp_shared_sire' => '父親',
     'bp_shared_dam' => '母親',
+    'bp_half_sibling_warning' => '最終世代は半兄弟婚（F=12.5%）になります。新しい血統の導入を検討してください。',
+    'bp_cousin_warning' => '最終世代は従兄弟婚（F≈6.25%）になります。許容範囲ですが、長期繁殖には新しい血統を検討してください。',
 
     // ============================================================
     // v7.2: 交配シナリオ翻訳キー
@@ -333,6 +335,8 @@ $pf_en = [
     'bp_same_parent_warning' => 'All pairings share the same {parent}. Final generation offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.',
     'bp_shared_sire' => 'sire',
     'bp_shared_dam' => 'dam',
+    'bp_half_sibling_warning' => 'Final generation offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.',
+    'bp_cousin_warning' => 'Final generation offspring will be cousins (F≈6.25%). Acceptable but consider introducing new bloodlines for long-term breeding.',
 
     // ============================================================
     // v7.2: Breeding Scenario Translation Keys
@@ -527,6 +531,8 @@ $pf_de = [
     'bp_same_parent_warning' => 'Alle Paarungen teilen denselben {parent}. Nachkommen der letzten Generation werden Halbgeschwister (F=12,5%). Erwägen Sie die Einführung neuer Blutlinien.',
     'bp_shared_sire' => 'Vater',
     'bp_shared_dam' => 'Mutter',
+    'bp_half_sibling_warning' => 'Nachkommen der letzten Generation werden Halbgeschwister (F=12,5%). Erwägen Sie die Einführung neuer Blutlinien.',
+    'bp_cousin_warning' => 'Nachkommen der letzten Generation werden Cousins (F≈6,25%). Akzeptabel, aber für Langzeitzucht neue Blutlinien empfohlen.',
 
     // v7.2: Zucht-Szenario
     'pf_breeding_scenario' => 'Zuchtszenario',
@@ -703,6 +709,8 @@ $pf_fr = [
     'bp_same_parent_warning' => 'Tous les accouplements partagent le même {parent}. Les descendants de la dernière génération seront des demi-frères/sœurs (F=12,5%). Envisagez d\'introduire de nouvelles lignées.',
     'bp_shared_sire' => 'père',
     'bp_shared_dam' => 'mère',
+    'bp_half_sibling_warning' => 'Les descendants de la dernière génération seront des demi-frères/sœurs (F=12,5%). Envisagez d\'introduire de nouvelles lignées.',
+    'bp_cousin_warning' => 'Les descendants de la dernière génération seront des cousins (F≈6,25%). Acceptable mais envisagez de nouvelles lignées pour l\'élevage à long terme.',
 
     // v7.2: Scénario d'élevage
     'pf_breeding_scenario' => 'Scénario d\'élevage',
@@ -879,6 +887,8 @@ $pf_it = [
     'bp_same_parent_warning' => 'Tutti gli accoppiamenti condividono lo stesso {parent}. I discendenti dell\'ultima generazione saranno mezzi fratelli (F=12,5%). Considerare l\'introduzione di nuove linee di sangue.',
     'bp_shared_sire' => 'padre',
     'bp_shared_dam' => 'madre',
+    'bp_half_sibling_warning' => 'I discendenti dell\'ultima generazione saranno mezzi fratelli (F=12,5%). Considerare l\'introduzione di nuove linee di sangue.',
+    'bp_cousin_warning' => 'I discendenti dell\'ultima generazione saranno cugini (F≈6,25%). Accettabile ma considerare nuove linee di sangue per l\'allevamento a lungo termine.',
 
     // v7.2: Scenario di allevamento
     'pf_breeding_scenario' => 'Scenario di allevamento',
@@ -1055,6 +1065,8 @@ $pf_es = [
     'bp_same_parent_warning' => 'Todos los apareamientos comparten el mismo {parent}. Los descendientes de la última generación serán medio hermanos (F=12,5%). Considere introducir nuevas líneas de sangre.',
     'bp_shared_sire' => 'padre',
     'bp_shared_dam' => 'madre',
+    'bp_half_sibling_warning' => 'Los descendientes de la última generación serán medio hermanos (F=12,5%). Considere introducir nuevas líneas de sangre.',
+    'bp_cousin_warning' => 'Los descendientes de la última generación serán primos (F≈6,25%). Aceptable pero considere nuevas líneas de sangre para cría a largo plazo.',
 
     // v7.2: Escenario de cría
     'pf_breeding_scenario' => 'Escenario de cría',

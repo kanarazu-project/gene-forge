@@ -1351,119 +1351,213 @@ const BreedingPlanner = {
     },
 
     /**
-     * v7.3.15: 最終世代の近親交配を避けるため、異なる親を使ったペアリングを優先選択
+     * v7.3.16: 鳥のpedigreeから全祖先IDを取得
+     * @param {Object} bird - 鳥データ
+     * @returns {Set} 祖先IDのセット
+     */
+    getAncestorIds(bird) {
+        const ancestors = new Set();
+        if (!bird || !bird.pedigree) return ancestors;
+
+        const pedigree = bird.pedigree;
+
+        // 親
+        if (pedigree.sire) ancestors.add(pedigree.sire);
+        if (pedigree.dam) ancestors.add(pedigree.dam);
+
+        // 祖父母
+        if (pedigree.sire_sire) ancestors.add(pedigree.sire_sire);
+        if (pedigree.sire_dam) ancestors.add(pedigree.sire_dam);
+        if (pedigree.dam_sire) ancestors.add(pedigree.dam_sire);
+        if (pedigree.dam_dam) ancestors.add(pedigree.dam_dam);
+
+        // 曾祖父母
+        if (pedigree.sire_sire_sire) ancestors.add(pedigree.sire_sire_sire);
+        if (pedigree.sire_sire_dam) ancestors.add(pedigree.sire_sire_dam);
+        if (pedigree.sire_dam_sire) ancestors.add(pedigree.sire_dam_sire);
+        if (pedigree.sire_dam_dam) ancestors.add(pedigree.sire_dam_dam);
+        if (pedigree.dam_sire_sire) ancestors.add(pedigree.dam_sire_sire);
+        if (pedigree.dam_sire_dam) ancestors.add(pedigree.dam_sire_dam);
+        if (pedigree.dam_dam_sire) ancestors.add(pedigree.dam_dam_sire);
+        if (pedigree.dam_dam_dam) ancestors.add(pedigree.dam_dam_dam);
+
+        // BirdDBのgetAllAncestorIdsも使用（より深い系統追跡）
+        if (typeof BirdDB !== 'undefined' && bird.id) {
+            const dbAncestors = BirdDB.getAllAncestorIds(bird.id);
+            if (dbAncestors) {
+                dbAncestors.forEach(id => ancestors.add(id));
+            }
+        }
+
+        return ancestors;
+    },
+
+    /**
+     * v7.3.16: 2つのペアリングの子同士が共有する祖先をチェック
+     * ペアリング1の子の祖先 = {ペアリング1のオス, ペアリング1のメス, それぞれの祖先}
+     * ペアリング2の子の祖先 = {ペアリング2のオス, ペアリング2のメス, それぞれの祖先}
      *
-     * 重要: 最終世代でオス×メスを交配する際、両方の親が同じ祖先を持つと近親交配になる
-     * - 同じオスからの子同士 → 半兄弟（F=12.5%）
-     * - 同じメスからの子同士 → 半兄弟（F=12.5%）
+     * @param {Object} pair1 - 最初のペアリング
+     * @param {Object} pair2 - 2番目のペアリング
+     * @returns {Object} { sharedCount, sharedIds, estimatedIC }
+     */
+    calculateSharedAncestors(pair1, pair2) {
+        // ペアリング1の子が持つ祖先
+        const ancestors1 = new Set();
+        if (pair1.male?.id) {
+            ancestors1.add(pair1.male.id);
+            this.getAncestorIds(pair1.male).forEach(id => ancestors1.add(id));
+        }
+        if (pair1.female?.id) {
+            ancestors1.add(pair1.female.id);
+            this.getAncestorIds(pair1.female).forEach(id => ancestors1.add(id));
+        }
+
+        // ペアリング2の子が持つ祖先
+        const ancestors2 = new Set();
+        if (pair2.male?.id) {
+            ancestors2.add(pair2.male.id);
+            this.getAncestorIds(pair2.male).forEach(id => ancestors2.add(id));
+        }
+        if (pair2.female?.id) {
+            ancestors2.add(pair2.female.id);
+            this.getAncestorIds(pair2.female).forEach(id => ancestors2.add(id));
+        }
+
+        // 共通祖先を検出
+        const sharedIds = [];
+        ancestors1.forEach(id => {
+            if (ancestors2.has(id)) {
+                sharedIds.push(id);
+            }
+        });
+
+        // 近交係数を推定
+        // - 同じ親（直接の親） = 12.5%〜25%
+        // - 同じ祖父母 = 6.25%（従兄弟婚）
+        // - 同じ曾祖父母 = 3.125%
+        let estimatedIC = 0;
+        const pair1Parents = new Set([pair1.male?.id, pair1.female?.id].filter(Boolean));
+        const pair2Parents = new Set([pair2.male?.id, pair2.female?.id].filter(Boolean));
+
+        // 共通の親をチェック（兄弟/半兄弟）
+        let sharedParentCount = 0;
+        pair1Parents.forEach(id => {
+            if (pair2Parents.has(id)) sharedParentCount++;
+        });
+
+        if (sharedParentCount === 2) {
+            estimatedIC = 0.25;  // 全兄弟
+        } else if (sharedParentCount === 1) {
+            estimatedIC = 0.125; // 半兄弟
+        } else if (sharedIds.length > 0) {
+            // 祖父母以上で共通 → 従兄弟以下
+            // 共通祖先の数に基づいて推定
+            estimatedIC = Math.min(0.0625 * sharedIds.length, 0.125);
+        }
+
+        return {
+            sharedCount: sharedIds.length,
+            sharedIds,
+            estimatedIC,
+            relationship: sharedParentCount === 2 ? 'full_siblings' :
+                         sharedParentCount === 1 ? 'half_siblings' :
+                         sharedIds.length > 0 ? 'cousins' : 'unrelated'
+        };
+    },
+
+    /**
+     * v7.3.16: 最終世代の近親交配を避けるため、祖先データを使って最適なペアリングを選択
      *
-     * したがって、sire用ペアリングとdam用ペアリングで共通の親を持たないようにする
+     * 優先順位:
+     * 1. 共通祖先なし（F=0%）
+     * 2. 共通祖先が曾祖父母のみ（F≈3%）
+     * 3. 共通祖先が祖父母（従兄弟婚 F=6.25%）
+     * 4. 共通親が1つ（半兄弟婚 F=12.5%）
+     * 5. 共通親が2つ（全兄弟婚 F=25%）
      */
     selectDiversifiedPairings(pairings, maxCount) {
         if (pairings.length <= 1) return pairings;
 
-        // v7.3.15: 2つのペアリングを選択 - 共通の親を持たない組み合わせを優先
-        // sire用（最終世代の父を作る）とdam用（最終世代の母を作る）
+        // v7.3.16: 祖先データを使って最適なペアリング組み合わせを選択
         const result = this.selectNonOverlappingPairings(pairings, maxCount);
 
         return result;
     },
 
     /**
-     * v7.3.15: 共通の親を持たないペアリングを選択
-     * 最終世代で半兄弟婚にならないよう、オス親/メス親が重複しない組み合わせを探す
+     * v7.3.16: 共通祖先を持たないペアリングを優先選択
+     * pedigreeデータを使用して3世代まで遡り、共通祖先をチェック
      */
     selectNonOverlappingPairings(pairings, maxCount) {
         if (pairings.length <= 1) return pairings;
 
         const selected = [];
-
-        // 最初のペアリング（sire用）を選択
         const firstPair = pairings[0];
         selected.push(firstPair);
 
-        const firstMaleId = firstPair.male?.id;
-        const firstFemaleId = firstPair.female?.id;
+        // 各ペアリングと最初のペアリングの共通祖先を計算
+        const pairingsWithScore = pairings.slice(1).map(p => {
+            const shared = this.calculateSharedAncestors(firstPair, p);
+            return {
+                pairing: p,
+                sharedCount: shared.sharedCount,
+                estimatedIC: shared.estimatedIC,
+                relationship: shared.relationship
+            };
+        });
 
-        // 2番目以降のペアリング（dam用）を選択
-        // 条件: 最初のペアリングと親が重複しない
-        let foundNonOverlapping = false;
+        // 共通祖先が少ない順にソート（近交係数が低い順）
+        pairingsWithScore.sort((a, b) => a.estimatedIC - b.estimatedIC);
 
-        for (const p of pairings.slice(1)) {
-            if (selected.length >= maxCount) break;
+        // 最も共通祖先が少ないペアリングを選択
+        let bestSecondPair = null;
+        let bestRelationship = 'unknown';
 
-            const maleId = p.male?.id;
-            const femaleId = p.female?.id;
-
-            // 共通の親がいないかチェック
-            const sharesMale = maleId && maleId === firstMaleId;
-            const sharesFemale = femaleId && femaleId === firstFemaleId;
-
-            if (!sharesMale && !sharesFemale) {
-                // 共通の親なし → 最終世代で近親交配にならない
-                selected.push(p);
-                foundNonOverlapping = true;
-                break;  // dam用は1つで十分
+        for (const item of pairingsWithScore) {
+            if (item.estimatedIC === 0) {
+                // 共通祖先なし → 最適
+                bestSecondPair = item.pairing;
+                bestRelationship = 'unrelated';
+                break;
+            } else if (item.estimatedIC < 0.0625 && !bestSecondPair) {
+                // 遠縁（従兄弟未満）
+                bestSecondPair = item.pairing;
+                bestRelationship = item.relationship;
+            } else if (item.estimatedIC < 0.125 && !bestSecondPair) {
+                // 従兄弟以下
+                bestSecondPair = item.pairing;
+                bestRelationship = item.relationship;
             }
         }
 
-        // 共通親なしのペアが見つからない場合、異なるメスを優先
-        if (!foundNonOverlapping && selected.length < maxCount) {
-            for (const p of pairings.slice(1)) {
-                if (selected.length >= maxCount) break;
-                if (selected.includes(p)) continue;
-
-                const femaleId = p.female?.id;
-
-                // 異なるメスを使ったペアリングを優先
-                if (femaleId && femaleId !== firstFemaleId) {
-                    selected.push(p);
-
-                    // 同じオス・異なるメス → F=0%
-                    // 警告なしで追加
-                    foundNonOverlapping = true;
-                    break;
-                }
-            }
+        // 見つからなければ最もICが低いものを使用
+        if (!bestSecondPair && pairingsWithScore.length > 0) {
+            bestSecondPair = pairingsWithScore[0].pairing;
+            bestRelationship = pairingsWithScore[0].relationship;
         }
 
-        // 異なるメスも見つからない場合、異なるオスを試す
-        if (!foundNonOverlapping && selected.length < maxCount) {
-            for (const p of pairings.slice(1)) {
-                if (selected.length >= maxCount) break;
-                if (selected.includes(p)) continue;
+        if (bestSecondPair) {
+            selected.push(bestSecondPair);
 
-                const maleId = p.male?.id;
+            // 近親交配の警告を追加
+            const shared = this.calculateSharedAncestors(firstPair, bestSecondPair);
 
-                // 異なるオスを使ったペアリング
-                if (maleId && maleId !== firstMaleId) {
-                    selected.push(p);
-                    break;
-                }
-            }
-        }
-
-        // 全て同じ両親の場合（最悪ケース）、警告を追加
-        if (selected.length >= 2) {
-            const allSameMale = selected.every(p => p.male?.id === firstMaleId);
-            const allSameFemale = selected.every(p => p.female?.id === firstFemaleId);
-
-            if (allSameMale && allSameFemale) {
-                // 全て同じ両親 → 最終世代は全兄弟婚（F=25%）
+            if (shared.relationship === 'full_siblings') {
                 selected.push({
                     recommendation: '🚫 ' + this._t('bp_same_parents_warning', 'All pairings use the same parents. Final generation will be full siblings (F=25%). Must introduce new bloodlines.'),
                     probability: 0,
                     isWarning: true
                 });
-            } else if (allSameMale || allSameFemale) {
-                // 同じオスまたは同じメス → 最終世代は半兄弟婚（F=12.5%）
-                const sharedParent = allSameMale ?
-                    this._t('bp_shared_sire', 'sire') :
-                    this._t('bp_shared_dam', 'dam');
+            } else if (shared.relationship === 'half_siblings') {
                 selected.push({
-                    recommendation: '⚠️ ' + this._tp('bp_same_parent_warning',
-                        { parent: sharedParent },
-                        `All pairings share the same ${sharedParent}. Final generation offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.`),
+                    recommendation: '⚠️ ' + this._t('bp_half_sibling_warning', 'Final generation offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.'),
+                    probability: 0,
+                    isWarning: true
+                });
+            } else if (shared.relationship === 'cousins') {
+                selected.push({
+                    recommendation: '⚠️ ' + this._t('bp_cousin_warning', 'Final generation offspring will be cousins (F≈6.25%). Acceptable but consider introducing new bloodlines for long-term breeding.'),
                     probability: 0,
                     isWarning: true
                 });
