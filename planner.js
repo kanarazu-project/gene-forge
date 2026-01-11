@@ -823,8 +823,25 @@ const BreedingPlanner = {
 
         // 1世代で作出可能か判定
         const canProduceInOneGen = missing.length === 0;
-        const maxGenerationsNeeded = missing.length === 0 ? 1 :
-            Math.max(...missing.map(m => m.generationsNeeded)) + 1;
+
+        // v7.1.1: 正確な世代数計算
+        // 遺伝子が別々の個体に散在している場合、組み合わせに追加世代が必要
+        let maxGenerationsNeeded = 1;
+        if (missing.length > 0) {
+            // 各遺伝子の固定に必要な世代
+            const fixGenerations = Math.max(...missing.map(m => m.generationsNeeded));
+
+            // 遺伝子が既に同一個体に存在するか確認
+            const combinationNeeded = this.checkCombinationNeeded(birds, required, slr, available);
+
+            // 基本世代 + 固定世代 + 組み合わせ世代
+            maxGenerationsNeeded = fixGenerations + 1;
+
+            // 組み合わせが必要な場合、追加世代
+            if (combinationNeeded.needsCombination) {
+                maxGenerationsNeeded += combinationNeeded.additionalGenerations;
+            }
+        }
 
         return {
             target,
@@ -834,9 +851,73 @@ const BreedingPlanner = {
             missing,
             canProduceInOneGen,
             maxGenerationsNeeded: Math.min(maxGenerationsNeeded, 4),
+            combinationAnalysis: missing.length > 0 ?
+                this.checkCombinationNeeded(birds, required, slr, available) : null,
             totalBirds: birds.length,
             males: males.length,
             females: females.length
+        };
+    },
+
+    /**
+     * v7.1.1: 遺伝子の組み合わせが必要かチェック
+     * 必要な遺伝子が別々の個体に散在している場合、組み合わせ世代が必要
+     */
+    checkCombinationNeeded(birds, required, slr, available) {
+        const requiredGenes = [
+            ...Object.keys(required),
+            ...Object.keys(slr)
+        ];
+
+        if (requiredGenes.length <= 1) {
+            return { needsCombination: false, additionalGenerations: 0 };
+        }
+
+        // 全ての必要遺伝子を持つ（または持てる）個体を探す
+        let bestBird = null;
+        let maxGenesInOneBird = 0;
+
+        birds.forEach(bird => {
+            const geno = bird.genotype || {};
+            let genesPresent = 0;
+
+            // 常染色体遺伝子
+            for (const [locus, vals] of Object.entries(required)) {
+                const val = geno[locus] || '++';
+                // ホモでもヘテロでも「持っている」とカウント
+                if (vals.includes(val) || (val !== '++' && val !== 'dd' && val !== 'vv')) {
+                    genesPresent++;
+                }
+            }
+
+            // 伴性遺伝子
+            for (const [locus, vals] of Object.entries(slr)) {
+                const val = geno[locus] || (bird.sex === 'male' ? '++' : '+W');
+                if (vals.includes(val) || (val !== '++' && val !== '+W')) {
+                    genesPresent++;
+                }
+            }
+
+            if (genesPresent > maxGenesInOneBird) {
+                maxGenesInOneBird = genesPresent;
+                bestBird = bird;
+            }
+        });
+
+        const totalRequired = requiredGenes.length;
+        const genesScattered = totalRequired - maxGenesInOneBird;
+
+        // 散在している遺伝子を組み合わせるのに必要な追加世代
+        // 各組み合わせステップで1世代必要
+        const additionalGenerations = genesScattered > 0 ? Math.ceil(genesScattered / 2) : 0;
+
+        return {
+            needsCombination: genesScattered > 0,
+            additionalGenerations,
+            totalRequired,
+            maxGenesInOneBird,
+            genesScattered,
+            bestBird: bestBird ? bestBird.name : null
         };
     },
 
@@ -1183,7 +1264,26 @@ function runPlanner() {
                     : _t('bp_gene_absent', 'absent (need to introduce)');
             html += `<li><strong>${locusName}</strong>: ${statusText}</li>`;
         });
-        html += `</ul></div>`;
+        html += `</ul>`;
+
+        // v7.1.1: 組み合わせ分析を表示
+        if (analysis.combinationAnalysis && analysis.combinationAnalysis.needsCombination) {
+            const combo = analysis.combinationAnalysis;
+            html += `<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed #ffc107;">`;
+            html += `<p><strong>🔗 ${_t('bp_combination_needed', 'Gene combination needed')}:</strong></p>`;
+            html += `<p style="font-size: 0.9em; color: #856404;">`;
+            html += _t('bp_genes_scattered', '{scattered} genes are on different birds. Need {gens} extra generation(s) to combine.')
+                .replace('{scattered}', combo.genesScattered)
+                .replace('{gens}', combo.additionalGenerations);
+            html += `</p>`;
+            if (combo.bestBird) {
+                html += `<p style="font-size: 0.9em;">`;
+                html += `${_t('bp_best_foundation', 'Best foundation bird')}: <strong>${combo.bestBird}</strong> (${combo.maxGenesInOneBird}/${combo.totalRequired} ${_t('bp_genes', 'genes')})`;
+                html += `</p>`;
+            }
+            html += `</div>`;
+        }
+        html += `</div>`;
     } else if (analysis && analysis.canProduceInOneGen) {
         html += `<div style="background: #d4edda; border: 1px solid #28a745; padding: 10px; border-radius: 8px; margin-bottom: 15px;">`;
         html += `<p style="margin:0; color: #155724;">✅ ${_t('bp_one_gen_possible', 'Can be produced in 1 generation!')}</p>`;

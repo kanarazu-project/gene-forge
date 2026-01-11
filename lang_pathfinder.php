@@ -98,6 +98,12 @@ $pf_ja = [
     'bp_introduce_slr_gene' => '{gene}（伴性）を導入',
     'bp_breeding_plan' => '配合計画',
     'bp_open_in_familymap' => 'FamilyMapで開く',
+
+    // v7.1.1: 組み合わせ分析
+    'bp_combination_needed' => '遺伝子の組み合わせが必要',
+    'bp_genes_scattered' => '{scattered}個の遺伝子が別々の個体に存在。組み合わせに{gens}世代追加。',
+    'bp_best_foundation' => '最適な基礎個体',
+    'bp_genes' => '遺伝子',
 ];
 
 // ============================================================
@@ -189,6 +195,12 @@ $pf_en = [
     'bp_introduce_slr_gene' => 'Introduce {gene} (sex-linked)',
     'bp_breeding_plan' => 'Breeding Plan',
     'bp_open_in_familymap' => 'Open in FamilyMap',
+
+    // v7.1.1: Combination analysis
+    'bp_combination_needed' => 'Gene combination needed',
+    'bp_genes_scattered' => '{scattered} genes are on different birds. Need {gens} extra generation(s) to combine.',
+    'bp_best_foundation' => 'Best foundation bird',
+    'bp_genes' => 'genes',
 ];
 
 // ============================================================
@@ -253,6 +265,12 @@ $pf_de = [
     'bp_introduce_slr_gene' => '{gene} (geschlechtsgeb.) einführen',
     'bp_breeding_plan' => 'Zuchtplan',
     'bp_open_in_familymap' => 'In FamilyMap öffnen',
+
+    // v7.1.1: Kombinationsanalyse
+    'bp_combination_needed' => 'Genkombination erforderlich',
+    'bp_genes_scattered' => '{scattered} Gene sind auf verschiedenen Vögeln. {gens} zusätzliche Generation(en) zum Kombinieren benötigt.',
+    'bp_best_foundation' => 'Bester Grundvogel',
+    'bp_genes' => 'Gene',
 ];
 
 // ============================================================
@@ -317,6 +335,12 @@ $pf_fr = [
     'bp_introduce_slr_gene' => 'Introduire {gene} (lié au sexe)',
     'bp_breeding_plan' => 'Plan d\'Élevage',
     'bp_open_in_familymap' => 'Ouvrir dans FamilyMap',
+
+    // v7.1.1: Analyse de combinaison
+    'bp_combination_needed' => 'Combinaison génétique nécessaire',
+    'bp_genes_scattered' => '{scattered} gènes sont sur différents oiseaux. {gens} génération(s) supplémentaire(s) nécessaire(s).',
+    'bp_best_foundation' => 'Meilleur oiseau de base',
+    'bp_genes' => 'gènes',
 ];
 
 // ============================================================
@@ -381,6 +405,12 @@ $pf_it = [
     'bp_introduce_slr_gene' => 'Introdurre {gene} (legato al sesso)',
     'bp_breeding_plan' => 'Piano di Allevamento',
     'bp_open_in_familymap' => 'Apri in FamilyMap',
+
+    // v7.1.1: Analisi combinazione
+    'bp_combination_needed' => 'Combinazione genetica necessaria',
+    'bp_genes_scattered' => '{scattered} geni sono su uccelli diversi. {gens} generazione(i) extra necessaria(e).',
+    'bp_best_foundation' => 'Miglior uccello base',
+    'bp_genes' => 'geni',
 ];
 
 // ============================================================
@@ -445,4 +475,10 @@ $pf_es = [
     'bp_introduce_slr_gene' => 'Introducir {gene} (ligado al sexo)',
     'bp_breeding_plan' => 'Plan de Cría',
     'bp_open_in_familymap' => 'Abrir en FamilyMap',
+
+    // v7.1.1: Análisis de combinación
+    'bp_combination_needed' => 'Combinación genética necesaria',
+    'bp_genes_scattered' => '{scattered} genes están en diferentes aves. {gens} generación(es) extra necesaria(s).',
+    'bp_best_foundation' => 'Mejor ave base',
+    'bp_genes' => 'genes',
 ];
