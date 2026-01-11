@@ -1338,7 +1338,64 @@ const BreedingPlanner = {
         // スコア順でソート
         pairings.sort((a, b) => b.probability - a.probability || a.inbreedingCoef - b.inbreedingCoef);
 
-        return pairings.slice(0, 3);
+        // v7.3.13: 最終世代の半兄弟婚を避けるため、異なるオス/メスを優先選択
+        const selectedPairings = this.selectDiversifiedPairings(pairings, 3);
+
+        return selectedPairings;
+    },
+
+    /**
+     * v7.3.13: 最終世代の近親交配を避けるため、異なる親を使ったペアリングを優先選択
+     * 同じオスばかり使うと最終世代が半兄弟婚（F=12.5%）になる
+     */
+    selectDiversifiedPairings(pairings, maxCount) {
+        if (pairings.length <= 1) return pairings;
+
+        const selected = [];
+        const usedMaleIds = new Set();
+        const usedFemaleIds = new Set();
+
+        // 第1パス: 異なるオスを使ったペアリングを優先
+        for (const p of pairings) {
+            if (selected.length >= maxCount) break;
+            const maleId = p.male?.id;
+            if (maleId && !usedMaleIds.has(maleId)) {
+                selected.push(p);
+                usedMaleIds.add(maleId);
+                if (p.female?.id) usedFemaleIds.add(p.female.id);
+            }
+        }
+
+        // 第2パス: 異なるメスを使ったペアリングを追加
+        for (const p of pairings) {
+            if (selected.length >= maxCount) break;
+            if (selected.includes(p)) continue;
+            const femaleId = p.female?.id;
+            if (femaleId && !usedFemaleIds.has(femaleId)) {
+                selected.push(p);
+                usedFemaleIds.add(femaleId);
+                if (p.male?.id) usedMaleIds.add(p.male.id);
+            }
+        }
+
+        // 第3パス: 足りない分は元のソート順で補充
+        for (const p of pairings) {
+            if (selected.length >= maxCount) break;
+            if (!selected.includes(p)) {
+                selected.push(p);
+            }
+        }
+
+        // 全て同じオスの場合、新しい血統導入の警告を追加
+        if (selected.length > 1 && usedMaleIds.size === 1) {
+            selected.push({
+                recommendation: '⚠️ ' + this._t('bp_same_sire_warning', 'All pairings use the same sire. Offspring will be half-siblings (F=12.5%). Consider introducing new bloodlines.'),
+                probability: 0,
+                isWarning: true
+            });
+        }
+
+        return selected;
     },
 
     /**
