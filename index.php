@@ -1229,12 +1229,14 @@ $mPh = $_POST['m_ph'] ?? '++';
                     select.innerHTML = `<option value="">${T.select_placeholder}</option>`;
                     birds.forEach(b => {
                         const geno = b.genotype || {};
-                        const pheno = b.phenotype || {};
+                        // v7.3.11: keyToLabelで動的にローカライズ（observed.baseColorを優先）
                         let colorLabel;
                         if (Object.keys(geno).length > 0 && BirdDB.calculatePhenotype) {
                             colorLabel = BirdDB.calculatePhenotype(geno, b.sex);
+                        } else if (b.observed?.baseColor) {
+                            colorLabel = keyToLabel(b.observed.baseColor);
                         } else {
-                            colorLabel = getColorLabel(pheno.baseColor, isJa);
+                            colorLabel = b.phenotype || '?';
                         }
                         const opt = document.createElement('option');
                         opt.value = b.id;
@@ -1389,12 +1391,14 @@ $mPh = $_POST['m_ph'] ?? '++';
                     healthSire.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
                     healthDam.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
                     males.forEach(b => {
-                        const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
+                        // v7.3.11: keyToLabelで動的にローカライズ
+                        const pheno = b.observed?.baseColor ? keyToLabel(b.observed.baseColor) : (b.phenotype || '?');
                         const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
                         healthSire.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)}${lineage}</option>`;
                     });
                     females.forEach(b => {
-                        const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
+                        // v7.3.11: keyToLabelで動的にローカライズ
+                        const pheno = b.observed?.baseColor ? keyToLabel(b.observed.baseColor) : (b.phenotype || '?');
                         const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
                         healthDam.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)}${lineage}</option>`;
                     });
@@ -1718,14 +1722,16 @@ function closeBirdForm() {
             healthDam.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
 
             males.forEach(b => {
-                const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
+                // v7.3.11: keyToLabelで動的にローカライズ
+                const pheno = b.observed?.baseColor ? keyToLabel(b.observed.baseColor) : (b.phenotype || '?');
                 const geno = formatGenoShort(b.genotype, b.sex);
                 const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
                 healthSire.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)} (${escapeHtml(geno)})${lineage}</option>`;
             });
 
             females.forEach(b => {
-                const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
+                // v7.3.11: keyToLabelで動的にローカライズ
+                const pheno = b.observed?.baseColor ? keyToLabel(b.observed.baseColor) : (b.phenotype || '?');
                 const geno = formatGenoShort(b.genotype, b.sex);
                 const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
                 healthDam.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)} (${escapeHtml(geno)})${lineage}</option>`;
