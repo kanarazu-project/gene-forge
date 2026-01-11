@@ -1142,8 +1142,11 @@ const BreedingPlanner = {
     },
 
     /**
-     * v7.1: 計画をFamilyMap形式に変換
-     * FamilyMapで表示可能な形式で出力
+     * v7.1.2: 計画をFamilyMap形式に変換（目標を子として逆算）
+     * G0: 目標個体（作出予定）
+     * G1: 親（最終交配ペア）
+     * G2: 祖父母（中間世代1）
+     * G3: 曾祖父母（中間世代2）
      */
     convertToFamilyMapFormat(plan, birds) {
         const data = {
@@ -1151,6 +1154,7 @@ const BreedingPlanner = {
             savedAt: new Date().toISOString(),
             isBreedingPlan: true,
             targetKey: plan.targetKey,
+            totalGenerations: plan.totalGenerations,
             // G0: 目標（作出予定）
             offspring: [{
                 id: 'plan_target',
@@ -1158,12 +1162,11 @@ const BreedingPlanner = {
                 sex: 'unknown',
                 phenotype: { baseColor: plan.targetKey },
                 genotype: plan.analysis.target.required,
-                isPlanned: true
+                isPlanned: true,
+                isTarget: true
             }],
-            // G1: 親（最終交配ペア）
-            sire: null,
-            dam: null,
-            // G2-G3: 祖先（中間世代）
+            // G1-G3: 初期化
+            sire: null, dam: null,
             sire_sire: null, sire_dam: null,
             dam_sire: null, dam_dam: null,
             sire_sire_sire: null, sire_sire_dam: null,
@@ -1172,35 +1175,93 @@ const BreedingPlanner = {
             dam_dam_sire: null, dam_dam_dam: null
         };
 
-        // 利用可能な世代計画からFamilyMapに配置
-        if (plan.generations.length > 0) {
-            const gen1 = plan.generations.find(g => g.genNumber === 1);
-            if (gen1 && gen1.pairings && gen1.pairings.length > 0) {
-                const topPair = gen1.pairings[0];
-                if (topPair.male) {
-                    data.sire = this.birdToFamilyMapFormat(topPair.male, 'sire');
-                }
-                if (topPair.female) {
-                    data.dam = this.birdToFamilyMapFormat(topPair.female, 'dam');
-                }
-            }
+        // 世代ごとのペアリングをFamilyMapの位置にマッピング
+        // Gen1 → sire/dam
+        // Gen2 → sire_sire/sire_dam (sireを作る) または dam_sire/dam_dam (damを作る)
+        // Gen3 → great-grandparents
 
-            // 中間世代があれば配置
-            const gen2 = plan.generations.find(g => g.genNumber === 2);
-            if (gen2 && gen2.pairings && gen2.pairings.length > 0) {
-                const pair = gen2.pairings[0];
-                if (pair.male) data.sire_sire = this.birdToFamilyMapFormat(pair.male, 'sire_sire');
-                if (pair.female) data.sire_dam = this.birdToFamilyMapFormat(pair.female, 'sire_dam');
+        const generations = plan.generations || [];
+
+        // 最終世代（Gen1）: 目標を直接作出するペア
+        const gen1 = generations.find(g => g.genNumber === 1);
+        if (gen1 && gen1.pairings && gen1.pairings.length > 0) {
+            const topPair = gen1.pairings[0];
+            if (topPair.male) {
+                data.sire = this.birdToFamilyMapFormat(topPair.male, 'sire', false);
+            } else {
+                // 中間個体（まだ作出されていない）
+                data.sire = this.createPlannedBird('sire', gen1.targetGene, '♂', 1);
             }
+            if (topPair.female) {
+                data.dam = this.birdToFamilyMapFormat(topPair.female, 'dam', false);
+            } else {
+                data.dam = this.createPlannedBird('dam', gen1.targetGene, '♀', 1);
+            }
+        }
+
+        // 第2世代（Gen2）: G1の親を作出するペア
+        const gen2 = generations.find(g => g.genNumber === 2);
+        if (gen2 && gen2.pairings && gen2.pairings.length > 0) {
+            const pair = gen2.pairings[0];
+            if (pair.male && pair.female) {
+                // sireの親として配置
+                data.sire_sire = this.birdToFamilyMapFormat(pair.male, 'sire_sire', true);
+                data.sire_dam = this.birdToFamilyMapFormat(pair.female, 'sire_dam', true);
+
+                // sireが未作出の場合、プランとしてマーク
+                if (data.sire && !data.sire.isExisting) {
+                    data.sire.fromPairing = { sire: pair.male.name, dam: pair.female.name };
+                }
+            } else if (pair.recommendation) {
+                // 導入が必要な場合
+                data.sire_sire = this.createPlannedBird('sire_sire', gen2.targetGene, '♂', 2, pair.recommendation);
+            }
+        }
+
+        // 第3世代（Gen3）: G2の親を作出するペア
+        const gen3 = generations.find(g => g.genNumber === 3);
+        if (gen3 && gen3.pairings && gen3.pairings.length > 0) {
+            const pair = gen3.pairings[0];
+            if (pair.male && pair.female) {
+                data.sire_sire_sire = this.birdToFamilyMapFormat(pair.male, 'sire_sire_sire', true);
+                data.sire_sire_dam = this.birdToFamilyMapFormat(pair.female, 'sire_sire_dam', true);
+            }
+        }
+
+        // 第4世代（Gen4）: 最大4世代
+        const gen4 = generations.find(g => g.genNumber === 4);
+        if (gen4 && gen4.pairings && gen4.pairings.length > 0) {
+            // G4は表示限界外だが、メモとして保存
+            data.gen4Note = gen4.goal;
         }
 
         return data;
     },
 
     /**
-     * v7.1: 鳥データをFamilyMap用にフォーマット
+     * v7.1.2: 作出予定の個体を作成
      */
-    birdToFamilyMapFormat(bird, position) {
+    createPlannedBird(position, targetGene, sex, generation, note) {
+        const sexLabel = sex === '♂' ? 'male' : 'female';
+        return {
+            id: `plan_${position}`,
+            name: `📋 ${this._t('bp_planned_bird', 'Planned')} (G${generation})`,
+            sex: sexLabel,
+            phenotype: { baseColor: 'unknown' },
+            genotype: {},
+            position: position,
+            isPlanned: true,
+            isExisting: false,
+            targetGene: targetGene,
+            generation: generation,
+            note: note || null
+        };
+    },
+
+    /**
+     * v7.1.2: 鳥データをFamilyMap用にフォーマット
+     */
+    birdToFamilyMapFormat(bird, position, isFoundation) {
         return {
             id: bird.id,
             name: bird.name,
@@ -1208,7 +1269,8 @@ const BreedingPlanner = {
             phenotype: bird.phenotype || { baseColor: 'unknown' },
             genotype: bird.genotype || {},
             position: position,
-            isExisting: true
+            isExisting: true,
+            isFoundation: isFoundation || false
         };
     }
 };
