@@ -1533,7 +1533,7 @@ function openPlanInFamilyMap() {
     if (typeof FamilyMap !== 'undefined') {
         FamilyMap.data = window._currentBreedingPlan;
         FamilyMap.familyMode = 'plan';
-        FamilyMap.render();
+        FamilyMap.renderUI();
 
         // FamilyMapタブに切り替え
         if (typeof showTab === 'function') {
