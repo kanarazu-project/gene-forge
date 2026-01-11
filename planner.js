@@ -1145,7 +1145,7 @@ const BreedingPlanner = {
                     goals.push({
                         locus: m.locus,
                         targetValue: m.required[0],
-                        description: this._tp('bp_introduce_slr', { gene: m.locus.toUpperCase() },
+                        description: this._tp('bp_introduce_slr_gene', { gene: m.locus.toUpperCase() },
                             `Introduce ${m.locus.toUpperCase()} (SLR)`),
                         strategy: 'need_introduction',
                         probability: 0,

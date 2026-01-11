@@ -93,7 +93,7 @@ $guardian_translations = [
     'summary_caution' => '注意',
     'summary_high' => '⚠️ 高リスク: {msg}',
     'summary_moderate' => '⚡ 注意事項あり',
-    'summary_safe' => '✓ 健康リスク: 低',
+    'summary_safe' => '健康リスク: 低',
     
     // --- needsRefresh ---
     'refresh_ino' => 'INO系（ルチノー/クリーミノ/ピュアホワイト）2世代到達',
@@ -110,6 +110,7 @@ $guardian_translations = [
     // --- 確定/推定ステータス ---
     'status_confirmed' => '✓確定',
     'status_estimated' => '?推定',
+    'confirmed_phenotype' => '✓ 確定（表現型）',
 ],
 
 // ============================================================
@@ -190,7 +191,7 @@ $guardian_translations = [
     'summary_caution' => 'Caution',
     'summary_high' => '⚠️ High risk: {msg}',
     'summary_moderate' => '⚡ Caution required',
-    'summary_safe' => '✓ Health risk: Low',
+    'summary_safe' => 'Health risk: Low',
     
     // --- needsRefresh ---
     'refresh_ino' => 'INO line (Lutino/Creamino/Pure White) reached 2 generations',
@@ -207,6 +208,7 @@ $guardian_translations = [
     // --- 確定/推定ステータス ---
     'status_confirmed' => '✓Confirmed',
     'status_estimated' => '?Estimated',
+    'confirmed_phenotype' => '✓ Confirmed (phenotype)',
 ],
 
 // ============================================================
@@ -287,7 +289,7 @@ $guardian_translations = [
     'summary_caution' => 'Vorsicht',
     'summary_high' => '⚠️ Hohes Risiko: {msg}',
     'summary_moderate' => '⚡ Vorsicht erforderlich',
-    'summary_safe' => '✓ Gesundheitsrisiko: Niedrig',
+    'summary_safe' => 'Gesundheitsrisiko: Niedrig',
     
     // --- needsRefresh ---
     'refresh_ino' => 'INO-Linie (Lutino/Creamino/Reinweiß) hat 2 Generationen erreicht',
@@ -304,6 +306,7 @@ $guardian_translations = [
     // --- 確定/推定ステータス ---
     'status_confirmed' => '✓Bestätigt',
     'status_estimated' => '?Geschätzt',
+    'confirmed_phenotype' => '✓ Bestätigt (Phänotyp)',
 ],
 
 // ============================================================
@@ -384,7 +387,7 @@ $guardian_translations = [
     'summary_caution' => 'Prudence',
     'summary_high' => '⚠️ Risque élevé: {msg}',
     'summary_moderate' => '⚡ Prudence requise',
-    'summary_safe' => '✓ Risque santé: Faible',
+    'summary_safe' => 'Risque santé: Faible',
     
     // --- needsRefresh ---
     'refresh_ino' => 'Lignée INO (Lutino/Creamino/Blanc pur) a atteint 2 générations',
@@ -401,6 +404,7 @@ $guardian_translations = [
     // --- 確定/推定ステータス ---
     'status_confirmed' => '✓Confirmé',
     'status_estimated' => '?Estimé',
+    'confirmed_phenotype' => '✓ Confirmé (phénotype)',
 ],
 
 // ============================================================
@@ -481,7 +485,7 @@ $guardian_translations = [
     'summary_caution' => 'Cautela',
     'summary_high' => '⚠️ Alto rischio: {msg}',
     'summary_moderate' => '⚡ Cautela richiesta',
-    'summary_safe' => '✓ Rischio salute: Basso',
+    'summary_safe' => 'Rischio salute: Basso',
     
     // --- needsRefresh ---
     'refresh_ino' => 'Linea INO (Lutino/Creamino/Bianco puro) ha raggiunto 2 generazioni',
@@ -498,6 +502,7 @@ $guardian_translations = [
     // --- 確定/推定ステータス ---
     'status_confirmed' => '✓Confermato',
     'status_estimated' => '?Stimato',
+    'confirmed_phenotype' => '✓ Confermato (fenotipo)',
 ],
 
 // ============================================================
@@ -578,7 +583,7 @@ $guardian_translations = [
     'summary_caution' => 'Precaución',
     'summary_high' => '⚠️ Alto riesgo: {msg}',
     'summary_moderate' => '⚡ Precaución requerida',
-    'summary_safe' => '✓ Riesgo salud: Bajo',
+    'summary_safe' => 'Riesgo salud: Bajo',
     
     // --- needsRefresh ---
     'refresh_ino' => 'Línea INO (Lutino/Creamino/Blanco puro) alcanzó 2 generaciones',
@@ -595,6 +600,7 @@ $guardian_translations = [
     // --- 確定/推定ステータス ---
     'status_confirmed' => '✓Confirmado',
     'status_estimated' => '?Estimado',
+    'confirmed_phenotype' => '✓ Confirmado (fenotipo)',
 ],
 
 ];
