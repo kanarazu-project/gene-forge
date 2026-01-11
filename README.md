@@ -76,7 +76,7 @@ The "$150k - $500k+" estimate depends on context:
 
 ### 🗂️ Specimen Management
 - **Individual Database**: Centralized management of Name, Sex, Birthday, Pedigree, and Genotype
-- **Demo Data (128 specimens)**: 32 colors × 2 sexes × 2 birds each for immediate system verification
+- **Demo Data (72 specimens)**: 3 families × 24 birds each (Family A/B for breeding, Family C for inference)
 - **Pedigree Generation**: HTML output for 3-generation and 5-generation pedigree charts
 - **Import / Export**: Full support for JSON and CSV formats
 
@@ -177,7 +177,7 @@ Gene-Forgeでは、**すべての遺伝データが `genetics.php` に一元化*
 | ファイル | タブ/機能 | 主な役割 |
 |---------|----------|---------|
 | **app.js** | 全体 | タブ切り替え、i18n (多言語)、Toast通知、初期化処理 |
-| **birds.js** | 📁 個体管理 | localStorage個体DB、登録/編集/削除、デモデータ128羽、CSV/JSONエクスポート |
+| **birds.js** | 📁 個体管理 | localStorage個体DB、登録/編集/削除、デモデータ72羽(3血族)、CSV/JSONエクスポート |
 | **family.js** | 👨‍👩‍👧 家系推論 | 家系図UI、ドラッグ&ドロップ、個体入力モーダル、FamilyEstimatorV3呼び出し |
 | **guardian.js** | 🛡️ 健康評価 | 近交係数計算、INO/Pallid警告、世代制限チェック、リスク評価 |
 | **breeding.js** | 🧬 繁殖結果 | 子孫確率計算結果の表示、スプリット表記、カラーカード生成 |
@@ -194,7 +194,7 @@ BirdDB = {
     delete(id)         // 削除
     exportJSON()       // JSONエクスポート
     importCSV(csv)     // CSVインポート
-    loadDemoData()     // デモデータ128羽読み込み
+    loadDemoData()     // デモデータ72羽(3血族)読み込み
     migrateGenotypeToV7() // v7形式変換 (連鎖遺伝対応)
 }
 ```
@@ -579,7 +579,16 @@ curl -X POST http://localhost:8000/infer.php \
 
 ## 🧪 Demo Data for Verification
 
-Demo mode includes **128 specimens** (32 colors × 2 sexes × 2 birds) for the following tests:
+Demo mode includes **72 specimens** (3 families × 24 birds each) for the following tests:
+
+### Family Structure
+| Family | Purpose | Genotype Data |
+|--------|---------|---------------|
+| **Family A** | Breeding simulation (INO/Opaline/Cinnamon/Pied/Violet) | Complete v7.0 haplotypes |
+| **Family B** | Breeding simulation (Dilute/Fallow/Edged/Orangeface) | Complete v7.0 haplotypes |
+| **Family C** | Family Inference demo (genotype unknown) | Empty (for inference practice) |
+
+Each family has 4-generation structure: 8 great-grandparents → 4 grandparents → 2 parents → 10 offspring
 
 ### Health Evaluation Tests
 - Sire × Daughter → Critical risk (F ≈ 43.75%, 3-generation pedigree)
@@ -743,7 +752,7 @@ Browser localStorage is typically limited to **5MB**. Saving may fail if you reg
 
 ### Demo Data and User Data Separation
 
-Demo mode (66 birds) and User mode are completely separated. Changes made in demo mode are not saved.
+Demo mode (72 birds across 3 families) and User mode are completely separated. Changes made in demo mode are not saved.
 
 ---
 
