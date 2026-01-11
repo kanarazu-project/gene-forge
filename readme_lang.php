@@ -1,7 +1,7 @@
 <?php
 /**
  * README専用多言語辞書
- * Gene-Forge v6.8
+ * Gene-Forge v7.0
  */
 
 function getReadmeLang(): string {
@@ -21,9 +21,9 @@ function rt(string $key): string {
 
 const README_LANG = [
     'ja' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Agapornis Genetics Calculator — ALBS Compliant Edition',
-        'description' => 'ラブバード（コザクラインコ / Agapornis roseicollis）の遺伝計算エンジン。<br>14座位・310色以上に対応し、ALBS（African Lovebird Society）Peachfaced部門の命名規則に準拠。',
+        'description' => 'ラブバード（コザクラインコ / Agapornis roseicollis）の遺伝計算エンジン。<br>14座位・310色以上に対応し、ALBS（African Lovebird Society）Peachfaced部門の命名規則に準拠。<br><strong>v7.0:</strong> 連鎖遺伝（組換え率計算）に対応。',
         
         'features' => '機能一覧',
         
@@ -50,7 +50,13 @@ const README_LANG = [
         'feat_calc_1' => '子孫予測: 親の遺伝子型から子の表現型確率を計算',
         'feat_calc_2' => '14座位対応: 全座位の組み合わせを網羅',
         'feat_calc_3' => '伴性遺伝計算: Z染色体連鎖遺伝の正確な計算（オスのスプリット、メスのヘミ接合）',
-        
+
+        'feat_linkage' => '連鎖遺伝（v7.0新機能）',
+        'feat_linkage_1' => 'Z連鎖座位: cinnamon-ino（3%）、ino-opaline（30%）、cinnamon-opaline（33%）の組換え率を実装',
+        'feat_linkage_2' => '常染色体連鎖: dark-parblue（7%）の組換え率を実装',
+        'feat_linkage_3' => '相（Cis/Trans）推論: 連鎖座位の相を家系情報から推定',
+        'feat_linkage_4' => '連鎖対応プランナー: Cis/Trans相を考慮した交配経路の探索',
+
         'feat_estimate' => '遺伝推計（親型逆推）',
         'feat_estimate_1' => '表現型→遺伝子型: 観察された色から可能な遺伝子型を推定',
         'feat_estimate_2' => '確定/推定の区別: 確実に判定できる座位と推定の座位を明示',
@@ -138,9 +144,9 @@ const README_LANG = [
     ],
     
     'en' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Agapornis Genetics Calculator — ALBS Compliant Edition',
-        'description' => 'Genetics calculation engine for Lovebirds (Rosy-faced Lovebird / Agapornis roseicollis).<br>Supports 14 loci and 310+ colors, compliant with ALBS (African Lovebird Society) Peachfaced section nomenclature.',
+        'description' => 'Genetics calculation engine for Lovebirds (Rosy-faced Lovebird / Agapornis roseicollis).<br>Supports 14 loci and 310+ colors, compliant with ALBS (African Lovebird Society) Peachfaced section nomenclature.<br><strong>v7.0:</strong> Linkage genetics with recombination rates.',
         
         'features' => 'Features',
         
@@ -167,7 +173,13 @@ const README_LANG = [
         'feat_calc_1' => 'Offspring Prediction: Calculate phenotype probabilities from parental genotypes',
         'feat_calc_2' => '14 Loci Support: Covers all locus combinations',
         'feat_calc_3' => 'Sex-Linked Calculation: Accurate Z-chromosome inheritance (male splits, female hemizygous)',
-        
+
+        'feat_linkage' => 'Linkage Genetics (v7.0 New)',
+        'feat_linkage_1' => 'Z-Linked Loci: Recombination rates for cinnamon-ino (3%), ino-opaline (30%), cinnamon-opaline (33%)',
+        'feat_linkage_2' => 'Autosomal Linkage: Recombination rate for dark-parblue (7%)',
+        'feat_linkage_3' => 'Phase (Cis/Trans) Inference: Estimate linkage phase from pedigree information',
+        'feat_linkage_4' => 'Linkage-Aware Planner: Breeding path exploration considering Cis/Trans phase',
+
         'feat_estimate' => 'Genotype Estimator',
         'feat_estimate_1' => 'Phenotype→Genotype: Estimate possible genotypes from observed colors',
         'feat_estimate_2' => 'Confirmed/Estimated: Distinguish certain loci from inferred ones',
@@ -255,9 +267,9 @@ const README_LANG = [
     ],
     
     'de' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Agapornis Genetik-Rechner — ALBS-konform',
-        'description' => 'Genetik-Berechnungsmaschine für Unzertrennliche (Rosenköpfchen / Agapornis roseicollis).<br>Unterstützt 14 Loci und 310+ Farben, konform mit ALBS (African Lovebird Society) Peachfaced-Nomenklatur.',
+        'description' => 'Genetik-Berechnungsmaschine für Unzertrennliche (Rosenköpfchen / Agapornis roseicollis).<br>Unterstützt 14 Loci und 310+ Farben, konform mit ALBS (African Lovebird Society) Peachfaced-Nomenklatur.<br><strong>v7.0:</strong> Kopplungsgenetik mit Rekombinationsraten.',
         
         'features' => 'Funktionen',
         
@@ -284,7 +296,13 @@ const README_LANG = [
         'feat_calc_1' => 'Nachkommen-Vorhersage: Phänotyp-Wahrscheinlichkeiten aus Eltern-Genotypen',
         'feat_calc_2' => '14 Loci: Alle Locus-Kombinationen',
         'feat_calc_3' => 'Geschlechtsgebundene Berechnung: Z-Chromosom-Vererbung',
-        
+
+        'feat_linkage' => 'Kopplungsgenetik (v7.0 Neu)',
+        'feat_linkage_1' => 'Z-gekoppelte Loci: Rekombinationsraten cinnamon-ino (3%), ino-opaline (30%), cinnamon-opaline (33%)',
+        'feat_linkage_2' => 'Autosomale Kopplung: Rekombinationsrate dark-parblue (7%)',
+        'feat_linkage_3' => 'Phase (Cis/Trans) Inferenz: Kopplungsphase aus Stammbaum schätzen',
+        'feat_linkage_4' => 'Kopplungsbewusster Planer: Zuchtpfadsuche unter Berücksichtigung der Cis/Trans-Phase',
+
         'feat_estimate' => 'Genotyp-Schätzer',
         'feat_estimate_1' => 'Phänotyp→Genotyp: Genotypen aus beobachteten Farben schätzen',
         'feat_estimate_2' => 'Bestätigt/Geschätzt: Sichere und vermutete Loci unterscheiden',
@@ -372,9 +390,9 @@ const README_LANG = [
     ],
     
     'fr' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Calculateur Génétique Agapornis — Conforme ALBS',
-        'description' => 'Moteur de calcul génétique pour Inséparables (Inséparable rosegorge / Agapornis roseicollis).<br>Supporte 14 loci et 310+ couleurs, conforme à la nomenclature ALBS Peachfaced.',
+        'description' => 'Moteur de calcul génétique pour Inséparables (Inséparable rosegorge / Agapornis roseicollis).<br>Supporte 14 loci et 310+ couleurs, conforme à la nomenclature ALBS Peachfaced.<br><strong>v7.0:</strong> Génétique de liaison avec taux de recombinaison.',
         
         'features' => 'Fonctionnalités',
         
@@ -401,7 +419,13 @@ const README_LANG = [
         'feat_calc_1' => 'Prédiction descendance: Probabilités phénotypes depuis génotypes parents',
         'feat_calc_2' => '14 loci: Toutes combinaisons',
         'feat_calc_3' => 'Calcul lié au sexe: Hérédité chromosome Z',
-        
+
+        'feat_linkage' => 'Génétique de liaison (v7.0 Nouveau)',
+        'feat_linkage_1' => 'Loci liés au Z: Taux de recombinaison cinnamon-ino (3%), ino-opaline (30%), cinnamon-opaline (33%)',
+        'feat_linkage_2' => 'Liaison autosomale: Taux de recombinaison dark-parblue (7%)',
+        'feat_linkage_3' => 'Inférence de phase (Cis/Trans): Estimer la phase de liaison depuis le pédigrée',
+        'feat_linkage_4' => 'Planificateur liaison: Recherche de chemins considérant la phase Cis/Trans',
+
         'feat_estimate' => 'Estimateur génotype',
         'feat_estimate_1' => 'Phénotype→Génotype: Estimer génotypes depuis couleurs observées',
         'feat_estimate_2' => 'Confirmé/Estimé: Distinguer loci certains et inférés',
@@ -489,9 +513,9 @@ const README_LANG = [
     ],
     
     'it' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Calcolatore Genetico Agapornis — Conforme ALBS',
-        'description' => 'Motore di calcolo genetico per Inseparabili (Inseparabile dal collo rosa / Agapornis roseicollis).<br>Supporta 14 loci e 310+ colori, conforme alla nomenclatura ALBS Peachfaced.',
+        'description' => 'Motore di calcolo genetico per Inseparabili (Inseparabile dal collo rosa / Agapornis roseicollis).<br>Supporta 14 loci e 310+ colori, conforme alla nomenclatura ALBS Peachfaced.<br><strong>v7.0:</strong> Genetica di linkage con tassi di ricombinazione.',
         
         'features' => 'Funzionalità',
         
@@ -518,7 +542,13 @@ const README_LANG = [
         'feat_calc_1' => 'Previsione prole: Probabilità fenotipi da genotipi genitori',
         'feat_calc_2' => '14 loci: Tutte le combinazioni',
         'feat_calc_3' => 'Calcolo legato al sesso: Ereditarietà cromosoma Z',
-        
+
+        'feat_linkage' => 'Genetica di linkage (v7.0 Nuovo)',
+        'feat_linkage_1' => 'Loci Z-linked: Tassi di ricombinazione cinnamon-ino (3%), ino-opaline (30%), cinnamon-opaline (33%)',
+        'feat_linkage_2' => 'Linkage autosomale: Tasso di ricombinazione dark-parblue (7%)',
+        'feat_linkage_3' => 'Inferenza fase (Cis/Trans): Stimare la fase di linkage dal pedigree',
+        'feat_linkage_4' => 'Pianificatore linkage: Ricerca percorsi considerando la fase Cis/Trans',
+
         'feat_estimate' => 'Stimatore genotipo',
         'feat_estimate_1' => 'Fenotipo→Genotipo: Stimare genotipi da colori osservati',
         'feat_estimate_2' => 'Confermato/Stimato: Distinguere loci certi e inferiti',
@@ -606,9 +636,9 @@ const README_LANG = [
     ],
     
     'es' => [
-        'title' => 'Gene-Forge v6.8',
+        'title' => 'Gene-Forge v7.0',
         'subtitle' => 'Calculadora Genética Agapornis — Conforme ALBS',
-        'description' => 'Motor de cálculo genético para Agapornis (Inseparable de Namibia / Agapornis roseicollis).<br>Soporta 14 loci y 310+ colores, conforme a la nomenclatura ALBS Peachfaced.',
+        'description' => 'Motor de cálculo genético para Agapornis (Inseparable de Namibia / Agapornis roseicollis).<br>Soporta 14 loci y 310+ colores, conforme a la nomenclatura ALBS Peachfaced.<br><strong>v7.0:</strong> Genética de ligamiento con tasas de recombinación.',
         
         'features' => 'Funcionalidades',
         
@@ -635,7 +665,13 @@ const README_LANG = [
         'feat_calc_1' => 'Predicción descendencia: Probabilidades fenotipo desde genotipos padres',
         'feat_calc_2' => '14 loci: Todas las combinaciones',
         'feat_calc_3' => 'Cálculo ligado al sexo: Herencia cromosoma Z',
-        
+
+        'feat_linkage' => 'Genética de ligamiento (v7.0 Nuevo)',
+        'feat_linkage_1' => 'Loci ligados al Z: Tasas de recombinación cinnamon-ino (3%), ino-opaline (30%), cinnamon-opaline (33%)',
+        'feat_linkage_2' => 'Ligamiento autosómico: Tasa de recombinación dark-parblue (7%)',
+        'feat_linkage_3' => 'Inferencia de fase (Cis/Trans): Estimar fase de ligamiento desde el pedigrí',
+        'feat_linkage_4' => 'Planificador de ligamiento: Búsqueda de rutas considerando la fase Cis/Trans',
+
         'feat_estimate' => 'Estimador genotipo',
         'feat_estimate_1' => 'Fenotipo→Genotipo: Estimar genotipos desde colores observados',
         'feat_estimate_2' => 'Confirmado/Estimado: Distinguir loci seguros e inferidos',
