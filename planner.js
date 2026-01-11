@@ -231,7 +231,11 @@ const BreedingPlanner = {
         // v6.7.4: 近親交配フィルタリング
         pairings = this.filterByInbreeding(pairings);
 
+        // v7.0: 確率0%のペアを除外（貢献度がないペアは推奨しない）
+        const viablePairings = pairings.filter(p => p.probability > 0);
+
         pairings.sort((a, b) => b.score - a.score);
+        viablePairings.sort((a, b) => b.score - a.score);
 
         // v6.7.4: フィルタリング後に候補がない場合
         if (pairings.length === 0) {
@@ -241,20 +245,29 @@ const BreedingPlanner = {
                 filteredOut: true
             };
         }
+
+        // v7.0: 確率>0のペアがない場合
+        if (viablePairings.length === 0) {
+            return {
+                error: this._t('bp_no_viable_pairs', 'No pairs can produce target trait'),
+                suggestion: this._t('bp_need_carriers', 'Register birds that carry the required genes for this target.'),
+                noViable: true
+            };
+        }
         
         // v6.7.5: targetNameをCOLOR_LABELSから取得
         const targetName = this.getColorName(targetKey);
         
-        return { 
-            target, 
+        return {
+            target,
             targetKey,
             targetName,  // v6.7.5: SSOT対応
-            topPairings: pairings.slice(0, 5), 
-            allPairings: pairings, 
-            roadmap: this.generateRoadmap(pairings[0], target, targetKey, []), 
-            totalBirds: birds.length, 
-            maleCount: males.length, 
-            femaleCount: females.length 
+            topPairings: viablePairings.slice(0, 5),  // v7.0: 確率>0のみ
+            allPairings: pairings,
+            roadmap: this.generateRoadmap(viablePairings[0], target, targetKey, []),
+            totalBirds: birds.length,
+            maleCount: males.length,
+            femaleCount: females.length
         };
     },
     
