@@ -1861,18 +1861,25 @@ const BirdDB = {
         if (['opop', 'opW'].includes(geno.opaline)) keyParts.push('opaline');
         if (['cincin', 'cinW'].includes(geno.cinnamon)) keyParts.push('cinnamon');
 
-        // ダーク因子
+        // ダーク因子（全パーブルー系列に対応）
         if (geno.dark === 'DD') {
             if (baseKey === 'green') baseKey = 'olive';
             else if (baseKey === 'aqua') baseKey = 'aqua_dd';
+            else if (baseKey === 'turquoise') baseKey = 'turquoise_olive';
+            else if (baseKey === 'seagreen') baseKey = 'seagreen_olive';
         } else if (geno.dark === 'Dd') {
             if (baseKey === 'green') baseKey = 'darkgreen';
             else if (baseKey === 'aqua') baseKey = 'aqua_dark';
+            else if (baseKey === 'turquoise') baseKey = 'turquoise_dark';
+            else if (baseKey === 'seagreen') baseKey = 'seagreen_dark';
         }
 
         // その他の形質
         if (['flpflp', 'flfl'].includes(geno.fallow_pale)) keyParts.push('fallow');
         if (geno.pied_rec === 'pipi') keyParts.push('pied');
+        if (geno.violet === 'Vv' || geno.violet === 'VV') keyParts.push('violet');
+        if (geno.dilute === 'dildil') keyParts.push('dilute');
+        if (geno.edged === 'eded') keyParts.push('edged');
 
         // キーを構築してkeyToLabelで変換
         const colorKey = baseKey ? [...keyParts, baseKey].join('_') : keyParts.join('_');
