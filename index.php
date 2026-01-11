@@ -7,7 +7,8 @@
  * 「制度は責任を放棄した。制度外がそれを果たす。」
  * 制度外文明・かならづプロジェクト
  *
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
+ * 連鎖遺伝（Linkage Genetics）対応版
  * FamilyEstimator V3 搭載
  * ALBS Peachfaced部門準拠版
  * 
@@ -19,7 +20,16 @@ require_once 'genetics.php';
 require_once 'lang.php';
 
 $lang = getLang();
-if (isset($_GET['lang'])) setcookie('lang', $_GET['lang'], time() + 86400 * 365, '/');
+// セキュリティ: langパラメータをホワイトリストで検証
+if (isset($_GET['lang']) && in_array($_GET['lang'], ['ja', 'en', 'de', 'fr', 'it', 'es'], true)) {
+    setcookie('lang', $_GET['lang'], [
+        'expires' => time() + 86400 * 365,
+        'path' => '/',
+        'secure' => isset($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax'
+    ]);
+}
 
 /**
  * 共通：表現型選択肢を生成
@@ -86,9 +96,15 @@ if ($action === 'calculate') {
     $activeTab = 'estimator';
 } elseif ($action === 'family_infer') {
     $familyEstimator = new FamilyEstimatorV3();
-    $familyData = json_decode($_POST['familyData'] ?? '{}', true);
+    $rawJson = $_POST['familyData'] ?? '{}';
+    $familyData = json_decode($rawJson, true);
     $targetPosition = $_POST['targetPosition'] ?? '';
-    if ($familyData && $targetPosition) {
+    // JSON検証: デコード失敗または不正な構造をチェック
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $familyResult = ['error' => 'Invalid JSON data'];
+    } elseif (!is_array($familyData)) {
+        $familyResult = ['error' => 'Invalid data structure'];
+    } elseif ($familyData && $targetPosition) {
         $familyResult = $familyEstimator->estimate($familyData, $targetPosition);
     } else {
         $familyResult = ['error' => t('select_target')];
@@ -104,7 +120,7 @@ if ($action === 'calculate') {
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>🦜 Gene-Forge v6.8</title>
+    <title>🦜 Gene-Forge v7.0</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Noto+Sans+JP:wght@300;400;500;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=674">
     <style>
@@ -424,7 +440,13 @@ if ($action === 'calculate') {
     // v6.8修正: T辞書を先に定義（customConfirm等で使用）
     const LANG = '<?= $lang ?>';
     const T = <?= json_encode(getLangDict()) ?>;
-    
+
+    // XSS対策: HTMLエスケープ関数
+    function escapeHtml(str) {
+        if (str == null) return '';
+        return String(str).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]);
+    }
+
     // SSOT: genetics.php から注入
     const COLOR_LABELS = <?= json_encode(AgapornisLoci::labels($lang === 'ja')) ?>;
     const COLOR_MASTER = <?= json_encode(AgapornisLoci::COLOR_DEFINITIONS) ?>;
@@ -432,6 +454,12 @@ if ($action === 'calculate') {
 const COLOR_GROUPED = <?= json_encode(AgapornisLoci::groupedKeys()) ?>;
 const CATEGORY_LABELS = <?= json_encode(AgapornisLoci::categoryLabels($lang === 'ja')) ?>;
 const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
+const GENOTYPE_OPTIONS = <?= json_encode(AgapornisLoci::GENOTYPE_OPTIONS) ?>;
+const UI_GENOTYPE_LOCI = <?= json_encode(AgapornisLoci::UI_GENOTYPE_LOCI) ?>;
+// v7.0: 連鎖遺伝用定数
+const LINKAGE_GROUPS = <?= json_encode(AgapornisLoci::LINKAGE_GROUPS) ?>;
+const RECOMBINATION_RATES = <?= json_encode(AgapornisLoci::RECOMBINATION_RATES) ?>;
+const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
 </script>
 </head>
 
@@ -497,25 +525,22 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
                     </div>
                     <?php if (!empty($familyResult['testBreedings'])): ?>
                     <h4 style="margin-top:1.5rem;color:#fff;">🧪 <?= t('test_breeding_proposal') ?></h4>
-                    <?php foreach ($familyResult['testBreedings'] as $t): ?>
+                    <?php foreach ($familyResult['testBreedings'] as $tb): ?>
                     <div class="test-item">
-                        <div class="test-locus"><?= htmlspecialchars($t['locus']) ?></div>
-                        <div style="margin:.5rem 0;color:#ccc;"><?= t('current_status') ?>: <?= htmlspecialchars($t['currentStatus'] ?? '') ?></div>
+                        <div class="test-locus"><?= htmlspecialchars(t($tb['locus']) ?: ucfirst($tb['locus'])) ?></div>
                         <div style="margin:.5rem 0;">
-                            <strong style="color:#4ecdc4;"><?= t('recommended_partner') ?>:</strong> <?= htmlspecialchars($t['partner'] ?? '') ?>
-                            <span style="color:#888;font-size:.85rem;"> (<?= htmlspecialchars($t['partnerGeno'] ?? '') ?>)</span>
+                            <strong style="color:#4ecdc4;"><?= t('recommendation') ?>:</strong>
+                            <span style="color:#ddd;"><?= htmlspecialchars($tb['recommendation'] ?? '') ?></span>
                         </div>
                         <div style="margin-top:.75rem;padding:.5rem;background:rgba(0,0,0,.2);border-radius:4px;">
                             <div style="font-size:.85rem;color:#aaa;margin-bottom:.3rem;"><?= t('determination_by_offspring') ?>:</div>
-                            <?php if (!empty($t['判定方法'])): ?>
-                            <?php foreach ($t['判定方法'] as $method): ?>
-                            <div style="font-size:.85rem;color:#ddd;padding:.2rem 0;"><?= htmlspecialchars($method) ?></div>
-                            <?php endforeach; ?>
+                            <div style="font-size:.85rem;color:#ddd;padding:.2rem 0;"><?= htmlspecialchars($tb['expectedResult'] ?? '') ?></div>
+                            <?php if (!empty($tb['minOffspring'])): ?>
+                            <div style="font-size:.8rem;color:#888;margin-top:.3rem;">
+                                (<?= $lang === 'ja' ? '推奨子数: ' . $tb['minOffspring'] . '羽以上' : 'Recommended offspring: ' . $tb['minOffspring'] . '+' ?>)
+                            </div>
                             <?php endif; ?>
                         </div>
-                        <?php if (!empty($t['note'])): ?>
-                        <div style="font-size:.8rem;color:#888;margin-top:.5rem;font-style:italic;">💡 <?= htmlspecialchars($t['note']) ?></div>
-                        <?php endif; ?>
                     </div>
                     <?php endforeach; ?>
                     <?php endif; ?>
@@ -762,10 +787,72 @@ const LOCI_MASTER = <?= json_encode(AgapornisLoci::LOCI) ?>;
                 </form>
                 <div id="pathfinder-result">
                 <?php if ($action === 'pathfind' && $result && !isset($result['error'])): ?>
+                <?php
+                // 目標色名を取得
+                $targetKey = $result['targetKey'] ?? '';
+                $targetColorDef = AgapornisLoci::COLOR_DEFINITIONS[$targetKey] ?? null;
+                $targetName = $targetColorDef ? ($lang === 'ja' ? $targetColorDef['ja'] : $targetColorDef['en']) : $targetKey;
+
+                // ヘルパー関数: 色キーから翻訳済み名称を取得
+                $getColorName = function($colorKey) use ($lang) {
+                    $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$colorKey] ?? null;
+                    if ($colorDef) {
+                        return $lang === 'ja' ? $colorDef['ja'] : $colorDef['en'];
+                    }
+                    return t($colorKey) ?: ucfirst($colorKey);
+                };
+                ?>
                 <div class="output-panel" style="margin-top:1rem;">
-                    <h4><?= htmlspecialchars($result['name']) ?></h4>
-                    <?php if(!empty($result['warning'])): ?><div class="warning-box"><?= htmlspecialchars($result['warning']) ?></div><?php endif; ?>
-                    <?php foreach($result['steps'] as $s): ?><div style="margin:.5rem 0;padding:.5rem;background:var(--bg-tertiary);border-radius:4px;"><strong><?= htmlspecialchars($s['title']) ?></strong><br>♂<?= htmlspecialchars($s['male']) ?> × ♀<?= htmlspecialchars($s['female']) ?><br>→ <?= htmlspecialchars($s['result']) ?></div><?php endforeach; ?>
+                    <h4>🎯 <?= htmlspecialchars($targetName) ?></h4>
+                    <p style="color:var(--text-secondary);margin-bottom:1rem;"><?= t_pf('pf_estimated_gen') ?>: <?= count($result['steps']) ?></p>
+
+                    <?php // 警告表示 ?>
+                    <?php if(!empty($result['warnings'])): ?>
+                    <?php foreach($result['warnings'] as $warnKey): ?>
+                    <div class="warning-box" style="margin-bottom:.5rem;"><?= htmlspecialchars(t_pf($warnKey)) ?></div>
+                    <?php endforeach; ?>
+                    <?php endif; ?>
+
+                    <?php // ステップ表示 ?>
+                    <?php foreach($result['steps'] as $stepIndex => $s): ?>
+                    <?php
+                    // タイトル翻訳
+                    $titleParams = $s['title_params'] ?? [];
+                    $stepTitle = t_pf($s['title_key'] ?? 'pf_wild_type', $titleParams);
+
+                    // オス親の色名
+                    $maleColorName = $getColorName($s['male_key'] ?? 'green');
+                    $maleSuffix = isset($s['male_suffix_key']) ? ' (' . t_pf($s['male_suffix_key']) . ')' : '';
+
+                    // メス親の色名
+                    $femaleColorName = $getColorName($s['female_key'] ?? 'green');
+                    $femaleSuffix = isset($s['female_suffix_key']) ? ' (' . t_pf($s['female_suffix_key']) . ')' : '';
+
+                    // 結果翻訳
+                    $resultParams = $s['result_params'] ?? [];
+                    $resultText = t_pf($s['result_key'] ?? '', $resultParams);
+                    ?>
+                    <div style="margin:.5rem 0;padding:.75rem;background:var(--bg-tertiary);border-radius:4px;border-left:3px solid var(--accent-primary);">
+                        <div style="font-weight:bold;margin-bottom:.5rem;">Step <?= $stepIndex + 1 ?>: <?= htmlspecialchars($stepTitle) ?></div>
+                        <div style="margin:.25rem 0;">♂ <?= htmlspecialchars($maleColorName . $maleSuffix) ?></div>
+                        <div style="margin:.25rem 0;">♀ <?= htmlspecialchars($femaleColorName . $femaleSuffix) ?></div>
+                        <div style="margin-top:.5rem;color:var(--text-secondary);font-size:.9em;">→ <?= htmlspecialchars($resultText) ?></div>
+                    </div>
+                    <?php endforeach; ?>
+
+                    <?php // v7.0 連鎖遺伝情報 ?>
+                    <?php if(!empty($result['linkage']) && !empty($result['linkage']['info'])): ?>
+                    <div style="margin-top:1rem;padding:.75rem;background:var(--bg-secondary);border-radius:4px;border:1px solid var(--accent-secondary);">
+                        <strong>🔗 <?= t('phase') ?></strong>
+                        <?php foreach($result['linkage']['info'] as $linkInfo): ?>
+                        <div style="margin-top:.25rem;font-size:.9em;"><?= htmlspecialchars($linkInfo) ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                </div>
+                <?php elseif ($action === 'pathfind' && isset($result['error'])): ?>
+                <div class="warning-box" style="margin-top:1rem;">
+                    <?= htmlspecialchars(t_pf($result['error'], ['target' => $result['errorParam'] ?? ''])) ?>
                 </div>
                 <?php endif; ?>
                 </div>
@@ -916,17 +1003,55 @@ $mPh = $_POST['m_ph'] ?? '++';
 <div class="form-group"><label>Pale Headed</label><select name="m_ph"><?php foreach(['++'=>'+/+','+ph'=>'+/ph','phph'=>'ph/ph'] as $v=>$l){echo '<option value="'.$v.'"'.(($mPh??'')===$v?' selected':'').'>'.$l.'</option>';}?></select></div>
                         </div>
                     </div>
+
+                    <!-- v7.0: 連鎖遺伝モード -->
+                    <div class="linkage-mode-section" style="margin-top: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" name="use_linkage" value="1" id="useLinkageCheck" onchange="toggleLinkageUI()">
+                            <strong>🧬 <?= $lang === 'ja' ? '連鎖遺伝モード (v7.0)' : 'Linkage Mode (v7.0)' ?></strong>
+                        </label>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.5rem 0 0 1.5rem;">
+                            <?= $lang === 'ja'
+                                ? 'cin-ino: 3%, ino-op: 30%, dark-parblue: 7% の組み換え率を適用'
+                                : 'Apply recombination rates: cin-ino: 3%, ino-op: 30%, dark-parblue: 7%' ?>
+                        </p>
+
+                        <!-- オス用 相(Phase)選択 -->
+                        <div id="fatherPhaseUI" style="display: none; margin-top: 1rem; padding: 0.5rem; background: var(--bg-tertiary); border-radius: 4px;">
+                            <label style="font-weight: bold;">♂ <?= $lang === 'ja' ? 'Z染色体の相 (Phase)' : 'Z Chromosome Phase' ?></label>
+                            <div style="display: flex; gap: 1rem; margin-top: 0.5rem;">
+                                <label><input type="radio" name="f_z_phase" value="unknown" checked> <?= $lang === 'ja' ? '不明' : 'Unknown' ?></label>
+                                <label><input type="radio" name="f_z_phase" value="cis"> Cis (cin-ino連鎖)</label>
+                                <label><input type="radio" name="f_z_phase" value="trans"> Trans (cin/ino分離)</label>
+                            </div>
+                            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;">
+                                <?= $lang === 'ja'
+                                    ? '※ 母親がLacewingの場合、息子はCis確定'
+                                    : '* If dam is Lacewing, son is Cis confirmed' ?>
+                            </p>
+                        </div>
+                    </div>
+
                     <button type="button" class="btn btn-primary" style="margin-top:1rem;" onclick="window._allowSubmit=true; document.getElementById('feasibilityForm').submit();">🧬 <?= t('btn_calculate') ?></button>
 
                 </form>
                 
                 <script>
+                // v7.0: 連鎖遺伝モードUI切り替え
+                function toggleLinkageUI() {
+                    const checked = document.getElementById('useLinkageCheck').checked;
+                    const phaseUI = document.getElementById('fatherPhaseUI');
+                    if (phaseUI) {
+                        phaseUI.style.display = checked ? 'block' : 'none';
+                    }
+                }
+
                 function toggleInputMode(parent) {
                     const mode = document.querySelector(`input[name="${parent}_mode"]:checked`).value;
                     document.getElementById(`${parent}_phenotype_inputs`).style.display = mode === 'phenotype' ? 'block' : 'none';
                     document.getElementById(`${parent}_genotype_inputs`).style.display = mode === 'genotype' ? 'block' : 'none';
                     document.getElementById(`${parent}_db_inputs`).style.display = mode === 'fromdb' ? 'block' : 'none';
-                    
+
                     // DB選択時はリストを更新
                     if (mode === 'fromdb') {
                         populateDbSelect(parent);
@@ -1000,123 +1125,7 @@ $mPh = $_POST['m_ph'] ?? '++';
                     
                     return false;
                 }
-                 /**
-                 * 観察情報から遺伝子型を推測
-                 * v6.7.3: aqua系対応、creamino=INO系修正
-                 */
-                function inferGenotypeFromObserved(observed, sex) {
-                    const geno = { parblue: '++', dark: 'dd', op: '++', cin: '++', pirec: '++' };
-                    const isMale = sex === 'male';
-                    geno.ino = isMale ? '++' : '+W';
-                    geno.op = isMale ? '++' : '+W';
-                    geno.cin = isMale ? '++' : '+W';
-                    
-                    const bc = observed.baseColor || '';
-                    
-                    // アクア系（v6.7.3: 旧ブルー系 → aqua系）
-                    if (bc.includes('aqua') || bc === 'blue' || bc === 'cobalt' || bc === 'mauve') {
-                        geno.parblue = 'aqaq';
-                    } else if (bc.includes('turquoise') && !bc.includes('seagreen')) {
-                        geno.parblue = 'tqtq';
-                    } else if (bc.includes('seagreen')) {
-                        geno.parblue = 'tqaq';
-                    }
-                    
-                    // INO系（v6.7.3: creamino, pure_white も INO）
-                    if (bc === 'lutino') {
-                        geno.ino = isMale ? 'inoino' : 'inoW';
-                    } else if (bc === 'creamino' || bc === 'creamino_seagreen') {
-                        // v6.7.3: クリーミノはINO系（赤目）
-                        geno.parblue = bc === 'creamino_seagreen' ? 'tqaq' : 'aqaq';
-                        geno.ino = isMale ? 'inoino' : 'inoW';
-                    } else if (bc === 'pure_white' || bc === 'albino') {
-                        // v6.7.3: ピュアホワイト = INO + Turquoise
-                        geno.parblue = 'tqtq';
-                        geno.ino = isMale ? 'inoino' : 'inoW';
-                    }
-                    
-                    // パリッド系（黒目）
-                    if (bc.includes('pallid')) {
-                        geno.ino = isMale ? 'pldpld' : 'pldW';
-                         if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // オパーリン
-                    if (bc.includes('opaline')) {
-                        geno.op = isMale ? 'opop' : 'opW';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // シナモン
-                    if (bc.includes('cinnamon')) {
-                        geno.cin = isMale ? 'cincin' : 'cinW';
-                         if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // フォロー
-                    if (bc.includes('fallow_pale') || (bc.includes('fallow') && !bc.includes('bronze'))) {
-                        geno.flp = 'flpflp';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    } else if (bc.includes('fallow_bronze') || bc.includes('bronze')) {
-                        geno.flb = 'flbflb';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
 
-                    
-                                        // パイド
-                    if (bc.includes('pied_rec') || (bc.includes('pied') && !bc.includes('dom'))) {
-                        geno.pirec = 'pipi';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    } else if (bc.includes('pied_dom') || bc.includes('dominant')) {
-                        geno.pidom = 'Pi+';
-                        if (bc.includes('aqua')) geno.parblue = 'aqaq';
-                        if (bc.includes('turquoise')) geno.parblue = 'tqtq';
-                        if (bc.includes('seagreen')) geno.parblue = 'tqaq';
-                    }
-                    
-                    // ダーク因子
-                    if (observed.darkness === 'sf') geno.dark = 'Dd';
-                    else if (observed.darkness === 'df') geno.dark = 'DD';
-                    // Violet
-                    if (bc.includes('violet')) {
-                        geno.vio = 'Vv';
-                    }
-                    
-                    // Edged
-                    if (bc.includes('edged')) {
-                        geno.ed = 'eded';
-                    }
-                    
-                    // Orangeface / Yellowface
-                    if (bc.includes('orangeface') || bc.includes('yellowface')) {
-                        geno.of = 'ofof';
-                    }
-                    
-                    // Pale Headed
-                    if (bc.includes('paleheaded')) {
-                        geno.ph = 'phph';
-                    }
-                    
-                    // Dilute
-                    if (bc.includes('dilute')) {
-                        geno.dil = 'dildil';
-                    }
-                    
-                    return geno;
-                }
-                
                 // グローバル関数（BirdDB.setMode()から呼ばれる）
                 function refreshDBSelectors() {
                     populateDbSelect('f');
@@ -1132,17 +1141,17 @@ $mPh = $_POST['m_ph'] ?? '++';
                     const males = birds.filter(b => b.sex === 'male');
                     const females = birds.filter(b => b.sex === 'female');
                     
-                    healthSire.innerHTML = `<option value="">${T.select_placeholder}</option>`;
-                    healthDam.innerHTML = `<option value="">${T.select_placeholder}</option>`;
+                    healthSire.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
+                    healthDam.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
                     males.forEach(b => {
                         const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
-                        const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                        healthSire.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno}${lineage}</option>`;
+                        const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                        healthSire.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)}${lineage}</option>`;
                     });
                     females.forEach(b => {
                         const pheno = b.phenotype || BirdDB.getColorLabel(b.observed?.baseColor, 'ja') || '?';
-                        const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                        healthDam.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno}${lineage}</option>`;
+                        const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                        healthDam.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)}${lineage}</option>`;
                     });
                 }
 
@@ -1159,8 +1168,17 @@ $mPh = $_POST['m_ph'] ?? '++';
                 
                 <div id="feasibility-result">
                 <?php if ($action === 'calculate' && $result): ?>
+                <?php
+                // v7互換: 結果配列を取得
+                $offspring = $result['results'] ?? $result['phenotype'] ?? $result;
+                ?>
                 <div class="output-panel" style="margin-top:1rem;"><div class="offspring-grid">
-                    <?php foreach($result as $o): ?><div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($o['prob']*100,1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype']) ?></div></div><?php endforeach; ?>
+                    <?php foreach($offspring as $o): ?>
+                    <?php
+                    // probが1以上ならパーセント値、1未満なら小数
+                    $probValue = $o['prob'] > 1 ? $o['prob'] : $o['prob'] * 100;
+                    ?>
+                    <div style="padding:.5rem;background:var(--bg-tertiary);border-radius:4px;text-align:center;"><div style="font-size:1.2rem;"><?= number_format($probValue, 1) ?>%</div><div><?= $o['sex']==='male'?'♂':'♀' ?> <?= htmlspecialchars($o['phenotype'] ?? $o['displayName'] ?? '') ?></div></div><?php endforeach; ?>
                 </div></div>
                 <?php endif; ?>
                 </div>
@@ -1212,7 +1230,7 @@ $mPh = $_POST['m_ph'] ?? '++';
 <?php 
     $bgColor = $l['isConfirmed'] ? 'rgba(78,205,196,0.15)' : 'rgba(255,255,255,0.03)';
     $borderLeft = $l['isConfirmed'] ? '3px solid #4ecdc4' : '3px solid #555';
-    $confidenceLabel = $l['isConfirmed'] ? '✓ 確定' : '? 推定';
+    $confidenceLabel = $l['isConfirmed'] ? '✓ ' . t('confirmed') : '? ' . t('estimated');
 ?>
 <div style="padding:0.5rem;margin:0.25rem 0;background:<?= $bgColor ?>;border-radius:4px;border-left:<?= $borderLeft ?>;">
     <strong style="color:#4ecdc4;"><?= htmlspecialchars($l['locusName'] ?? $l['locusKey'] ?? '?') ?>:</strong>
@@ -1310,23 +1328,35 @@ function refreshBirdList() {
         return;
     }
     
+    // XSS対策: すべてのユーザーデータをエスケープ
     listEl.innerHTML = filtered.map(function(bird) {
+        var safeId = escapeHtml(bird.id);
         return '<div class="bird-card" style="background:var(--bg-tertiary);padding:.75rem;border-radius:8px;margin-bottom:.5rem;">' +
             '<div style="display:flex;justify-content:space-between;align-items:center;">' +
                 '<div>' +
-                    '<strong style="color:#fff;">' + (bird.name || '') + '</strong> ' +
-                    '<span style="color:#888;font-size:.8rem;">' + (bird.code || '') + '</span> ' +
+                    '<strong style="color:#fff;">' + escapeHtml(bird.name || '') + '</strong> ' +
+                    '<span style="color:#888;font-size:.8rem;">' + escapeHtml(bird.code || '') + '</span> ' +
                     '<span style="color:' + (bird.sex === 'male' ? '#4a90d9' : '#d94a8c') + ';">' + (bird.sex === 'male' ? '♂' : '♀') + '</span>' +
                 '</div>' +
                 '<div style="display:flex;gap:.25rem;">' +
-                    '<button type="button" class="btn btn-tiny" onclick="editBird(\'' + bird.id + '\')">✏️</button>' +
-                    '<button type="button" class="btn btn-tiny" onclick="showPedigree(\'' + bird.id + '\')">📜</button>' +
-                    '<button type="button" class="btn btn-tiny" onclick="deleteBird(\'' + bird.id + '\')">🗑️</button>' +
+                    '<button type="button" class="btn btn-tiny" data-action="edit" data-id="' + safeId + '">✏️</button>' +
+                    '<button type="button" class="btn btn-tiny" data-action="pedigree" data-id="' + safeId + '">📜</button>' +
+                    '<button type="button" class="btn btn-tiny" data-action="delete" data-id="' + safeId + '">🗑️</button>' +
                 '</div>' +
             '</div>' +
-            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + (bird.phenotype || '') + '</div>' +
+            '<div style="color:#4ecdc4;font-size:.85rem;margin-top:.25rem;">' + escapeHtml(bird.phenotype || '') + '</div>' +
         '</div>';
     }).join('');
+    // イベント委譲: data属性を使用してXSSを防止
+    listEl.querySelectorAll('[data-action]').forEach(function(btn) {
+        btn.onclick = function() {
+            var action = this.dataset.action;
+            var id = this.dataset.id;
+            if (action === 'edit') editBird(id);
+            else if (action === 'pedigree') showPedigree(id);
+            else if (action === 'delete') deleteBird(id);
+        };
+    });
 }
 
 function filterBirds() { refreshBirdList(); }
@@ -1435,37 +1465,37 @@ function showTab(id){
             const females = birds.filter(b => b.sex === 'female');
             const isJa = document.documentElement.lang === 'ja';
             
-            healthSire.innerHTML = `<option value="">${T.select_placeholder}</option>`;
-            healthDam.innerHTML = `<option value="">${T.select_placeholder}</option>`;
-            
+            healthSire.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
+            healthDam.innerHTML = `<option value="">${escapeHtml(T.select_placeholder)}</option>`;
+
             males.forEach(b => {
                 const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
                 const geno = formatGenoShort(b.genotype, b.sex);
-                const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                healthSire.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno} (${geno})${lineage}</option>`;
+                const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                healthSire.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)} (${escapeHtml(geno)})${lineage}</option>`;
             });
-            
+
             females.forEach(b => {
                 const pheno = b.phenotype || getColorLabel(b.observed?.baseColor, isJa) || '?';
                 const geno = formatGenoShort(b.genotype, b.sex);
-                const lineage = b.lineage ? ` [${b.lineage}]` : '';
-                healthDam.innerHTML += `<option value="${b.id}">${b.name || b.id} - ${pheno} (${geno})${lineage}</option>`;
+                const lineage = b.lineage ? ` [${escapeHtml(b.lineage)}]` : '';
+                healthDam.innerHTML += `<option value="${escapeHtml(b.id)}">${escapeHtml(b.name || b.id)} - ${escapeHtml(pheno)} (${escapeHtml(geno)})${lineage}</option>`;
             });
         }
         
-        // 遺伝構成を短縮表示
+        // 遺伝構成を短縮表示（SSOT: v7.0座位名を使用）
         function formatGenoShort(geno, sex) {
             if (!geno || Object.keys(geno).length === 0) return 'WT';
             const parts = [];
             if (geno.parblue && geno.parblue !== '++') parts.push(geno.parblue);
             if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(geno.ino);
             if (geno.dark && geno.dark !== 'dd') parts.push(geno.dark);
-            if (geno.op && geno.op !== '++' && geno.op !== '+W') parts.push('op');
-            if (geno.cin && geno.cin !== '++' && geno.cin !== '+W') parts.push('cin');
-            if (geno.pirec && geno.pirec !== '++') parts.push('pirec');
-if (geno.pidom && geno.pidom !== '++') parts.push('pidom');
-if (geno.flp && geno.flp !== '++') parts.push('flp');
-if (geno.flb && geno.flb !== '++') parts.push('flb');
+            if (geno.opaline && geno.opaline !== '++' && geno.opaline !== '+W') parts.push('op');
+            if (geno.cinnamon && geno.cinnamon !== '++' && geno.cinnamon !== '+W') parts.push('cin');
+            if (geno.pied_rec && geno.pied_rec !== '++') parts.push('pirec');
+            if (geno.pied_dom && geno.pied_dom !== '++') parts.push('pidom');
+            if (geno.fallow_pale && geno.fallow_pale !== '++') parts.push('flp');
+            if (geno.fallow_bronze && geno.fallow_bronze !== '++') parts.push('flb');
             return parts.length > 0 ? parts.join('/') : 'WT';
         }
         /**

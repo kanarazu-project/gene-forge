@@ -1,27 +1,40 @@
 /**
- * Agapornis Gene-Forge v6.7.5
+ * Agapornis Gene-Forge v7.0
  * 目標逆算計画エンジン (Target Breeding Planner)
- * 
+ *
+ * v7.0変更点:
+ * - 連鎖遺伝対応: 相（Phase: Cis/Trans）を考慮したペアリング評価
+ * - Cis配置個体優先推奨ロジック追加
+ * - 組み換え率を考慮した確率計算
+ * - LINKAGE_GROUPS, RECOMBINATION_RATES参照
+ *
  * v6.7.5変更点:
  * - SSOT化: TARGET_REQUIREMENTSからnameフィールド削除
  * - 表示時はCOLOR_LABELS参照に統一
  * - genetics.phpのAgapornisLoci::labels()がSSOT
- * 
+ *
  * v6.7.4変更点:
  * - 近親交配フィルタリング追加（12.5%未満のみ出力）
  * - BreedingValidator連携
  * - ルート全世代の近交係数チェック
- * 
- * v6.7.3変更点:
- * - 32色対応
- * - blue系→aqua系に改名
- * - albino→pure_white
- * - creamino追加（INO系・赤目）- パリッドブルーとは別物
- * - ALBS Peachfaced部門準拠
- * - parblue短縮形統一: bb→aqaq, tqb→tqaq, +b→+aq
  */
 const BreedingPlanner = {
-    
+
+    // v7.0: 翻訳対応ヘルパー
+    _t(key, fallback) {
+        const T = window.T || {};
+        return T[key] || fallback;
+    },
+    _tp(key, params, fallback) {
+        let text = this._t(key, fallback);
+        if (params) {
+            Object.keys(params).forEach(k => {
+                text = text.replace(new RegExp(`\\{${k}\\}`, 'g'), params[k]);
+            });
+        }
+        return text;
+    },
+
     // v6.7.4: 近交係数閾値
     INBREEDING_THRESHOLD: 0.125,  // 12.5%
     
@@ -104,27 +117,28 @@ const BreedingPlanner = {
         return colorKey;
     },
     
+    // v7.0: 翻訳対応plan関数
     plan(targetKey) {
         const target = this.TARGET_REQUIREMENTS[targetKey];
-        if (!target) return { error: '未対応の目標形質です' };
+        if (!target) return { error: this._t('bp_unsupported_target', '未対応の目標形質です') };
         const birds = typeof BirdDB !== 'undefined' ? BirdDB.getAllBirds() : [];
-        if (birds.length === 0) return { error: '個体が登録されていません', suggestion: '「個体管理」タブで手持ち個体を登録してください' };
+        if (birds.length === 0) return { error: this._t('bp_no_birds', '個体が登録されていません'), suggestion: this._t('bp_register_hint', '「個体管理」タブで手持ち個体を登録してください') };
         const males = birds.filter(b => b.sex === 'male'), females = birds.filter(b => b.sex === 'female');
-        if (males.length === 0 || females.length === 0) return { error: 'オスとメスが両方必要です', suggestion: `現在: オス ${males.length}羽, メス ${females.length}羽` };
-        
+        if (males.length === 0 || females.length === 0) return { error: this._t('bp_need_both_sex', 'オスとメスが両方必要です'), suggestion: this._tp('bp_current_count', { m: males.length, f: females.length }, `現在: オス ${males.length}羽, メス ${females.length}羽`) };
+
         let pairings = [];
         males.forEach(m => females.forEach(f => pairings.push(this.evaluatePairing(m, f, target, targetKey))));
-        
+
         // v6.7.4: 近親交配フィルタリング
         pairings = this.filterByInbreeding(pairings);
-        
+
         pairings.sort((a, b) => b.score - a.score);
-        
+
         // v6.7.4: フィルタリング後に候補がない場合
         if (pairings.length === 0) {
-            return { 
-                error: '倫理基準を満たすペアがありません', 
-                suggestion: '近交係数12.5%未満のペアが存在しません。別血統の個体を導入してください。',
+            return {
+                error: this._t('bp_no_ethical_pairs', '倫理基準を満たすペアがありません'),
+                suggestion: this._t('bp_introduce_new_blood', '近交係数12.5%未満のペアが存在しません。別血統の個体を導入してください。'),
                 filteredOut: true
             };
         }
@@ -215,7 +229,11 @@ const BreedingPlanner = {
         let score = this.calculateGeneScore(male, target) + this.calculateGeneScore(female, target);
         const prob = this.calculateTargetProbability(male, female, target);
         score += prob * 100;
-        
+
+        // v7.0: 連鎖遺伝ボーナス
+        const linkageBonus = this.calculateLinkageBonus(male, female, targetKey);
+        score += linkageBonus;
+
         // 近交係数計算
         let inbreedingCoef = 0;
         let warningLevel = { level: 'safe' };
@@ -255,34 +273,41 @@ const BreedingPlanner = {
             health.warnings.forEach(w => warnings.push('⚠️ ' + w.message));
         }
         
-        // v6.7.4: 近交係数による推奨メッセージ
+        // v7.0: 翻訳対応推奨メッセージ
         let recommendation;
         if (!canBreed) {
-            recommendation = '🚫 繁殖禁止';
+            recommendation = '🚫 ' + this._t('bp_breeding_prohibited', '繁殖禁止');
         } else if (inbreedingCoef >= this.INBREEDING_THRESHOLD) {
-            recommendation = '⚠️ 競走馬では禁忌とされる配合';
+            recommendation = '⚠️ ' + this._t('bp_ethics_warning', '競走馬では禁忌とされる配合');
         } else if (prob >= 0.5) {
-            recommendation = '🌟 最適ペア';
+            recommendation = '🌟 ' + this._t('bp_optimal_pair', '最適ペア');
         } else if (prob > 0) {
-            recommendation = '✓ 可能';
+            recommendation = '✓ ' + this._t('bp_possible', '可能');
         } else {
-            recommendation = '✗ 目標への貢献度低';
+            recommendation = '✗ ' + this._t('bp_low_contribution', '目標への貢献度低');
         }
-        
-        return { 
-            male, 
-            female, 
-            score, 
-            probability: prob, 
-            estimatedGenerations: target.minGen + (prob < 0.5 ? 1 : 0), 
-            inbreedingCoef, 
-            canBreed, 
-            healthRisk, 
+
+        // v7.0: 連鎖遺伝に関する推奨
+        const linkageRec = this.generateLinkageRecommendation(male, female, targetKey);
+        if (linkageRec) {
+            warnings.push(linkageRec);
+        }
+
+        return {
+            male,
+            female,
+            score,
+            probability: prob,
+            estimatedGenerations: target.minGen + (prob < 0.5 ? 1 : 0),
+            inbreedingCoef,
+            canBreed,
+            healthRisk,
             warnings,
             recommendation,
             targetKey,  // v6.7.5: targetKeyを保持
-            maleGenes: { hasRequired: [], carrierOf: [], missing: [] }, 
-            femaleGenes: { hasRequired: [], carrierOf: [], missing: [] } 
+            linkageBonus,  // v7.0: 連鎖ボーナス
+            maleGenes: { hasRequired: [], carrierOf: [], missing: [] },
+            femaleGenes: { hasRequired: [], carrierOf: [], missing: [] }
         };
     },
     
@@ -320,51 +345,312 @@ const BreedingPlanner = {
         return prob;
     },
     
+    // v7.0: 翻訳対応
     generateRoadmap(topPairing, target, targetKey, missingGenes) {
-        if (!topPairing) return [{ generation: 0, action: '繁殖可能なペアがありません', goal: '健康リスクの低い個体を導入してください' }];
+        if (!topPairing) return [{ generation: 0, action: this._t('bp_no_breedable_pair', '繁殖可能なペアがありません'), goal: this._t('bp_introduce_healthy', '健康リスクの低い個体を導入してください') }];
         // v6.7.5: COLOR_LABELSから色名取得
         const targetName = this.getColorName(targetKey);
-        return [{ generation: 1, action: `${topPairing.male.name} × ${topPairing.female.name}`, goal: targetName + 'の作出', probability: `${(topPairing.probability * 100).toFixed(1)}%` }];
+        const goalText = this._tp('bp_goal_produce', { name: targetName }, targetName + 'の作出');
+        return [{ generation: 1, action: `${topPairing.male.name} × ${topPairing.female.name}`, goal: goalText, probability: `${(topPairing.probability * 100).toFixed(1)}%` }];
+    },
+
+    // ========================================
+    // v7.0: 連鎖遺伝（相/Phase）評価
+    // ========================================
+
+    /**
+     * v7.0: 個体の連鎖座位の相を評価
+     * @param {Object} bird - 個体データ
+     * @param {string} targetKey - 目標色キー
+     * @returns {Object} 連鎖情報 { phase, advantage, loci }
+     */
+    evaluateLinkagePhase(bird, targetKey) {
+        // LINKAGE_GROUPS/RECOMBINATION_RATES が未定義なら空を返す
+        if (typeof LINKAGE_GROUPS === 'undefined' || typeof RECOMBINATION_RATES === 'undefined') {
+            return { available: false };
+        }
+
+        const target = this.TARGET_REQUIREMENTS[targetKey];
+        if (!target) return { available: false };
+
+        const geno = bird.genotype || {};
+        const result = {
+            available: true,
+            Z_linked: this.evaluateZLinkedPhase(bird, geno, target),
+            autosomal_1: this.evaluateAutosomal1Phase(bird, geno, target)
+        };
+
+        return result;
+    },
+
+    /**
+     * v7.0: Z染色体連鎖座位の相評価
+     */
+    evaluateZLinkedPhase(bird, geno, target) {
+        const sex = bird.sex;
+
+        // メスはヘミ接合（相の概念なし）
+        if (sex === 'female') {
+            return { phase: 'hemizygous', note: this._t('bp_female_hemizygous', 'メスは相の概念なし') };
+        }
+
+        // 必要な伴性座位を特定
+        const slr = target.slr || {};
+        const neededLoci = [];
+        if (slr.ino) neededLoci.push('ino');
+        if (slr.cin) neededLoci.push('cinnamon');
+        if (slr.op) neededLoci.push('opaline');
+
+        if (neededLoci.length < 2) {
+            return { phase: 'not_applicable', note: this._t('bp_linkage_not_needed', '連鎖考慮不要') };
+        }
+
+        // v7形式のZ_linkedハプロタイプがあれば使用
+        if (geno.Z_linked && geno.Z_linked.Z1) {
+            return this.detectPhaseFromV7Format(geno.Z_linked, neededLoci);
+        }
+
+        // 旧形式から推論
+        return this.inferPhaseFromOldFormat(geno, neededLoci, sex);
+    },
+
+    /**
+     * v7.0: v7形式からCis/Trans検出
+     */
+    detectPhaseFromV7Format(zLinked, neededLoci) {
+        const z1 = zLinked.Z1 || {};
+        const z2 = zLinked.Z2 || {};
+
+        // Z1とZ2の両方に変異があるか確認
+        let z1Mutations = 0, z2Mutations = 0;
+        neededLoci.forEach(loc => {
+            if (z1[loc] && z1[loc] !== '+') z1Mutations++;
+            if (z2[loc] && z2[loc] !== '+') z2Mutations++;
+        });
+
+        if (z1Mutations >= 2 && z2Mutations === 0) {
+            return {
+                phase: 'cis',
+                Z1: z1,
+                Z2: z2,
+                advantage: true,
+                note: this._t('bp_phase_cis', 'Cis配置（効率的）')
+            };
+        }
+
+        if (z1Mutations === 1 && z2Mutations === 1) {
+            return {
+                phase: 'trans',
+                Z1: z1,
+                Z2: z2,
+                advantage: false,
+                note: this._t('bp_phase_trans', 'Trans配置（非効率）')
+            };
+        }
+
+        return { phase: 'unknown', note: this._t('bp_phase_unknown', '相不明') };
+    },
+
+    /**
+     * v7.0: 旧形式から相を推論
+     */
+    inferPhaseFromOldFormat(geno, neededLoci, sex) {
+        // 複数伴性形質が同時発現していればCis
+        // (表現型からの推論は限定的)
+        let expressedCount = 0;
+        neededLoci.forEach(loc => {
+            const val = geno[loc] || '++';
+            if (val !== '++' && val !== '+W' && !val.startsWith('+')) {
+                expressedCount++;
+            }
+        });
+
+        if (expressedCount >= 2) {
+            return {
+                phase: 'cis_inferred',
+                advantage: true,
+                note: this._t('bp_phase_cis_inferred', '複数発現 → Cis推定')
+            };
+        }
+
+        return { phase: 'unknown', note: this._t('bp_phase_no_info', '相情報なし') };
+    },
+
+    /**
+     * v7.0: 常染色体連鎖座位の相評価
+     */
+    evaluateAutosomal1Phase(bird, geno, target) {
+        const req = target.required || {};
+
+        // dark + parblue の両方が必要か
+        const needsDark = req.dark && !req.dark.includes('dd');
+        const needsParblue = req.parblue && !req.parblue.includes('++');
+
+        if (!needsDark || !needsParblue) {
+            return { phase: 'not_applicable', note: this._t('bp_linkage_not_needed', '連鎖考慮不要') };
+        }
+
+        // v7形式確認
+        if (geno.autosomal_1 && geno.autosomal_1.chr1) {
+            const chr1 = geno.autosomal_1.chr1;
+            const chr2 = geno.autosomal_1.chr2;
+
+            const chr1HasBoth = chr1.dark === 'D' && chr1.parblue !== '+';
+            const chr2Wild = chr2.dark === 'd' && chr2.parblue === '+';
+
+            if (chr1HasBoth && chr2Wild) {
+                return {
+                    phase: 'cis',
+                    advantage: true,
+                    note: this._t('bp_autosomal_cis', 'Dark+Parblue Cis配置')
+                };
+            }
+        }
+
+        return { phase: 'unknown', note: this._t('bp_phase_no_info', '相情報なし') };
+    },
+
+    /**
+     * v7.0: 連鎖を考慮したスコアボーナス
+     * Cis配置の個体には追加スコア
+     */
+    calculateLinkageBonus(male, female, targetKey) {
+        let bonus = 0;
+
+        const mPhase = this.evaluateLinkagePhase(male, targetKey);
+        const fPhase = this.evaluateLinkagePhase(female, targetKey);
+
+        // オスのCis配置にボーナス（オスの相が効率に影響）
+        if (mPhase.available && mPhase.Z_linked) {
+            if (mPhase.Z_linked.phase === 'cis' || mPhase.Z_linked.phase === 'cis_inferred') {
+                bonus += 50;  // Cis優位性ボーナス
+            } else if (mPhase.Z_linked.phase === 'trans') {
+                bonus -= 30;  // Trans非効率ペナルティ
+            }
+        }
+
+        // 常染色体も同様
+        if (mPhase.available && mPhase.autosomal_1) {
+            if (mPhase.autosomal_1.phase === 'cis') {
+                bonus += 30;
+            }
+        }
+
+        return bonus;
+    },
+
+    /**
+     * v7.0: 連鎖を考慮した確率修正
+     * @param {number} baseProb - 基本確率（独立分離仮定）
+     * @param {Object} male - オス個体
+     * @param {string} targetKey - 目標色
+     * @returns {number} 修正後確率
+     */
+    adjustProbabilityForLinkage(baseProb, male, targetKey) {
+        if (typeof RECOMBINATION_RATES === 'undefined') {
+            return baseProb;
+        }
+
+        const mPhase = this.evaluateLinkagePhase(male, targetKey);
+        if (!mPhase.available) return baseProb;
+
+        // Z連鎖の修正
+        if (mPhase.Z_linked && mPhase.Z_linked.phase !== 'not_applicable') {
+            const target = this.TARGET_REQUIREMENTS[targetKey];
+            const slr = target?.slr || {};
+
+            // cin + ino 両方必要な場合（Lacewing系）
+            if (slr.ino && slr.cin) {
+                const rate = RECOMBINATION_RATES['cinnamon-ino'] || 0.03;
+                if (mPhase.Z_linked.phase === 'cis' || mPhase.Z_linked.phase === 'cis_inferred') {
+                    // Cis: 97%が連鎖遺伝
+                    baseProb *= (1 - rate);
+                } else if (mPhase.Z_linked.phase === 'trans') {
+                    // Trans: 3%でしか揃わない
+                    baseProb *= rate;
+                }
+            }
+
+            // ino + opaline 両方必要な場合
+            if (slr.ino && slr.op) {
+                const rate = RECOMBINATION_RATES['ino-opaline'] || 0.30;
+                if (mPhase.Z_linked.phase === 'cis' || mPhase.Z_linked.phase === 'cis_inferred') {
+                    baseProb *= (1 - rate);
+                } else if (mPhase.Z_linked.phase === 'trans') {
+                    baseProb *= rate;
+                }
+            }
+        }
+
+        return baseProb;
+    },
+
+    /**
+     * v7.0: 連鎖に関する推奨メッセージ生成
+     */
+    generateLinkageRecommendation(male, female, targetKey) {
+        const mPhase = this.evaluateLinkagePhase(male, targetKey);
+
+        if (!mPhase.available || !mPhase.Z_linked) {
+            return null;
+        }
+
+        if (mPhase.Z_linked.phase === 'cis' || mPhase.Z_linked.phase === 'cis_inferred') {
+            return '✓ ' + this._t('bp_male_cis_efficient', 'オスがCis配置 → 効率的');
+        }
+
+        if (mPhase.Z_linked.phase === 'trans') {
+            return '⚠ ' + this._t('bp_male_trans_inefficient', 'オスがTrans配置 → 非効率（Cis個体推奨）');
+        }
+
+        if (mPhase.Z_linked.phase === 'unknown') {
+            return '? ' + this._t('bp_male_phase_unknown', 'オスの相不明 → テスト交配で確認推奨');
+        }
+
+        return null;
     }
 };
 
 /**
- * v6.7.5: runPlanner() - SSOT対応版
+ * v7.0: runPlanner() - 翻訳対応版
  * 表示時はCOLOR_LABELSから色名を取得
  */
 function runPlanner() {
+    const T = window.T || {};
+    const _t = (key, fallback) => T[key] || fallback;
+
     const targetSelect = document.getElementById('plannerTarget'), resultPanel = document.getElementById('plannerResult');
     if (!targetSelect || !resultPanel) return;
     const targetKey = targetSelect.value;
-    if (!targetKey) { alert('目標形質を選択してください'); return; }
+    if (!targetKey) { alert(_t('bp_select_target', '目標形質を選択してください')); return; }
     const result = BreedingPlanner.plan(targetKey);
-    
-    if (result.error) { 
+
+    if (result.error) {
         let errorHtml = `<div class="empty-state"><p>⚠️ ${result.error}</p>`;
         if (result.suggestion) errorHtml += `<p>${result.suggestion}</p>`;
         // v6.7.4: フィルタリングによる候補なしの場合の追加メッセージ
         if (result.filteredOut) {
-            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ 近交係数12.5%以上のペアは倫理基準により候補から除外されています</p>`;
+            errorHtml += `<p style="color: #666; font-size: 0.9em;">※ ${_t('bp_filtered_note', '近交係数12.5%以上のペアは倫理基準により候補から除外されています')}</p>`;
         }
         errorHtml += '</div>';
-        resultPanel.innerHTML = errorHtml; 
-        resultPanel.style.display = 'block'; 
-        return; 
+        resultPanel.innerHTML = errorHtml;
+        resultPanel.style.display = 'block';
+        return;
     }
-    
+
     // v6.7.5: targetNameはresultから取得（SSOT対応）
     const targetName = result.targetName;
-    
-    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} 作出計画</span></div>`;
-    html += '<h4>🏆 推奨ペアリング TOP5</h4><div class="pairing-list">';
+
+    let html = `<div class="output-header"><span class="output-title">🎯 ${targetName} ${_t('bp_production_plan', '作出計画')}</span></div>`;
+    html += `<h4>🏆 ${_t('bp_recommended_top5', '推奨ペアリング TOP5')}</h4><div class="pairing-list">`;
     result.topPairings.forEach((p, i) => {
         // v6.7.4: 近交係数表示の強化
         const icPercent = (p.inbreedingCoef * 100).toFixed(2);
         const icClass = p.inbreedingCoef >= 0.125 ? 'ic-warning' : (p.inbreedingCoef >= 0.0625 ? 'ic-caution' : 'ic-safe');
-        
+
         html += `<div class="pairing-card ${p.canBreed ? '' : 'pairing-blocked'}">`;
         html += `<div class="pairing-header">#${i+1} ♂${p.male.name} × ♀${p.female.name} ${!p.canBreed ? '🚫' : ''}</div>`;
-        html += `<div class="pairing-stats">確率: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">F値: ${icPercent}%</span></div>`;
+        html += `<div class="pairing-stats">${_t('bp_probability', '確率')}: ${(p.probability*100).toFixed(1)}% | <span class="${icClass}">${_t('bp_f_value', 'F値')}: ${icPercent}%</span></div>`;
         html += `<div class="pairing-recommendation">${p.recommendation}</div>`;
         if (p.warnings.length > 0) {
             html += `<div class="pairing-warnings">${p.warnings.join('<br>')}</div>`;
@@ -372,10 +658,10 @@ function runPlanner() {
         html += '</div>';
     });
     html += '</div>';
-    
+
     // v6.7.4: 倫理基準の説明を追加
     html += `<div class="ethics-note" style="margin-top: 15px; padding: 10px; background: #f0f0f0; border-radius: 5px; font-size: 0.85em;">`;
-    html += `<p>📋 <strong>倫理基準:</strong> 近交係数12.5%以上のペアは候補から除外されています（サラブレッド規則準拠）</p>`;
+    html += `<p>📋 <strong>${_t('bp_ethics_standard', '倫理基準')}:</strong> ${_t('bp_ethics_description', '近交係数12.5%以上のペアは候補から除外されています（サラブレッド規則準拠）')}</p>`;
     html += `</div>`;
     
     resultPanel.innerHTML = html; 

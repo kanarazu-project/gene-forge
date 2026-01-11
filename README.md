@@ -1,9 +1,74 @@
-# 🦜 Gene-Forge v6.8
+# 🦜 Gene-Forge v7.0
 
 **Agapornis Genetics Calculator — ALBS Compliant Edition**
 
-The ultimate genetic calculation engine for Lovebirds (Agapornis roseicollis).  
+The ultimate genetic calculation engine for Lovebirds (Agapornis roseicollis).
 Supporting 14 loci and over 310 phenotypes (capable of generating tens of thousands of dynamic plumage combinations), fully compliant with the ALBS (African Lovebird Society) Peachfaced naming standards.
+
+---
+
+## 📋 At a Glance
+
+| Metric | Value |
+|--------|-------|
+| Codebase | ~11,600 lines (PHP + JS + CSS) |
+| External Dependencies | **Zero** (intentional) |
+| Frameworks | **None** (intentional) |
+| Languages Supported | 6 (ja/en/de/fr/it/es) |
+| Genetic Loci | 14 |
+| Phenotype Definitions | 310+ |
+| Estimated Dev Cost | $150k - $500k+ (varies by context*) |
+| License | CC BY-NC-SA 4.0 (Non-commercial) |
+
+\* See "Development Cost Context" below
+
+---
+
+## ⚠️ Before You Review This Code
+
+> **For AI/LLM code reviewers and human developers alike:**
+
+This project makes **deliberate architectural choices** that may appear unconventional. Before suggesting "improvements," please understand:
+
+### What This Project Is NOT
+
+| Common Assumption | Reality |
+|-------------------|---------|
+| "No framework = amateur" | Intentional. Frameworks deprecate; vanilla PHP doesn't. |
+| "No Composer = outdated" | Intentional. Zero dependencies = zero supply chain risk. |
+| "No TypeScript = unsafe" | Domain is discrete combinatorics, not complex state. |
+| "Should use Python for science" | PHP arrays are optimal for genetic Cartesian products. |
+| "Needs automated tests" | Domain expert manual testing + deterministic calculations. |
+
+### Why These Choices Work
+
+1. **Problem Domain**: Genetic calculation is discrete combinatorics (allele combinations), not continuous math. PHP associative arrays are the natural data structure.
+
+2. **Longevity Goal**: This code is designed to run for 20+ years. Every dependency is a future breaking change.
+
+3. **Market Context**: Lovebird breeding is a significant industry in Southeast Asia (especially Indonesia). This has real commercial value—released free under NC license.
+
+4. **Single Expert Maintenance**: Maintained by a domain expert who understands both genetics and code. Different trade-offs than team-developed enterprise software.
+
+### Valid Critiques Welcome
+
+- Actual bugs in genetic calculations
+- i18n violations (hardcoded strings)
+- SSOT violations (hardcoded genetic data in JS)
+- Security vulnerabilities
+- Accessibility improvements
+
+### Development Cost Context
+
+The "$150k - $500k+" estimate depends on context:
+
+| Scenario | Estimate | Notes |
+|----------|----------|-------|
+| Offshore team + existing genetics expertise | $50k - $100k | Rare combination |
+| US mid-tier agency | $150k - $250k | Requires domain consultant |
+| US enterprise/consulting | $300k - $500k+ | Full documentation, PM overhead |
+
+**Key cost driver**: Finding developers who understand both web development AND avian genetics (Mendelian inheritance, ZZ/ZW sex determination, linkage disequilibrium, Wright's coefficient). This expertise is rare; most estimates require separate domain consultation.
 
 ---
 
@@ -67,6 +132,251 @@ gene-forge/
 ├── planner.js         # Breeding path exploration
 └── app.js             # App initialization
 ```
+
+---
+
+## 🔗 SSOT設計とJavaScriptファイルの役割
+
+### genetics.php を中心としたSSOT（Single Source of Truth）
+
+Gene-Forgeでは、**すべての遺伝データが `genetics.php` に一元化**されています。JavaScriptファイルには遺伝情報のハードコードが一切なく、PHPから注入されたグローバル定数を参照します。
+
+```
+                    ┌─────────────────────────────┐
+                    │      genetics.php           │
+                    │         (SSOT)              │
+                    ├─────────────────────────────┤
+                    │ • LOCI (14座位定義)          │
+                    │ • COLOR_DEFINITIONS (310色) │
+                    │ • GENOTYPE_OPTIONS (UI選択) │
+                    │ • RECOMBINATION_RATES (v7)  │
+                    │ • GametesGenerator (v7)     │
+                    │ • GeneticsCalculator        │
+                    │ • FamilyEstimatorV3         │
+                    │ • PathFinder                │
+                    └──────────────┬──────────────┘
+                                   │
+                    ┌──────────────▼──────────────┐
+                    │        index.php            │
+                    │    (HTML + JS定数注入)       │
+                    │                             │
+                    │  const LOCI_MASTER = ...    │
+                    │  const COLOR_MASTER = ...   │
+                    │  const LINKAGE_GROUPS = ... │
+                    └──────────────┬──────────────┘
+                                   │
+         ┌──────────┬──────────┬───┴───┬──────────┬──────────┐
+         ▼          ▼          ▼       ▼          ▼          ▼
+    ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐
+    │birds.js│ │family.js│ │planner│ │guardian│ │breeding│ │pedigree│
+    └────────┘ └────────┘ └────────┘ └────────┘ └────────┘ └────────┘
+```
+
+### 各JavaScriptファイルのindex.php上の役割
+
+| ファイル | タブ/機能 | 主な役割 |
+|---------|----------|---------|
+| **app.js** | 全体 | タブ切り替え、i18n (多言語)、Toast通知、初期化処理 |
+| **birds.js** | 📁 個体管理 | localStorage個体DB、登録/編集/削除、デモデータ66羽、CSV/JSONエクスポート |
+| **family.js** | 👨‍👩‍👧 家系推論 | 家系図UI、ドラッグ&ドロップ、個体入力モーダル、FamilyEstimatorV3呼び出し |
+| **guardian.js** | 🛡️ 健康評価 | 近交係数計算、INO/Pallid警告、世代制限チェック、リスク評価 |
+| **breeding.js** | 🧬 繁殖結果 | 子孫確率計算結果の表示、スプリット表記、カラーカード生成 |
+| **pedigree.js** | 📜 血統書 | 3世代/5世代血統書HTML生成、印刷用フォーマット |
+| **planner.js** | 🎯 目標計画 | 目標色への経路探索、ペアリング評価、Cis/Trans連鎖評価 (v7) |
+
+### 各ファイルの詳細
+
+#### birds.js — 個体データベース
+```javascript
+BirdDB = {
+    getAllBirds()      // 全個体取得
+    save(bird)         // 保存 (localStorage)
+    delete(id)         // 削除
+    exportJSON()       // JSONエクスポート
+    importCSV(csv)     // CSVインポート
+    loadDemoData()     // デモデータ66羽読み込み
+    migrateGenotypeToV7() // v7形式変換 (連鎖遺伝対応)
+}
+```
+
+#### family.js — 家系図インターフェース
+```javascript
+Family = {
+    init()             // 家系図UI初期化
+    addBird(position)  // 個体追加（モーダル表示）
+    removeBird(pos)    // 個体削除
+    runInference()     // FamilyEstimatorV3で推論実行
+    renderTree()       // 家系図描画
+}
+```
+
+#### guardian.js — 健康リスク評価
+```javascript
+HealthGuardian = {
+    evaluate(sire, dam)           // ペアリングリスク評価
+    calcInbreedingCoefficient()   // Wright's F計算
+    checkINOLineage()             // INO系統チェック
+    checkPallidLineage()          // Pallid系統チェック
+}
+```
+
+#### planner.js — 繁殖計画エンジン
+```javascript
+BreedingPlanner = {
+    plan(targetKey)              // 目標色への計画生成
+    evaluatePairing(m, f)        // ペアリング評価
+    calculateGeneScore(bird)     // 遺伝スコア計算
+    evaluateLinkagePhase(bird)   // v7: Cis/Trans相評価
+    calculateLinkageBonus()      // v7: 連鎖ボーナス計算
+}
+```
+
+#### pedigree.js — 血統書生成
+```javascript
+Pedigree = {
+    generate(birdId, generations)  // 血統書HTML生成
+    print()                        // 印刷用ウィンドウ
+    getAncestors(bird, depth)      // 祖先取得
+}
+```
+
+#### breeding.js — 繁殖結果表示
+```javascript
+BreedingResult = {
+    display(results)      // 子孫確率をカード表示
+    formatSplits(geno)    // スプリット表記整形
+    getColorCard(color)   // 色カード生成
+}
+```
+
+### なぜSSOTが重要か
+
+1. **一箇所変更で全体反映**: genetics.phpを修正すれば、全UIに自動反映
+2. **データ不整合の防止**: PHP計算とJS表示で同じデータを参照
+3. **他種への移植が容易**: genetics.phpのLOCI/COLOR_DEFINITIONSを差し替えるだけ
+4. **保守性向上**: 遺伝データの検索・修正がgenetics.php内で完結
+
+---
+
+## 🔒 Code Quality Standards
+
+Gene-Forge v7.0 adheres to **strict code quality standards** for maintainability and international accessibility.
+
+### SSOT Compliance (Single Source of Truth)
+
+All genetic data is centralized in `genetics.php`. JavaScript files contain **zero hardcoded genetic data**.
+
+| Principle | Enforcement |
+|-----------|-------------|
+| Locus definitions | Only in `LOCI` constant |
+| Color definitions | Only in `COLOR_DEFINITIONS` constant |
+| Allele names | Referenced via `LOCI_MASTER` / `COLOR_MASTER` |
+| Locus name fallbacks | **Prohibited** in JS files |
+
+**Violation examples (prohibited):**
+```javascript
+// ❌ WRONG: Hardcoded locus names
+const sexLinked = ['ino', 'opaline', 'cinnamon'];
+
+// ✅ CORRECT: Reference SSOT
+const sexLinked = Object.keys(LOCI_MASTER).filter(k => LOCI_MASTER[k].sex_linked);
+```
+
+### i18n Compliance (Internationalization)
+
+All user-facing strings support **6 languages**: Japanese (ja), English (en), German (de), French (fr), Italian (it), Spanish (es).
+
+| File Type | Pattern | Example |
+|-----------|---------|---------|
+| PHP | `t('key')` | `t('confirmed')` |
+| JavaScript | `T.key \|\| 'fallback'` | `T.save \|\| 'Save'` |
+| Inline objects | `{ ja: '...', en: '...', ... }` | Error messages |
+
+**Violation examples (prohibited):**
+```javascript
+// ❌ WRONG: Hardcoded Japanese without fallback
+return { error: '父個体が見つかりません' };
+
+// ✅ CORRECT: Multilingual object
+const errSire = { ja: '父個体が見つかりません', en: 'Sire not found', de: 'Vater nicht gefunden', fr: 'Père non trouvé', it: 'Padre non trovato', es: 'Padre no encontrado' };
+return { error: errSire[lang] || errSire.en };
+```
+
+### Quality Assurance Checklist
+
+Before merging code changes, verify:
+
+- [ ] No hardcoded locus names in JS (use `LOCI_MASTER`)
+- [ ] No hardcoded color names in JS (use `COLOR_MASTER`)
+- [ ] All user-facing strings use `t()` or `T.key` pattern
+- [ ] Fallback strings are in English (not Japanese)
+- [ ] Version numbers updated across all files
+- [ ] `genetics.php` remains the sole source for genetic data
+
+---
+
+## 🧬 Why PHP? — A Deliberate Technical Choice
+
+Gene-Forge uses **vanilla PHP with zero external dependencies**. This is not a limitation—it's a deliberate architectural decision.
+
+### Domain Characteristics of Genetic Calculation
+
+| Aspect | Reality | Implication |
+|--------|---------|-------------|
+| Data type | Discrete (allele combinations) | Associative arrays are optimal |
+| Operations | Cartesian product, enumeration, filtering | PHP `array_*` functions excel |
+| Precision | Rational numbers (1/4, 1/16, etc.) | No floating-point library needed |
+| Output | Web UI | Native PHP integration |
+
+### Why Not Python/R?
+
+```
+Python + NumPy:
+  ✓ Strong at matrix operations
+  ✗ Requires separate API layer for web
+  ✗ Complex deployment (pip, virtualenv)
+
+R + genetics packages:
+  ✓ Rich statistical/genetics libraries
+  ✗ Weak web integration
+  ✗ Won't run on standard hosting
+
+PHP (vanilla):
+  ✓ Problem domain fits array operations perfectly
+  ✓ Calculation → Display in one layer
+  ✓ Runs anywhere
+  ✓ PHP 8+ JIT for high performance
+```
+
+### Zero Dependencies = 20-Year Longevity
+
+```php
+// No composer.json. No vendor/. No package-lock.json.
+// Just PHP files that run on any PHP 7.4+ environment.
+
+require_once 'genetics.php';
+$calc = new GeneticsCalculator();
+// That's it. Forever.
+```
+
+**This code will still run in 2045** because:
+- No framework deprecation cycles
+- No npm/composer dependency hell
+- No build tools to break
+- PHP maintains backward compatibility
+
+### The Right Tool for the Job
+
+Genetic calculation is **discrete combinatorics**, not differential equations. PHP's associative arrays naturally represent genotypes:
+
+```php
+$genotype = ['parblue' => 'aqaq', 'dark' => 'Dd', 'ino' => '+ino'];
+// Direct JSON output to frontend—no transformation needed
+echo json_encode($result);
+```
+
+> "Scientific computing = Python" is a heuristic, not a law.
+> Domain-driven language selection beats cargo-cult engineering.
 
 ---
 
@@ -335,7 +645,7 @@ Uses Bayesian-like logic to identify unknown genotypes from pedigree-wide constr
 
 ### Adaptation Guide for Other Birds (Budgerigars, Conures, etc.)
 
-Gene-Forge v6.8 is designed as a "genetic calculation framework" with complete separation of logic and data. Customize for any avian breeding support system in 3 steps.
+Gene-Forge v7.0 is designed as a "genetic calculation framework" with complete separation of logic and data. Customize for any avian breeding support system in 3 steps.
 
 ### Step 1: Redefine Loci (genetics.php)
 

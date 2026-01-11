@@ -25,6 +25,218 @@ final class AgapornisLoci
         'opaline' => ['name'=>['ja'=>'オパーリン','en'=>'Opaline'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'op'=>1]],
         'cinnamon' => ['name'=>['ja'=>'シナモン','en'=>'Cinnamon'],'type'=>'SLR','sex_linked'=>true,'alleles'=>['+'=>0,'cin'=>1]],
     ];
+
+    /**
+     * GENOTYPE_OPTIONS - UI用遺伝型選択オプション（SSOT）
+     *
+     * 構造:
+     * - 常染色体座位: 'options' => [[値, ラベル], ...]
+     * - 伴性座位: 'male' => [...], 'female' => [...]
+     *
+     * family.js, app.js で使用
+     */
+    public const GENOTYPE_OPTIONS = [
+        // === 常染色体座位 ===
+        'parblue' => [
+            'options' => [
+                ['++', 'B⁺/B⁺'],
+                ['+aq', 'B⁺/b^aq'],
+                ['+tq', 'B⁺/b^tq'],
+                ['aqaq', 'b^aq/b^aq'],
+                ['tqtq', 'b^tq/b^tq'],
+                ['tqaq', 'b^tq/b^aq'],
+            ],
+        ],
+        'dark' => [
+            'options' => [
+                ['dd', 'd/d'],
+                ['Dd', 'D/d (SF)'],
+                ['DD', 'D/D (DF)'],
+            ],
+        ],
+        'violet' => [
+            'options' => [
+                ['vv', 'v/v'],
+                ['Vv', 'V/v (SF)'],
+                ['VV', 'V/V (DF)'],
+            ],
+        ],
+        'fallow_pale' => [
+            'options' => [
+                ['++', 'Flp⁺/Flp⁺'],
+                ['+flp', 'Flp⁺/flp'],
+                ['flpflp', 'flp/flp'],
+            ],
+        ],
+        'fallow_bronze' => [
+            'options' => [
+                ['++', 'Flb⁺/Flb⁺'],
+                ['+flb', 'Flb⁺/flb'],
+                ['flbflb', 'flb/flb'],
+            ],
+        ],
+        'pied_dom' => [
+            'options' => [
+                ['++', '+/+'],
+                ['Pi+', 'Pi/+'],
+                ['PiPi', 'Pi/Pi'],
+            ],
+        ],
+        'pied_rec' => [
+            'options' => [
+                ['++', 'Pi⁺/Pi⁺'],
+                ['+pi', 'Pi⁺/pi'],
+                ['pipi', 'pi/pi'],
+            ],
+        ],
+        'dilute' => [
+            'options' => [
+                ['++', 'Dil⁺/Dil⁺'],
+                ['+dil', 'Dil⁺/dil'],
+                ['dildil', 'dil/dil'],
+            ],
+        ],
+        'edged' => [
+            'options' => [
+                ['++', 'Ed⁺/Ed⁺'],
+                ['+ed', 'Ed⁺/ed'],
+                ['eded', 'ed/ed'],
+            ],
+        ],
+        'orangeface' => [
+            'options' => [
+                ['++', 'Of⁺/Of⁺'],
+                ['+of', 'Of⁺/of'],
+                ['ofof', 'of/of'],
+            ],
+        ],
+        'pale_headed' => [
+            'options' => [
+                ['++', 'Ph⁺/Ph⁺'],
+                ['+ph', 'Ph⁺/ph'],
+                ['phph', 'ph/ph'],
+            ],
+        ],
+        // === 伴性座位（性別で異なる） ===
+        'ino' => [
+            'male' => [
+                ['++', 'Z⁺/Z⁺'],
+                ['+pld', 'Z⁺/Z^pld'],
+                ['+ino', 'Z⁺/Z^ino'],
+                ['pldpld', 'Z^pld/Z^pld'],
+                ['inoino', 'Z^ino/Z^ino'],
+                ['pldino', 'Z^pld/Z^ino'],
+            ],
+            'female' => [
+                ['+W', 'Z⁺/W'],
+                ['pldW', 'Z^pld/W'],
+                ['inoW', 'Z^ino/W'],
+            ],
+        ],
+        'opaline' => [
+            'male' => [
+                ['++', 'Z⁺/Z⁺'],
+                ['+op', 'Z⁺/Z^op'],
+                ['opop', 'Z^op/Z^op'],
+            ],
+            'female' => [
+                ['+W', 'Z⁺/W'],
+                ['opW', 'Z^op/W'],
+            ],
+        ],
+        'cinnamon' => [
+            'male' => [
+                ['++', 'Z⁺/Z⁺'],
+                ['+cin', 'Z⁺/Z^cin'],
+                ['cincin', 'Z^cin/Z^cin'],
+            ],
+            'female' => [
+                ['+W', 'Z⁺/W'],
+                ['cinW', 'Z^cin/W'],
+            ],
+        ],
+    ];
+
+    /**
+     * UI_GENOTYPE_LOCI - UI用遺伝型フォームの座位設定（SSOT）
+     *
+     * family.js と app.js で共通使用
+     * key: フォームフィールド名/データ保存キー
+     * source: GENOTYPE_OPTIONS のキー
+     * label: 表示ラベル
+     */
+    public const UI_GENOTYPE_LOCI = [
+        ['key' => 'parblue', 'source' => 'parblue', 'label' => 'Parblue'],
+        ['key' => 'ino', 'source' => 'ino', 'label' => 'INO'],
+        ['key' => 'op', 'source' => 'opaline', 'label' => 'Opaline'],
+        ['key' => 'cin', 'source' => 'cinnamon', 'label' => 'Cinnamon'],
+        ['key' => 'dark', 'source' => 'dark', 'label' => 'Dark'],
+        ['key' => 'vio', 'source' => 'violet', 'label' => 'Violet'],
+        ['key' => 'fl', 'source' => 'fallow_pale', 'label' => 'Fallow'],
+        ['key' => 'dil', 'source' => 'dilute', 'label' => 'Dilute'],
+        ['key' => 'pi', 'source' => 'pied_rec', 'label' => 'Pied'],
+    ];
+
+    /**
+     * LINKAGE_GROUPS - 連鎖遺伝子群の定義（v7.0 SSOT）
+     *
+     * 同一染色体上で連鎖している座位のグループを定義。
+     * これらの座位は独立分離せず、組み換え率に基づいて遺伝する。
+     *
+     * 構造:
+     * - 'loci': 連鎖している座位のキー名（LOCIと同じキー）
+     * - 'chromosome': 染色体タイプ（'Z' = 伴性, 'autosome' = 常染色体）
+     */
+    public const LINKAGE_GROUPS = [
+        'Z_linked' => [
+            'loci' => ['cinnamon', 'ino', 'opaline'],
+            'chromosome' => 'Z',
+        ],
+        'autosomal_1' => [
+            'loci' => ['dark', 'parblue'],
+            'chromosome' => 'autosome',
+        ],
+    ];
+
+    /**
+     * RECOMBINATION_RATES - 組み換え率の定義（v7.0 SSOT）
+     *
+     * 連鎖した座位間の組み換え率を定義。
+     * 出典: Lovebirds Compendium (Dirk Van den Abeele, 2016) p.228-231
+     *
+     * キー形式: 'locus1-locus2'（アルファベット順）
+     * 値: 組み換え率（0.0〜0.5、0.5で独立分離と等価）
+     *
+     * 注: Pallid(pld)はino座位の複対立遺伝子のため、
+     *     ino関連の組み換え率がそのまま適用される
+     */
+    public const RECOMBINATION_RATES = [
+        // Z染色体（伴性）
+        'cinnamon-ino' => 0.03,      // 3% - ほぼ完全連鎖
+        'ino-opaline' => 0.30,       // 30%
+        'cinnamon-opaline' => 0.33,  // 33% (= 3% + 30%)
+        // 常染色体
+        'dark-parblue' => 0.07,      // 7%
+    ];
+
+    /**
+     * INDEPENDENT_LOCI - 独立遺伝座位（v7.0 SSOT）
+     *
+     * 連鎖グループに属さず、独立分離する座位。
+     * v6.8以前と同じ計算方法を維持。
+     */
+    public const INDEPENDENT_LOCI = [
+        'violet',
+        'fallow_pale',
+        'fallow_bronze',
+        'pied_dom',
+        'pied_rec',
+        'dilute',
+        'edged',
+        'orangeface',
+        'pale_headed',
+    ];
+
     public const COLOR_DEFINITIONS = [
         // 基底色（12色）
         'green'=>['ja'=>'グリーン','en'=>'Green','albs'=>'Green','genotype'=>['parblue'=>'++','dark'=>'dd'],'eye'=>'black','category'=>'green'],
@@ -793,6 +1005,273 @@ final class AgapornisLoci
 }
 
 /**
+ * GametesGenerator - 配偶子確率分布生成エンジン（v7.0）
+ *
+ * ハプロタイプ構成と組み換え率から配偶子の確率分布を計算。
+ * 連鎖遺伝計算の共通エンジンとして、GeneticsCalculator, FamilyEstimatorV3,
+ * PathFinder, Planner の4エンジンで使用される。
+ *
+ * @version 7.0
+ */
+final class GametesGenerator
+{
+    /**
+     * Z染色体連鎖群から配偶子確率分布を生成（オス用）
+     *
+     * @param array $Z1 Z1染色体のハプロタイプ {cinnamon, ino, opaline}
+     * @param array $Z2 Z2染色体のハプロタイプ {cinnamon, ino, opaline}
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateZLinkedMale(array $Z1, array $Z2): array
+    {
+        $rates = AgapornisLoci::RECOMBINATION_RATES;
+        $r1 = $rates['cinnamon-ino'];      // 0.03
+        $r2 = $rates['ino-opaline'];       // 0.30
+
+        // 組み換えなし（親型）
+        $noRecomb = (1 - $r1) * (1 - $r2);  // 0.679
+
+        // cin-ino間のみ組み換え
+        $recomb1Only = $r1 * (1 - $r2);     // 0.021
+
+        // ino-op間のみ組み換え
+        $recomb2Only = (1 - $r1) * $r2;     // 0.291
+
+        // 両方で組み換え（二重組み換え）
+        $doubleRecomb = $r1 * $r2;          // 0.009
+
+        $gametes = [];
+
+        // 親型配偶子（組み換えなし）
+        // Z1そのまま、Z2そのまま
+        $gametes[self::haplotypeKey($Z1)] = ($gametes[self::haplotypeKey($Z1)] ?? 0) + $noRecomb / 2;
+        $gametes[self::haplotypeKey($Z2)] = ($gametes[self::haplotypeKey($Z2)] ?? 0) + $noRecomb / 2;
+
+        // cin-ino間組み換え型
+        // Z1のcin + Z2のino,op → 新ハプロタイプ
+        // Z2のcin + Z1のino,op → 新ハプロタイプ
+        $recomb1_from_Z1 = ['cinnamon' => $Z1['cinnamon'], 'ino' => $Z2['ino'], 'opaline' => $Z2['opaline']];
+        $recomb1_from_Z2 = ['cinnamon' => $Z2['cinnamon'], 'ino' => $Z1['ino'], 'opaline' => $Z1['opaline']];
+        $gametes[self::haplotypeKey($recomb1_from_Z1)] = ($gametes[self::haplotypeKey($recomb1_from_Z1)] ?? 0) + $recomb1Only / 2;
+        $gametes[self::haplotypeKey($recomb1_from_Z2)] = ($gametes[self::haplotypeKey($recomb1_from_Z2)] ?? 0) + $recomb1Only / 2;
+
+        // ino-op間組み換え型
+        // Z1のcin,ino + Z2のop → 新ハプロタイプ
+        // Z2のcin,ino + Z1のop → 新ハプロタイプ
+        $recomb2_from_Z1 = ['cinnamon' => $Z1['cinnamon'], 'ino' => $Z1['ino'], 'opaline' => $Z2['opaline']];
+        $recomb2_from_Z2 = ['cinnamon' => $Z2['cinnamon'], 'ino' => $Z2['ino'], 'opaline' => $Z1['opaline']];
+        $gametes[self::haplotypeKey($recomb2_from_Z1)] = ($gametes[self::haplotypeKey($recomb2_from_Z1)] ?? 0) + $recomb2Only / 2;
+        $gametes[self::haplotypeKey($recomb2_from_Z2)] = ($gametes[self::haplotypeKey($recomb2_from_Z2)] ?? 0) + $recomb2Only / 2;
+
+        // 二重組み換え型
+        // Z1のcin + Z2のino + Z1のop
+        // Z2のcin + Z1のino + Z2のop
+        $doubleRecomb_from_Z1 = ['cinnamon' => $Z1['cinnamon'], 'ino' => $Z2['ino'], 'opaline' => $Z1['opaline']];
+        $doubleRecomb_from_Z2 = ['cinnamon' => $Z2['cinnamon'], 'ino' => $Z1['ino'], 'opaline' => $Z2['opaline']];
+        $gametes[self::haplotypeKey($doubleRecomb_from_Z1)] = ($gametes[self::haplotypeKey($doubleRecomb_from_Z1)] ?? 0) + $doubleRecomb / 2;
+        $gametes[self::haplotypeKey($doubleRecomb_from_Z2)] = ($gametes[self::haplotypeKey($doubleRecomb_from_Z2)] ?? 0) + $doubleRecomb / 2;
+
+        return $gametes;
+    }
+
+    /**
+     * Z染色体連鎖群から配偶子確率分布を生成（メス用）
+     *
+     * メスはZ染色体が1本のため組み換えなし。
+     * Z配偶子（50%）とW配偶子（50%）を生成。
+     *
+     * @param array $Z1 Z染色体のハプロタイプ {cinnamon, ino, opaline}
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateZLinkedFemale(array $Z1): array
+    {
+        return [
+            self::haplotypeKey($Z1) => 0.5,
+            'W' => 0.5,  // W染色体（伴性座位なし）
+        ];
+    }
+
+    /**
+     * 常染色体連鎖群から配偶子確率分布を生成
+     *
+     * @param array $chr1 染色体1のハプロタイプ {dark, parblue}
+     * @param array $chr2 染色体2のハプロタイプ {dark, parblue}
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateAutosomal1(array $chr1, array $chr2): array
+    {
+        $rates = AgapornisLoci::RECOMBINATION_RATES;
+        $r = $rates['dark-parblue'];  // 0.07
+
+        $gametes = [];
+
+        // 親型（組み換えなし）: 各50% × (1-r)
+        $noRecomb = 1 - $r;  // 0.93
+        $gametes[self::autosomalKey($chr1)] = ($gametes[self::autosomalKey($chr1)] ?? 0) + $noRecomb / 2;
+        $gametes[self::autosomalKey($chr2)] = ($gametes[self::autosomalKey($chr2)] ?? 0) + $noRecomb / 2;
+
+        // 組み換え型: 各50% × r
+        $recomb1 = ['dark' => $chr1['dark'], 'parblue' => $chr2['parblue']];
+        $recomb2 = ['dark' => $chr2['dark'], 'parblue' => $chr1['parblue']];
+        $gametes[self::autosomalKey($recomb1)] = ($gametes[self::autosomalKey($recomb1)] ?? 0) + $r / 2;
+        $gametes[self::autosomalKey($recomb2)] = ($gametes[self::autosomalKey($recomb2)] ?? 0) + $r / 2;
+
+        return $gametes;
+    }
+
+    /**
+     * 独立座位の配偶子確率分布を生成
+     *
+     * 連鎖しない座位は従来通り独立分離。
+     *
+     * @param string $genotype 遺伝型文字列（例: 'Vv', '++', 'flpflp'）
+     * @param string $locusKey 座位キー（LOCI定義に準拠）
+     * @return array 配偶子 => 確率 の連想配列
+     */
+    public static function generateIndependent(string $genotype, string $locusKey): array
+    {
+        $locus = AgapornisLoci::LOCI[$locusKey] ?? null;
+        if (!$locus) {
+            return ['+' => 1.0];
+        }
+
+        $alleles = array_keys($locus['alleles']);
+
+        // 遺伝型をパース（簡易版）
+        $parsed = self::parseGenotype($genotype, $alleles);
+
+        if ($parsed['a1'] === $parsed['a2']) {
+            // ホモ接合
+            return [$parsed['a1'] => 1.0];
+        } else {
+            // ヘテロ接合
+            return [
+                $parsed['a1'] => 0.5,
+                $parsed['a2'] => 0.5,
+            ];
+        }
+    }
+
+    /**
+     * ハプロタイプを一意のキー文字列に変換
+     */
+    private static function haplotypeKey(array $haplotype): string
+    {
+        return implode('|', [
+            $haplotype['cinnamon'] ?? '+',
+            $haplotype['ino'] ?? '+',
+            $haplotype['opaline'] ?? '+',
+        ]);
+    }
+
+    /**
+     * 常染色体ハプロタイプを一意のキー文字列に変換
+     */
+    private static function autosomalKey(array $haplotype): string
+    {
+        return implode('|', [
+            $haplotype['dark'] ?? 'd',
+            $haplotype['parblue'] ?? '+',
+        ]);
+    }
+
+    /**
+     * キー文字列からハプロタイプ配列に復元
+     */
+    public static function keyToHaplotype(string $key): array
+    {
+        $parts = explode('|', $key);
+        if (count($parts) === 3) {
+            return [
+                'cinnamon' => $parts[0],
+                'ino' => $parts[1],
+                'opaline' => $parts[2],
+            ];
+        } elseif (count($parts) === 2) {
+            return [
+                'dark' => $parts[0],
+                'parblue' => $parts[1],
+            ];
+        }
+        return [];
+    }
+
+    /**
+     * 遺伝型文字列をパース
+     */
+    private static function parseGenotype(string $genotype, array $alleles): array
+    {
+        // 代表的なパターンをハンドル
+        if ($genotype === '++') {
+            return ['a1' => '+', 'a2' => '+'];
+        }
+
+        // VV, Vv, vv パターン
+        if (preg_match('/^([A-Z])([A-Z])$/i', $genotype, $m)) {
+            return ['a1' => $m[1], 'a2' => $m[2]];
+        }
+
+        // +x, xx パターン
+        if (preg_match('/^\+([a-z]+)$/', $genotype, $m)) {
+            return ['a1' => '+', 'a2' => $m[1]];
+        }
+        if (preg_match('/^([a-z]+)([a-z]+)$/', $genotype, $m)) {
+            return ['a1' => $m[1], 'a2' => $m[2]];
+        }
+
+        return ['a1' => '+', 'a2' => '+'];
+    }
+
+    /**
+     * 配偶子確率分布を正規化（合計が1.0になるように）
+     */
+    public static function normalize(array $gametes): array
+    {
+        $total = array_sum($gametes);
+        if ($total <= 0) {
+            return $gametes;
+        }
+        return array_map(fn($p) => $p / $total, $gametes);
+    }
+
+    /**
+     * 2つの配偶子分布を掛け合わせて子の遺伝型分布を生成
+     *
+     * @param array $sireGametes 父の配偶子分布
+     * @param array $damGametes 母の配偶子分布
+     * @return array 子の遺伝型 => 確率 の連想配列
+     */
+    public static function combineGametes(array $sireGametes, array $damGametes): array
+    {
+        $offspring = [];
+        foreach ($sireGametes as $sireG => $sireP) {
+            foreach ($damGametes as $damG => $damP) {
+                // 遺伝型キーを生成（順序を正規化）
+                $genotypeKey = self::makeGenotypeKey($sireG, $damG);
+                $offspring[$genotypeKey] = ($offspring[$genotypeKey] ?? 0) + $sireP * $damP;
+            }
+        }
+        return $offspring;
+    }
+
+    /**
+     * 2つの配偶子から遺伝型キーを生成
+     */
+    private static function makeGenotypeKey(string $g1, string $g2): string
+    {
+        // Wを含む場合は特別処理（メスのZ/W）
+        if ($g1 === 'W') {
+            return $g2 . '/W';
+        }
+        if ($g2 === 'W') {
+            return $g1 . '/W';
+        }
+        // アルファベット順にソートして一貫性を保つ
+        return $g1 <= $g2 ? "$g1/$g2" : "$g2/$g1";
+    }
+}
+
+/**
  * FamilyEstimatorV3 - 一族マップからの遺伝子型推論エンジン
  * @version 6.8
  */
@@ -841,6 +1320,9 @@ class FamilyEstimatorV3
         // テスト交配提案を生成
         $testBreedings = $this->generateTestBreedingProposals($results);
 
+        // v7.0: 連鎖座位の相（Phase）を推論
+        $linkagePhase = $this->inferLinkagePhase();
+
         return [
             'success' => true,
             'target' => [
@@ -852,6 +1334,8 @@ class FamilyEstimatorV3
             'notes' => $notes,
             'testBreedings' => $testBreedings,
             'overallConfidence' => round($confidenceSum / count(AgapornisLoci::LOCI), 1),
+            // v7.0: 連鎖遺伝情報
+            'linkage' => $linkagePhase,
         ];
     }
 
@@ -1721,6 +2205,383 @@ private function genotypeEquivalent(string $g1, string $g2): bool
             'note' => '座位情報が見つかりません',
         ];
     }
+
+    // ========================================
+    // v7.0: 連鎖遺伝の相（Phase）推論
+    // ========================================
+
+    /**
+     * 連鎖座位群の相（Phase）を推論
+     * @return array 連鎖群ごとの相情報
+     */
+    public function inferLinkagePhase(): array
+    {
+        $result = [
+            'Z_linked' => $this->detectZLinkedPhase(),
+            'autosomal_1' => $this->detectAutosomal1Phase(),
+        ];
+
+        return $result;
+    }
+
+    /**
+     * Z染色体連鎖座位（cin, ino, opaline）の相を推論
+     */
+    private function detectZLinkedPhase(): array
+    {
+        $sex = $this->targetBird['sex'];
+        $phenotype = $this->targetBird['phenotype'] ?? [];
+        $baseColor = strtolower($phenotype['baseColor'] ?? '');
+
+        // メスはヘミ接合（ZW）なので相の概念なし
+        if ($sex === 'female') {
+            $z1 = $this->detectZLinkedHaplotypeFromPhenotype($baseColor);
+            return [
+                'phase' => 'hemizygous',
+                'Z1' => $z1,
+                'Z2' => null,
+                'confidence' => 100,
+                'note' => 'メスはZ染色体1本のみ（相の概念なし）',
+            ];
+        }
+
+        // オスの場合 - 表現型からの推論を試みる
+        $expressed = $this->detectZLinkedExpressedLoci($baseColor);
+
+        // 2つ以上の伴性形質が同時発現 → Cis確定
+        if (count($expressed) >= 2) {
+            $z1 = ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'];
+            foreach ($expressed as $locus => $allele) {
+                $z1[$locus] = $allele;
+            }
+            return [
+                'phase' => 'cis',
+                'Z1' => $z1,
+                'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => 100,
+                'note' => '複数伴性形質同時発現 → Cis確定',
+            ];
+        }
+
+        // 1つのみ発現 → ホモ接合または相不明
+        if (count($expressed) === 1) {
+            $locus = array_keys($expressed)[0];
+            $allele = $expressed[$locus];
+
+            // 子孫から相を推論
+            $phaseFromOffspring = $this->inferZLinkedPhaseFromOffspring();
+            if ($phaseFromOffspring['phase'] !== 'unknown') {
+                return $phaseFromOffspring;
+            }
+
+            return [
+                'phase' => 'unknown',
+                'Z1' => [$locus => $allele] + ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'Z2' => [$locus => $allele] + ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => 50,
+                'note' => "ホモ{$locus}発現（スプリット座位不明）",
+            ];
+        }
+
+        // 野生型表現 → スプリットの可能性は子孫から推論
+        $phaseFromOffspring = $this->inferZLinkedPhaseFromOffspring();
+        if ($phaseFromOffspring['phase'] !== 'unknown') {
+            return $phaseFromOffspring;
+        }
+
+        // 親からの推論
+        $phaseFromParents = $this->inferZLinkedPhaseFromParents();
+        if ($phaseFromParents['phase'] !== 'unknown') {
+            return $phaseFromParents;
+        }
+
+        return [
+            'phase' => 'unknown',
+            'Z1' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+            'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+            'confidence' => 0,
+            'note' => '相情報なし（野生型表現）',
+        ];
+    }
+
+    /**
+     * 表現型からZ_linkedハプロタイプを検出
+     */
+    private function detectZLinkedHaplotypeFromPhenotype(string $baseColor): array
+    {
+        $haplotype = ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'];
+
+        // Lacewing = cin + ino
+        if (strpos($baseColor, 'lacewing') !== false) {
+            $haplotype['cinnamon'] = 'cin';
+            $haplotype['ino'] = 'ino';
+        } elseif (strpos($baseColor, 'cinnamon') !== false) {
+            $haplotype['cinnamon'] = 'cin';
+        }
+
+        // INO系
+        if (strpos($baseColor, 'lutino') !== false ||
+            strpos($baseColor, 'creamino') !== false ||
+            strpos($baseColor, 'albino') !== false) {
+            $haplotype['ino'] = 'ino';
+        }
+        if (strpos($baseColor, 'pallid') !== false) {
+            $haplotype['ino'] = 'pld';
+        }
+
+        // Opaline
+        if (strpos($baseColor, 'opaline') !== false) {
+            $haplotype['opaline'] = 'op';
+        }
+
+        return $haplotype;
+    }
+
+    /**
+     * 表現型から発現している伴性座位を検出
+     */
+    private function detectZLinkedExpressedLoci(string $baseColor): array
+    {
+        $expressed = [];
+
+        if (strpos($baseColor, 'cinnamon') !== false || strpos($baseColor, 'lacewing') !== false) {
+            $expressed['cinnamon'] = 'cin';
+        }
+
+        if (strpos($baseColor, 'lutino') !== false ||
+            strpos($baseColor, 'creamino') !== false ||
+            strpos($baseColor, 'albino') !== false ||
+            strpos($baseColor, 'lacewing') !== false) {
+            $expressed['ino'] = 'ino';
+        }
+
+        if (strpos($baseColor, 'pallid') !== false) {
+            $expressed['ino'] = 'pld';
+        }
+
+        if (strpos($baseColor, 'opaline') !== false) {
+            $expressed['opaline'] = 'op';
+        }
+
+        return $expressed;
+    }
+
+    /**
+     * 子孫からZ_linked相を推論
+     * Lacewing子が多い → 親はCis
+     * cin子とino子が別々に出る → 親はTrans
+     */
+    private function inferZLinkedPhaseFromOffspring(): array
+    {
+        $offspring = $this->familyMap['offspring'] ?? [];
+        if (empty($offspring)) {
+            return ['phase' => 'unknown', 'confidence' => 0];
+        }
+
+        $stats = [
+            'lacewing' => 0,       // cin + ino 同時発現
+            'cin_only' => 0,       // cin のみ
+            'ino_only' => 0,       // ino のみ
+            'wild' => 0,           // 野生型
+            'total' => 0,
+        ];
+
+        foreach ($offspring as $child) {
+            $baseColor = strtolower($child['phenotype']['baseColor'] ?? '');
+            $stats['total']++;
+
+            if (strpos($baseColor, 'lacewing') !== false) {
+                $stats['lacewing']++;
+            } elseif (strpos($baseColor, 'cinnamon') !== false) {
+                $stats['cin_only']++;
+            } elseif (strpos($baseColor, 'lutino') !== false || strpos($baseColor, 'creamino') !== false) {
+                $stats['ino_only']++;
+            } else {
+                $stats['wild']++;
+            }
+        }
+
+        // 判定ロジック
+        $total = $stats['total'];
+        if ($total < 5) {
+            return ['phase' => 'unknown', 'confidence' => 0, 'note' => '子数不足'];
+        }
+
+        $lacewingRatio = $stats['lacewing'] / $total;
+        $separateRatio = ($stats['cin_only'] + $stats['ino_only']) / $total;
+
+        // Lacewingが20%以上 → Cis可能性高い（期待値24.25%）
+        if ($lacewingRatio >= 0.20 && $separateRatio < 0.05) {
+            return [
+                'phase' => 'cis',
+                'Z1' => ['cinnamon' => 'cin', 'ino' => 'ino', 'opaline' => '+'],
+                'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => min(90, $lacewingRatio * 200),
+                'note' => sprintf('Lacewing子%.0f%% → Cis推定', $lacewingRatio * 100),
+            ];
+        }
+
+        // cin/inoが別々に出る → Trans可能性高い
+        if ($separateRatio >= 0.30 && $stats['lacewing'] === 0) {
+            return [
+                'phase' => 'trans',
+                'Z1' => ['cinnamon' => 'cin', 'ino' => '+', 'opaline' => '+'],
+                'Z2' => ['cinnamon' => '+', 'ino' => 'ino', 'opaline' => '+'],
+                'confidence' => min(90, $separateRatio * 150),
+                'note' => sprintf('cin/ino別出現%.0f%% → Trans推定', $separateRatio * 100),
+            ];
+        }
+
+        return ['phase' => 'unknown', 'confidence' => 0];
+    }
+
+    /**
+     * 親からZ_linked相を推論
+     */
+    private function inferZLinkedPhaseFromParents(): array
+    {
+        $parents = $this->getParentsOf($this->targetPosition);
+        $dam = $parents['dam'] ?? null;
+
+        if (!$dam) {
+            return ['phase' => 'unknown', 'confidence' => 0];
+        }
+
+        // 母親がLacewing → 息子はCis cin-ino/+ を母から継承
+        $damColor = strtolower($dam['phenotype']['baseColor'] ?? '');
+        if (strpos($damColor, 'lacewing') !== false) {
+            return [
+                'phase' => 'cis',
+                'Z1' => ['cinnamon' => 'cin', 'ino' => 'ino', 'opaline' => '+'],
+                'Z2' => ['cinnamon' => '+', 'ino' => '+', 'opaline' => '+'],
+                'confidence' => 100,
+                'note' => '母がLacewing → 息子のZ1はCis cin-ino',
+            ];
+        }
+
+        return ['phase' => 'unknown', 'confidence' => 0];
+    }
+
+    /**
+     * 常染色体連鎖座位（dark, parblue）の相を推論
+     */
+    private function detectAutosomal1Phase(): array
+    {
+        $phenotype = $this->targetBird['phenotype'] ?? [];
+        $baseColor = strtolower($phenotype['baseColor'] ?? '');
+
+        // 両座位のアレルを検出
+        $darkAllele = $this->detectDarkAllele($baseColor);
+        $parblueAllele = $this->detectParblueAllele($baseColor);
+
+        // 両方とも野生型 → 相の概念なし
+        if ($darkAllele === 'd' && $parblueAllele === '+') {
+            return [
+                'phase' => 'wild',
+                'chr1' => ['dark' => 'd', 'parblue' => '+'],
+                'chr2' => ['dark' => 'd', 'parblue' => '+'],
+                'confidence' => 100,
+                'note' => '両座位野生型',
+            ];
+        }
+
+        // 子孫から相を推論
+        $phaseFromOffspring = $this->inferAutosomal1PhaseFromOffspring();
+        if ($phaseFromOffspring['phase'] !== 'unknown') {
+            return $phaseFromOffspring;
+        }
+
+        // 相不明
+        return [
+            'phase' => 'unknown',
+            'chr1' => ['dark' => $darkAllele, 'parblue' => $parblueAllele],
+            'chr2' => ['dark' => 'd', 'parblue' => '+'],
+            'confidence' => 0,
+            'note' => '相情報不足',
+        ];
+    }
+
+    /**
+     * 表現型からdarkアレルを検出
+     */
+    private function detectDarkAllele(string $baseColor): string
+    {
+        if (strpos($baseColor, 'olive') !== false || strpos($baseColor, 'mauve') !== false) {
+            return 'D'; // DF
+        }
+        if (strpos($baseColor, 'dark') !== false || strpos($baseColor, 'cobalt') !== false) {
+            return 'D'; // SF (ヘテロ)
+        }
+        return 'd';
+    }
+
+    /**
+     * 表現型からparblueアレルを検出
+     */
+    private function detectParblueAllele(string $baseColor): string
+    {
+        if (strpos($baseColor, 'aqua') !== false) return 'aq';
+        if (strpos($baseColor, 'turquoise') !== false) return 'tq';
+        if (strpos($baseColor, 'seagreen') !== false) return 'aq'; // tq/aq
+        return '+';
+    }
+
+    /**
+     * 子孫からautosomal_1相を推論
+     */
+    private function inferAutosomal1PhaseFromOffspring(): array
+    {
+        $offspring = $this->familyMap['offspring'] ?? [];
+        if (count($offspring) < 5) {
+            return ['phase' => 'unknown', 'confidence' => 0];
+        }
+
+        // dark+parblue同時発現 vs 別々発現をカウント
+        $stats = ['combined' => 0, 'dark_only' => 0, 'parblue_only' => 0, 'total' => 0];
+
+        foreach ($offspring as $child) {
+            $baseColor = strtolower($child['phenotype']['baseColor'] ?? '');
+            $stats['total']++;
+
+            $hasDark = strpos($baseColor, 'dark') !== false || strpos($baseColor, 'olive') !== false;
+            $hasParblue = strpos($baseColor, 'aqua') !== false || strpos($baseColor, 'turquoise') !== false;
+
+            if ($hasDark && $hasParblue) {
+                $stats['combined']++;
+            } elseif ($hasDark) {
+                $stats['dark_only']++;
+            } elseif ($hasParblue) {
+                $stats['parblue_only']++;
+            }
+        }
+
+        // 7%組み換えなので、Cisなら93%が同時遺伝
+        $total = $stats['total'];
+        $combinedRatio = $stats['combined'] / $total;
+        $separateRatio = ($stats['dark_only'] + $stats['parblue_only']) / $total;
+
+        if ($combinedRatio >= 0.80) {
+            return [
+                'phase' => 'cis',
+                'chr1' => ['dark' => 'D', 'parblue' => 'aq'],
+                'chr2' => ['dark' => 'd', 'parblue' => '+'],
+                'confidence' => min(90, $combinedRatio * 100),
+                'note' => sprintf('Dark+Parblue同時遺伝%.0f%% → Cis推定', $combinedRatio * 100),
+            ];
+        }
+
+        if ($separateRatio >= 0.80) {
+            return [
+                'phase' => 'trans',
+                'chr1' => ['dark' => 'D', 'parblue' => '+'],
+                'chr2' => ['dark' => 'd', 'parblue' => 'aq'],
+                'confidence' => min(90, $separateRatio * 100),
+                'note' => sprintf('Dark/Parblue別出現%.0f%% → Trans推定', $separateRatio * 100),
+            ];
+        }
+
+        return ['phase' => 'unknown', 'confidence' => 0];
+    }
 }
 
 
@@ -1786,6 +2647,200 @@ class GeneticsCalculator
             $results[$geno] = ($results[$geno] ?? 0) + $prob;
         }
         return $results;
+    }
+
+    // ========================================
+    // v7.0: 連鎖遺伝計算メソッド
+    // ========================================
+
+    /**
+     * Z染色体連鎖座位の計算（v7.0）
+     *
+     * GametesGenerator を使用して組み換え率を考慮した計算を行う。
+     *
+     * @param array $sireZ1 父のZ1ハプロタイプ
+     * @param array $sireZ2 父のZ2ハプロタイプ
+     * @param array $damZ1 母のZ1ハプロタイプ
+     * @return array ['male' => [...], 'female' => [...]]
+     */
+    private function calcZLinkedV7(array $sireZ1, array $sireZ2, array $damZ1): array
+    {
+        // 父の配偶子生成（組み換えあり）
+        $sireGametes = GametesGenerator::generateZLinkedMale($sireZ1, $sireZ2);
+
+        // 母の配偶子生成（組み換えなし、Z:50% W:50%）
+        $damGametes = GametesGenerator::generateZLinkedFemale($damZ1);
+
+        // 子の遺伝型分布を計算
+        $offspring = GametesGenerator::combineGametes($sireGametes, $damGametes);
+
+        // オス（ZZ）とメス（ZW）に分離
+        $maleResults = [];
+        $femaleResults = [];
+
+        foreach ($offspring as $genoKey => $prob) {
+            if (strpos($genoKey, '/W') !== false) {
+                // メス（Z/W）
+                $femaleResults[$genoKey] = $prob;
+            } else {
+                // オス（Z/Z）
+                $maleResults[$genoKey] = $prob;
+            }
+        }
+
+        return [
+            'male' => $maleResults,
+            'female' => $femaleResults,
+        ];
+    }
+
+    /**
+     * 常染色体連鎖座位の計算（v7.0）
+     *
+     * dark-parblue の連鎖を考慮した計算。
+     *
+     * @param array $sireChr1 父の染色体1
+     * @param array $sireChr2 父の染色体2
+     * @param array $damChr1 母の染色体1
+     * @param array $damChr2 母の染色体2
+     * @return array 遺伝型 => 確率
+     */
+    private function calcAutosomal1V7(
+        array $sireChr1, array $sireChr2,
+        array $damChr1, array $damChr2
+    ): array {
+        $sireGametes = GametesGenerator::generateAutosomal1($sireChr1, $sireChr2);
+        $damGametes = GametesGenerator::generateAutosomal1($damChr1, $damChr2);
+
+        return GametesGenerator::combineGametes($sireGametes, $damGametes);
+    }
+
+    /**
+     * 入力データからZ_linkedハプロタイプを抽出（v7.0）
+     *
+     * @param array $input 入力データ
+     * @param string $prefix 'f_' or 'm_'
+     * @param string $sex 'male' or 'female'
+     * @return array ['Z1' => [...], 'Z2' => [...] or null]
+     */
+    private function extractZLinked(array $input, string $prefix, string $sex): array
+    {
+        // 新形式（Z_linked構造）がある場合
+        $zLinkedKey = $prefix . 'Z_linked';
+        if (isset($input[$zLinkedKey]) && is_array($input[$zLinkedKey])) {
+            return $input[$zLinkedKey];
+        }
+
+        // 旧形式からの変換
+        $inoVal = $input[$prefix . 'ino'] ?? ($sex === 'female' ? '+W' : '++');
+        $opVal = $input[$prefix . 'op'] ?? $input[$prefix . 'opaline'] ?? ($sex === 'female' ? '+W' : '++');
+        $cinVal = $input[$prefix . 'cin'] ?? $input[$prefix . 'cinnamon'] ?? ($sex === 'female' ? '+W' : '++');
+
+        return $this->parseOldFormatToZLinked($inoVal, $opVal, $cinVal, $sex);
+    }
+
+    /**
+     * 旧形式の遺伝型文字列からZ_linked構造に変換（v7.0）
+     */
+    private function parseOldFormatToZLinked(
+        string $inoVal, string $opVal, string $cinVal, string $sex
+    ): array {
+        $parseAllele = function(string $val, string $locus) use ($sex) {
+            // メス形式（末尾W）
+            if (substr($val, -1) === 'W') {
+                $allele = substr($val, 0, -1);
+                return ['a1' => $allele ?: '+', 'a2' => null];
+            }
+
+            // オス形式
+            $patterns = [
+                '++' => ['+', '+'],
+                'inoino' => ['ino', 'ino'],
+                'pldpld' => ['pld', 'pld'],
+                'pldino' => ['pld', 'ino'],
+                '+ino' => ['ino', '+'],
+                '+pld' => ['pld', '+'],
+                'opop' => ['op', 'op'],
+                '+op' => ['op', '+'],
+                'cincin' => ['cin', 'cin'],
+                '+cin' => ['cin', '+'],
+            ];
+
+            if (isset($patterns[$val])) {
+                return ['a1' => $patterns[$val][0], 'a2' => $patterns[$val][1]];
+            }
+
+            return ['a1' => '+', 'a2' => $sex === 'male' ? '+' : null];
+        };
+
+        $ino = $parseAllele($inoVal, 'ino');
+        $op = $parseAllele($opVal, 'opaline');
+        $cin = $parseAllele($cinVal, 'cinnamon');
+
+        if ($sex === 'male') {
+            return [
+                'Z1' => ['cinnamon' => $cin['a1'], 'ino' => $ino['a1'], 'opaline' => $op['a1']],
+                'Z2' => ['cinnamon' => $cin['a2'], 'ino' => $ino['a2'], 'opaline' => $op['a2']],
+            ];
+        } else {
+            return [
+                'Z1' => ['cinnamon' => $cin['a1'], 'ino' => $ino['a1'], 'opaline' => $op['a1']],
+                'Z2' => null,
+            ];
+        }
+    }
+
+    /**
+     * 入力データからautosomal_1ハプロタイプを抽出（v7.0）
+     */
+    private function extractAutosomal1(array $input, string $prefix): array
+    {
+        // 新形式
+        $autoKey = $prefix . 'autosomal_1';
+        if (isset($input[$autoKey]) && is_array($input[$autoKey])) {
+            return $input[$autoKey];
+        }
+
+        // 旧形式からの変換
+        $darkVal = $input[$prefix . 'dark'] ?? 'dd';
+        $parblueVal = $input[$prefix . 'parblue'] ?? '++';
+
+        return $this->parseOldFormatToAutosomal1($darkVal, $parblueVal);
+    }
+
+    /**
+     * 旧形式からautosomal_1構造に変換（v7.0）
+     */
+    private function parseOldFormatToAutosomal1(string $darkVal, string $parblueVal): array
+    {
+        $parseDark = function(string $val): array {
+            switch ($val) {
+                case 'DD': return ['D', 'D'];
+                case 'Dd': return ['D', 'd'];
+                case 'dd': return ['d', 'd'];
+                default: return ['d', 'd'];
+            }
+        };
+
+        $parseParblue = function(string $val): array {
+            switch ($val) {
+                case '++': return ['+', '+'];
+                case '+aq': return ['aq', '+'];
+                case '+tq': return ['tq', '+'];
+                case 'aqaq': return ['aq', 'aq'];
+                case 'tqtq': return ['tq', 'tq'];
+                case 'tqaq': return ['tq', 'aq'];
+                default: return ['+', '+'];
+            }
+        };
+
+        $dark = $parseDark($darkVal);
+        $parblue = $parseParblue($parblueVal);
+
+        return [
+            'chr1' => ['dark' => $dark[0], 'parblue' => $parblue[0]],
+            'chr2' => ['dark' => $dark[1], 'parblue' => $parblue[1]],
+        ];
     }
 
     /**
@@ -2109,10 +3164,25 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
     }
 
     /**
-     * 子孫計算（v6.8.1: 最適化版）
+     * 子孫計算（v7.0: 連鎖遺伝対応版）
+     *
+     * v7モードが有効な場合、連鎖座位の組み換え率を考慮した計算を行う。
+     * v7モードは以下の条件で有効化される:
+     * - 入力に 'use_linkage' => true が含まれる
+     * - 入力に 'f_Z_linked' または 'm_Z_linked' が含まれる
      */
     public function calculateOffspring(array $input): array
     {
+        // v7モード判定
+        $useV7 = ($input['use_linkage'] ?? false)
+            || isset($input['f_Z_linked'])
+            || isset($input['m_Z_linked']);
+
+        if ($useV7) {
+            return $this->calculateOffspringV7($input);
+        }
+
+        // v6.8互換モード
         $fMode = $input['f_mode'] ?? 'genotype';
         $mMode = $input['m_mode'] ?? 'genotype';
         
@@ -2265,6 +3335,370 @@ private function phenotypeToGenotype(array $input, string $prefix, string $sex):
         return ['phenotype' => $phenotypeResults, 'genotype' => $genotypeResults, 'results' => $genotypeResults];
     }
 
+    /**
+     * v7.0 子孫計算 - 連鎖遺伝対応版
+     *
+     * GametesGenerator を使用して連鎖座位の組み換え率を考慮した計算を行う。
+     */
+    private function calculateOffspringV7(array $input): array
+    {
+        // 入力データ前処理（v6.8互換）
+        $fMode = $input['f_mode'] ?? 'genotype';
+        $mMode = $input['m_mode'] ?? 'genotype';
+
+        if ($fMode === 'phenotype') {
+            $fGeno = $this->phenotypeToGenotype($input, 'f', 'male');
+            foreach ($fGeno as $k => $v) { $input['f_' . $k] = $v; }
+        }
+        if ($mMode === 'phenotype') {
+            $mGeno = $this->phenotypeToGenotype($input, 'm', 'female');
+            foreach ($mGeno as $k => $v) { $input['m_' . $k] = $v; }
+        }
+
+        if ($fMode === 'fromdb' && !empty($input['f_db_genotype'])) {
+            $j = json_decode($input['f_db_genotype'], true);
+            if ($j) {
+                foreach ($j as $k => $v) { $input['f_' . $k] = $v; }
+                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['f_'.$short] = $j[$long]; }
+            }
+        }
+        if ($mMode === 'fromdb' && !empty($input['m_db_genotype'])) {
+            $j = json_decode($input['m_db_genotype'], true);
+            if ($j) {
+                foreach ($j as $k => $v) { $input['m_' . $k] = $v; }
+                $keyMap = ['opaline'=>'op','cinnamon'=>'cin','violet'=>'vio','pied_rec'=>'pirec','pied_dom'=>'pidom','fallow_pale'=>'flp','fallow_bronze'=>'flb','dilute'=>'dil','edged'=>'ed','orangeface'=>'of','pale_headed'=>'ph'];
+                foreach ($keyMap as $long => $short) { if (isset($j[$long])) $input['m_'.$short] = $j[$long]; }
+            }
+        }
+
+        // Z_linked ハプロタイプ抽出
+        $sireZLinked = $this->extractZLinked($input, 'f_', 'male');
+        $damZLinked = $this->extractZLinked($input, 'm_', 'female');
+
+        // autosomal_1 ハプロタイプ抽出
+        $sireAutosomal1 = $this->extractAutosomal1($input, 'f_');
+        $damAutosomal1 = $this->extractAutosomal1($input, 'm_');
+
+        // Z染色体連鎖座位の計算（組み換え率適用）
+        $zLinkedResults = $this->calcZLinkedV7(
+            $sireZLinked['Z1'],
+            $sireZLinked['Z2'],
+            $damZLinked['Z1']
+        );
+
+        // 常染色体連鎖座位の計算（組み換え率適用）
+        $autosomal1Results = $this->calcAutosomal1V7(
+            $sireAutosomal1['chr1'],
+            $sireAutosomal1['chr2'],
+            $damAutosomal1['chr1'],
+            $damAutosomal1['chr2']
+        );
+
+        // 独立座位の計算（従来通り）
+        $labels = [
+            'vio' => ['V' => 'V', 'v' => 'v'],
+            'flp' => ['+' => '+', 'flp' => 'flp'],
+            'flb' => ['+' => '+', 'flb' => 'flb'],
+            'pidom' => ['+' => '+', 'Pi' => 'Pi'],
+            'pirec' => ['+' => '+', 'pi' => 'pi'],
+            'dil' => ['+' => '+', 'dil' => 'dil'],
+            'ed' => ['+' => '+', 'ed' => 'ed'],
+            'of' => ['+' => '+', 'of' => 'of'],
+            'ph' => ['+' => '+', 'ph' => 'ph'],
+        ];
+
+        $independentLoci = [
+            'vio' => $this->calcAutosomal($input['f_vio'] ?? 'vv', $input['m_vio'] ?? 'vv', $labels['vio']),
+            'flp' => $this->calcAutosomal($input['f_flp'] ?? '++', $input['m_flp'] ?? '++', $labels['flp']),
+            'flb' => $this->calcAutosomal($input['f_flb'] ?? '++', $input['m_flb'] ?? '++', $labels['flb']),
+            'pidom' => $this->calcAutosomal($input['f_pidom'] ?? '++', $input['m_pidom'] ?? '++', $labels['pidom']),
+            'pirec' => $this->calcAutosomal($input['f_pirec'] ?? '++', $input['m_pirec'] ?? '++', $labels['pirec']),
+            'dil' => $this->calcAutosomal($input['f_dil'] ?? '++', $input['m_dil'] ?? '++', $labels['dil']),
+            'ed' => $this->calcAutosomal($input['f_ed'] ?? '++', $input['m_ed'] ?? '++', $labels['ed']),
+            'of' => $this->calcAutosomal($input['f_of'] ?? '++', $input['m_of'] ?? '++', $labels['of']),
+            'ph' => $this->calcAutosomal($input['f_ph'] ?? '++', $input['m_ph'] ?? '++', $labels['ph']),
+        ];
+
+        // 結果を組み合わせる
+        $PROB_THRESHOLD = 0.0001;
+        $maleResults = $this->enumerateCombinationsV7(
+            $autosomal1Results,
+            $zLinkedResults['male'],
+            $independentLoci,
+            'male',
+            $PROB_THRESHOLD
+        );
+        $femaleResults = $this->enumerateCombinationsV7(
+            $autosomal1Results,
+            $zLinkedResults['female'],
+            $independentLoci,
+            'female',
+            $PROB_THRESHOLD
+        );
+
+        $allResults = array_merge($maleResults, $femaleResults);
+
+        // 結果を集約
+        $phenotypeAggregated = [];
+        $genotypeAggregated = [];
+
+        foreach ($allResults as $r) {
+            $prob = $r['prob'];
+            $sex = $r['sex'];
+            $geno = $r['geno'];
+
+            $genotype = $this->convertToGenotypeArrayV7($geno, $sex);
+            $colorInfo = AgapornisLoci::resolveColor($genotype);
+            $colorName = $colorInfo['ja'] ?? 'Unknown';
+
+            $splits = $this->extractSplitsV7($geno, $sex);
+            $splitStr = !empty($splits) ? ' /' . implode(',', $splits) : '';
+
+            $phenoKey = $colorName . '|' . $sex;
+            if (!isset($phenotypeAggregated[$phenoKey])) {
+                $phenotypeAggregated[$phenoKey] = [
+                    'phenotype' => $colorName,
+                    'sex' => $sex,
+                    'probability' => 0,
+                    'splits' => [],
+                    'colorKey' => $colorInfo['key'] ?? 'unknown',
+                    'eyeColor' => $colorInfo['eye'] ?? 'black',
+                ];
+            }
+            $phenotypeAggregated[$phenoKey]['probability'] += $prob;
+            if (!empty($splits)) {
+                foreach ($splits as $s) {
+                    if (!in_array($s, $phenotypeAggregated[$phenoKey]['splits'])) {
+                        $phenotypeAggregated[$phenoKey]['splits'][] = $s;
+                    }
+                }
+            }
+
+            $genoKey = json_encode($geno) . '|' . $sex;
+            if (!isset($genotypeAggregated[$genoKey])) {
+                $genotypeAggregated[$genoKey] = [
+                    'genotype' => $geno,
+                    'sex' => $sex,
+                    'probability' => 0,
+                    'phenotype' => $colorName,
+                ];
+            }
+            $genotypeAggregated[$genoKey]['probability'] += $prob;
+        }
+
+        // 確率でソート
+        uasort($phenotypeAggregated, fn($a, $b) => $b['probability'] <=> $a['probability']);
+        uasort($genotypeAggregated, fn($a, $b) => $b['probability'] <=> $a['probability']);
+
+        $phenotypeResults = array_values($phenotypeAggregated);
+        $genotypeResults = array_values($genotypeAggregated);
+
+        return [
+            'phenotype' => $phenotypeResults,
+            'genotype' => $genotypeResults,
+            'results' => $genotypeResults,
+            'linkage_mode' => true,
+        ];
+    }
+
+    /**
+     * v7.0: 連鎖座位を含む組み合わせ列挙
+     */
+    private function enumerateCombinationsV7(
+        array $autosomal1Results,
+        array $zLinkedResults,
+        array $independentLoci,
+        string $sex,
+        float $threshold
+    ): array {
+        $results = [];
+
+        // autosomal_1 と Z_linked の組み合わせを先に計算
+        $linkedCombinations = [];
+        foreach ($autosomal1Results as $autoKey => $autoProb) {
+            foreach ($zLinkedResults as $zKey => $zProb) {
+                $prob = $autoProb * $zProb;
+                if ($prob < $threshold * 0.01) continue;
+                $linkedCombinations[] = [
+                    'autosomal_1' => $autoKey,
+                    'Z_linked' => $zKey,
+                    'prob' => $prob,
+                ];
+            }
+        }
+
+        // 独立座位との組み合わせ
+        $allIndependent = [];
+        foreach ($independentLoci as $key => $data) {
+            $allIndependent[] = ['key' => $key, 'data' => $data];
+        }
+
+        foreach ($linkedCombinations as $linked) {
+            $this->enumerateIndependentRecursive(
+                $allIndependent,
+                0,
+                [
+                    'autosomal_1' => $linked['autosomal_1'],
+                    'Z_linked' => $linked['Z_linked'],
+                ],
+                $linked['prob'],
+                $threshold,
+                $sex,
+                $results
+            );
+        }
+
+        return $results;
+    }
+
+    /**
+     * v7.0: 独立座位の再帰的列挙
+     */
+    private function enumerateIndependentRecursive(
+        array $loci,
+        int $index,
+        array $currentGeno,
+        float $currentProb,
+        float $threshold,
+        string $sex,
+        array &$results
+    ): void {
+        if ($index >= count($loci)) {
+            if ($currentProb >= $threshold) {
+                $results[] = ['sex' => $sex, 'prob' => $currentProb, 'geno' => $currentGeno];
+            }
+            return;
+        }
+
+        $locus = $loci[$index];
+        $key = $locus['key'];
+        $data = $locus['data'];
+
+        foreach ($data as $geno => $prob) {
+            $newProb = $currentProb * $prob;
+            if ($newProb < $threshold * 0.01) continue;
+            $newGeno = $currentGeno;
+            $newGeno[$key] = $geno;
+            $this->enumerateIndependentRecursive($loci, $index + 1, $newGeno, $newProb, $threshold, $sex, $results);
+        }
+    }
+
+    /**
+     * v7.0: 遺伝型をresolveColor用の配列に変換
+     */
+    private function convertToGenotypeArrayV7(array $geno, string $sex): array
+    {
+        $result = [];
+
+        // autosomal_1 をパース (dark|parblue/dark|parblue 形式)
+        if (isset($geno['autosomal_1'])) {
+            $parts = explode('/', $geno['autosomal_1']);
+            $chr1 = GametesGenerator::keyToHaplotype($parts[0] ?? '');
+            $chr2 = GametesGenerator::keyToHaplotype($parts[1] ?? $parts[0] ?? '');
+
+            // dark
+            $d1 = $chr1['dark'] ?? 'd';
+            $d2 = $chr2['dark'] ?? 'd';
+            $darkPair = [$d1, $d2];
+            sort($darkPair);
+            $result['dark'] = implode('', $darkPair);
+
+            // parblue
+            $p1 = $chr1['parblue'] ?? '+';
+            $p2 = $chr2['parblue'] ?? '+';
+            $parbluePair = [$p1, $p2];
+            sort($parbluePair);
+            $result['parblue'] = implode('', $parbluePair);
+        }
+
+        // Z_linked をパース
+        if (isset($geno['Z_linked'])) {
+            if (strpos($geno['Z_linked'], '/W') !== false) {
+                // メス (Z/W)
+                $zKey = str_replace('/W', '', $geno['Z_linked']);
+                $z = GametesGenerator::keyToHaplotype($zKey);
+                $result['cinnamon'] = ($z['cinnamon'] ?? '+') . 'W';
+                $result['ino'] = ($z['ino'] ?? '+') . 'W';
+                $result['opaline'] = ($z['opaline'] ?? '+') . 'W';
+            } else {
+                // オス (Z/Z)
+                $parts = explode('/', $geno['Z_linked']);
+                $z1 = GametesGenerator::keyToHaplotype($parts[0] ?? '');
+                $z2 = GametesGenerator::keyToHaplotype($parts[1] ?? $parts[0] ?? '');
+
+                $result['cinnamon'] = ($z1['cinnamon'] ?? '+') . ($z2['cinnamon'] ?? '+');
+                $result['ino'] = ($z1['ino'] ?? '+') . ($z2['ino'] ?? '+');
+                $result['opaline'] = ($z1['opaline'] ?? '+') . ($z2['opaline'] ?? '+');
+            }
+        }
+
+        // 独立座位
+        foreach (['vio', 'flp', 'flb', 'pidom', 'pirec', 'dil', 'ed', 'of', 'ph'] as $key) {
+            if (isset($geno[$key])) {
+                $keyMap = [
+                    'vio' => 'violet',
+                    'flp' => 'fallow_pale',
+                    'flb' => 'fallow_bronze',
+                    'pidom' => 'pied_dom',
+                    'pirec' => 'pied_rec',
+                    'dil' => 'dilute',
+                    'ed' => 'edged',
+                    'of' => 'orangeface',
+                    'ph' => 'pale_headed',
+                ];
+                $mapKey = $keyMap[$key] ?? $key;
+                $result[$mapKey] = str_replace('/', '', $geno[$key]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * v7.0: スプリット情報の抽出
+     */
+    private function extractSplitsV7(array $geno, string $sex): array
+    {
+        $splits = [];
+
+        // Z_linked からスプリット抽出
+        if (isset($geno['Z_linked']) && $sex === 'male') {
+            if (strpos($geno['Z_linked'], '/W') === false) {
+                $parts = explode('/', $geno['Z_linked']);
+                if (count($parts) === 2) {
+                    $z1 = GametesGenerator::keyToHaplotype($parts[0]);
+                    $z2 = GametesGenerator::keyToHaplotype($parts[1]);
+
+                    foreach (['cinnamon' => 'cin', 'ino' => 'ino', 'opaline' => 'op'] as $locus => $short) {
+                        $a1 = $z1[$locus] ?? '+';
+                        $a2 = $z2[$locus] ?? '+';
+                        if (($a1 !== '+' && $a2 === '+') || ($a1 === '+' && $a2 !== '+')) {
+                            $mutant = $a1 !== '+' ? $a1 : $a2;
+                            $splits[] = $mutant;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 独立座位からスプリット抽出
+        foreach ($geno as $key => $value) {
+            if (in_array($key, ['autosomal_1', 'Z_linked'])) continue;
+            if (strpos($value, '/') !== false) {
+                $parts = explode('/', $value);
+                if (count($parts) === 2 && $parts[0] !== $parts[1]) {
+                    // ヘテロ接合
+                    $mutant = $parts[0] !== '+' ? $parts[0] : $parts[1];
+                    if ($mutant !== '+') {
+                        $splits[] = $mutant;
+                    }
+                }
+            }
+        }
+
+        return array_unique($splits);
+    }
 
     private function enumerateCombinations(array $autosomalLoci, array $sexLinkedLoci, string $sex, float $threshold): array
     {
@@ -2306,21 +3740,26 @@ class PathFinder
     public function findPath(string $targetKey): array
     {
         $colorDef = AgapornisLoci::COLOR_DEFINITIONS[$targetKey] ?? null;
-        
+
         if (!$colorDef) {
             return ['error' => 'pf_unsupported_target', 'errorParam' => $targetKey];
         }
-        
+
         $genotype = $colorDef['genotype'] ?? [];
         $steps = $this->generateSteps($genotype);
         $warnings = $this->generateWarnings($genotype, $colorDef);
-        
+
+        // v7.0: 連鎖遺伝分析
+        $linkageAnalysis = $this->analyzeLinkageRequirements($genotype);
+
         return [
             'targetKey' => $targetKey,
             'genotype' => $genotype,
             'steps' => $steps,
             'warnings' => $warnings,
             'minGenerations' => count($steps),
+            // v7.0: 連鎖遺伝情報
+            'linkage' => $linkageAnalysis,
         ];
     }
     
@@ -2446,8 +3885,207 @@ class PathFinder
         if ($tier >= 2) {
             $warnings[] = ['key' => 'pf_warning_complex', 'params' => ['tier' => $tier]];
         }
-        
+
         return $warnings;
+    }
+
+    // ========================================
+    // v7.0: 連鎖遺伝分析
+    // ========================================
+
+    /**
+     * 目標表現型の連鎖座位要件を分析
+     */
+    private function analyzeLinkageRequirements(array $genotype): array
+    {
+        $zLinked = $this->analyzeZLinkedRequirements($genotype);
+        $autosomal1 = $this->analyzeAutosomal1Requirements($genotype);
+
+        return [
+            'Z_linked' => $zLinked,
+            'autosomal_1' => $autosomal1,
+        ];
+    }
+
+    /**
+     * Z染色体連鎖座位の要件分析
+     */
+    private function analyzeZLinkedRequirements(array $genotype): array
+    {
+        $required = [];
+
+        // cin (cinnamon)
+        $cinVal = $genotype['cinnamon'] ?? '++';
+        if (in_array($cinVal, ['cincin', 'cinW', '+cin'])) {
+            $required['cinnamon'] = 'cin';
+        }
+
+        // ino (ino/pld)
+        $inoVal = $genotype['ino'] ?? '++';
+        if (in_array($inoVal, ['inoino', 'inoW', '+ino'])) {
+            $required['ino'] = 'ino';
+        } elseif (in_array($inoVal, ['pldpld', 'pldW', '+pld'])) {
+            $required['ino'] = 'pld';
+        }
+
+        // opaline
+        $opVal = $genotype['opaline'] ?? '++';
+        if (in_array($opVal, ['opop', 'opW', '+op'])) {
+            $required['opaline'] = 'op';
+        }
+
+        // 連鎖の必要性を判定
+        $linkedCount = count($required);
+
+        if ($linkedCount < 2) {
+            return [
+                'requiredLoci' => $required,
+                'needsLinkage' => false,
+                'note' => '連鎖考慮不要（単一座位のみ）',
+            ];
+        }
+
+        // 組み換え率を取得
+        $recombInfo = $this->getZLinkedRecombinationInfo($required);
+
+        return [
+            'requiredLoci' => $required,
+            'needsLinkage' => true,
+            'recombination' => $recombInfo,
+            'cisAdvantage' => $this->calculateCisAdvantage($required),
+            'note' => 'Cis配置個体を優先使用すると効率的',
+        ];
+    }
+
+    /**
+     * Z連鎖の組み換え情報を取得
+     */
+    private function getZLinkedRecombinationInfo(array $required): array
+    {
+        $info = [];
+        $rates = AgapornisLoci::RECOMBINATION_RATES;
+
+        $loci = array_keys($required);
+
+        if (in_array('cinnamon', $loci) && in_array('ino', $loci)) {
+            $info['cinnamon-ino'] = [
+                'rate' => $rates['cinnamon-ino'] ?? 0.03,
+                'parentalProb' => 1 - ($rates['cinnamon-ino'] ?? 0.03),
+                'note' => '3%組み換え（強い連鎖）',
+            ];
+        }
+
+        if (in_array('ino', $loci) && in_array('opaline', $loci)) {
+            $info['ino-opaline'] = [
+                'rate' => $rates['ino-opaline'] ?? 0.30,
+                'parentalProb' => 1 - ($rates['ino-opaline'] ?? 0.30),
+                'note' => '30%組み換え（弱い連鎖）',
+            ];
+        }
+
+        if (in_array('cinnamon', $loci) && in_array('opaline', $loci)) {
+            $info['cinnamon-opaline'] = [
+                'rate' => $rates['cinnamon-opaline'] ?? 0.33,
+                'parentalProb' => 1 - ($rates['cinnamon-opaline'] ?? 0.33),
+                'note' => '33%組み換え（ほぼ独立分離）',
+            ];
+        }
+
+        return $info;
+    }
+
+    /**
+     * Cis配置の効率優位性を計算
+     *
+     * @return array Cis vs Trans の期待羽数比較
+     */
+    private function calculateCisAdvantage(array $required): array
+    {
+        $loci = array_keys($required);
+
+        // Lacewing (cin + ino) の場合
+        if (in_array('cinnamon', $loci) && in_array('ino', $loci) && !in_array('opaline', $loci)) {
+            $rate = AgapornisLoci::RECOMBINATION_RATES['cinnamon-ino'] ?? 0.03;
+            $cisProb = (1 - $rate) / 2 * 100;  // 片方のメス子 48.5%
+            $transProb = $rate / 2 * 100;       // 組み換え必要 1.5%
+
+            return [
+                'cisExpectedRatio' => $cisProb,
+                'transExpectedRatio' => $transProb,
+                'cisExpectedOffspring' => round(100 / $cisProb, 1),
+                'transExpectedOffspring' => round(100 / $transProb, 1),
+                'efficiencyRatio' => round((100 / $transProb) / (100 / $cisProb), 1),
+                'note' => sprintf(
+                    'Cis: %.1f%%確率（期待%.1f羽）, Trans: %.1f%%確率（期待%.0f羽）',
+                    $cisProb, 100 / $cisProb, $transProb, 100 / $transProb
+                ),
+            ];
+        }
+
+        // その他の組み合わせ（汎用計算）
+        // 最も強い連鎖ペアを使用
+        if (in_array('cinnamon', $loci) && in_array('ino', $loci)) {
+            $rate = 0.03;
+        } elseif (in_array('ino', $loci) && in_array('opaline', $loci)) {
+            $rate = 0.30;
+        } elseif (in_array('cinnamon', $loci) && in_array('opaline', $loci)) {
+            $rate = 0.33;
+        } else {
+            $rate = 0.50; // 独立分離
+        }
+
+        $cisProb = (1 - $rate) * 50;
+        $transProb = $rate * 50;
+
+        return [
+            'cisExpectedRatio' => $cisProb,
+            'transExpectedRatio' => $transProb,
+            'note' => 'Cis配置が効率的',
+        ];
+    }
+
+    /**
+     * 常染色体連鎖座位の要件分析
+     */
+    private function analyzeAutosomal1Requirements(array $genotype): array
+    {
+        $required = [];
+
+        // dark
+        $darkVal = $genotype['dark'] ?? 'dd';
+        if (in_array($darkVal, ['Dd', 'DD'])) {
+            $required['dark'] = 'D';
+        }
+
+        // parblue
+        $pbVal = $genotype['parblue'] ?? '++';
+        if (in_array($pbVal, ['aqaq', '+aq'])) {
+            $required['parblue'] = 'aq';
+        } elseif (in_array($pbVal, ['tqtq', '+tq'])) {
+            $required['parblue'] = 'tq';
+        } elseif ($pbVal === 'tqaq') {
+            $required['parblue'] = 'tq/aq';
+        }
+
+        $linkedCount = count($required);
+
+        if ($linkedCount < 2) {
+            return [
+                'requiredLoci' => $required,
+                'needsLinkage' => false,
+                'note' => '連鎖考慮不要',
+            ];
+        }
+
+        $rate = AgapornisLoci::RECOMBINATION_RATES['dark-parblue'] ?? 0.07;
+
+        return [
+            'requiredLoci' => $required,
+            'needsLinkage' => true,
+            'recombinationRate' => $rate,
+            'parentalProb' => 1 - $rate,
+            'note' => sprintf('dark-parblue: %.0f%%組み換え', $rate * 100),
+        ];
     }
 }
 

@@ -1,7 +1,7 @@
 <?php
 /**
  * infer.php - 家系図推論APIエンドポイント
- * Agapornis Gene-Forge v6.7.5
+ * Agapornis Gene-Forge v7.0
  * 
  * FamilyEstimatorV3 を呼び出して遺伝子型を推論する
  */
@@ -18,6 +18,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once 'genetics.php';
+
+/**
+ * 後方互換: レガシー色名を現在のキーにマッピング
+ * @param string $colorName 入力色名
+ * @return string 正規化された色キー
+ */
+function mapLegacyColorName(string $colorName): string {
+    // 空文字やnullは'green'（野生型）にフォールバック
+    if (empty($colorName)) {
+        return 'green';
+    }
+
+    // 既にCOLOR_DEFINITIONSに存在すればそのまま返す
+    if (isset(AgapornisLoci::COLOR_DEFINITIONS[$colorName])) {
+        return $colorName;
+    }
+
+    // レガシー名マッピング（旧名 → 新名）
+    $legacyMap = [
+        // ハイフン区切り → アンダースコア区切り
+        'opaline-green' => 'opaline_green',
+        'opaline-aqua' => 'opaline_aqua',
+        'dark-green' => 'dark_green',
+        'pale-headed' => 'pale_headed',
+        // 旧略称
+        'wg' => 'green',
+        'normal' => 'green',
+        'wildtype' => 'green',
+        'wild_type' => 'green',
+        // 大文字小文字正規化
+        'Green' => 'green',
+        'Aqua' => 'aqua',
+        'Turquoise' => 'turquoise',
+        'Lutino' => 'lutino',
+        'Creamino' => 'creamino',
+    ];
+
+    // 小文字変換してマッピング確認
+    $lower = strtolower($colorName);
+    if (isset($legacyMap[$lower])) {
+        return $legacyMap[$lower];
+    }
+
+    // マッピングにも無ければ元の値を返す
+    return $colorName;
+}
 
 try {
     // POSTデータを取得

@@ -20,42 +20,90 @@ const FamilyMap = {
     },
     targetPosition: null,
 
+    /**
+     * UIに表示する色のキーリスト（よく使う色を厳選）
+     * ラベルはCOLOR_MASTERから動的に取得（SSOT）
+     */
+    UI_COLOR_KEYS: [
+        // グリーン系
+        'green', 'darkgreen', 'olive',
+        // アクア系
+        'aqua', 'aqua_dark', 'aqua_olive',
+        // ターコイズ系
+        'turquoise', 'turquoise_dark',
+        // シーグリーン系
+        'seagreen', 'seagreen_dark',
+        // INO系
+        'lutino', 'creamino', 'pure_white', 'creamino_seagreen',
+        // パリッド系
+        'pallid_green', 'pallid_aqua', 'pallid_turquoise', 'pallid_seagreen',
+        // シナモン系
+        'cinnamon_green', 'cinnamon_aqua', 'cinnamon_turquoise', 'cinnamon_seagreen',
+        // オパーリン系
+        'opaline_green', 'opaline_aqua', 'opaline_turquoise', 'opaline_seagreen',
+        // ファロー系
+        'fallow_pale_green', 'fallow_pale_aqua',
+        // パイド系
+        'pied_rec_green', 'pied_rec_aqua', 'pied_rec_turquoise', 'pied_rec_seagreen',
+    ],
+
+    /**
+     * カテゴリ名のラベル（UI表示用）
+     * TODO: 将来的にgenetics.phpに移動してSSOT化
+     */
+    CATEGORY_LABELS: {
+        'green': { ja: 'グリーン系（野生型）', en: 'Green (Wild)' },
+        'aqua': { ja: 'アクア系', en: 'Aqua' },
+        'turquoise': { ja: 'ターコイズ系（Whitefaced）', en: 'Turquoise (Whitefaced)' },
+        'seagreen': { ja: 'シーグリーン系', en: 'Seagreen' },
+        'ino': { ja: 'INO系（メラニン欠落・赤目）', en: 'INO (Melanin Absent)' },
+        'pallid': { ja: 'パリッド系（メラニン減少・黒目）', en: 'Pallid (Melanin Reduced)' },
+        'cinnamon': { ja: 'シナモン系（茶色メラニン）', en: 'Cinnamon' },
+        'opaline': { ja: 'オパーリン系（模様変化）', en: 'Opaline' },
+        'fallow_pale': { ja: 'ペールファロー系（赤目）', en: 'Pale Fallow' },
+        'fallow_bronze': { ja: 'ブロンズファロー系（赤目）', en: 'Bronze Fallow' },
+        'pied_dom': { ja: 'ドミナントパイド系', en: 'Dominant Pied' },
+        'pied_rec': { ja: 'レセッシブパイド系', en: 'Recessive Pied' },
+        'dilute': { ja: 'ダイリュート系', en: 'Dilute' },
+        'edged': { ja: 'エッジド系', en: 'Edged' },
+        'orangeface': { ja: 'オレンジフェイス系', en: 'Orangeface' },
+        'pale_headed': { ja: 'ペールヘッド系', en: 'Pale Headed' },
+        'violet': { ja: 'バイオレット系', en: 'Violet' },
+    },
+
     get baseColorOptions() {
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-        return [
-            { value: 'green', label: isJa ? 'グリーン（ノーマル）' : 'Green (Normal)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'darkgreen', label: isJa ? 'ダークグリーン（D/+）' : 'Dark Green (D/+)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'olive', label: isJa ? 'オリーブ（D/D）' : 'Olive (D/D)', group: isJa ? 'グリーン系（野生型）' : 'Green (Wild)' },
-            { value: 'aqua', label: isJa ? 'アクア' : 'Aqua', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'aqua_dark', label: isJa ? 'アクアダーク（D/+）' : 'Aqua Dark (D/+)', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'aqua_dd', label: isJa ? 'アクアDD（D/D）' : 'Aqua DD (D/D)', group: isJa ? 'アクア系' : 'Aqua' },
-            { value: 'turquoise', label: isJa ? 'ターコイズ' : 'Turquoise', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'turquoise_dark', label: isJa ? 'ターコイズダーク' : 'Turquoise Dark', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'seagreen', label: isJa ? 'シーグリーン' : 'Sea Green', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'seagreen_dark', label: isJa ? 'シーグリーンダーク' : 'Sea Green Dark', group: isJa ? 'ターコイズ系（Whitefaced）' : 'Turquoise (Whitefaced)' },
-            { value: 'lutino', label: isJa ? 'ルチノー（黄色・赤目）' : 'Lutino (Yellow/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'creamino', label: isJa ? 'クリーミノ（クリーム・赤目）' : 'Creamino (Cream/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'pure_white', label: isJa ? 'ピュアホワイト（白・赤目）' : 'Pure White (White/Red eye)', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'creamino_seagreen', label: isJa ? 'クリーミノシーグリーン' : 'Creamino Sea Green', group: isJa ? 'INO系（メラニン欠落・赤目）' : 'INO (Melanin Absent)' },
-            { value: 'pallid_green', label: isJa ? 'パリッドグリーン' : 'Pallid Green', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_aqua', label: isJa ? 'パリッドアクア' : 'Pallid Aqua', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_turquoise', label: isJa ? 'パリッドターコイズ' : 'Pallid Turquoise', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'pallid_seagreen', label: isJa ? 'パリッドシーグリーン' : 'Pallid Sea Green', group: isJa ? 'パリッド系（メラニン減少・黒目）' : 'Pallid (Melanin Reduced)' },
-            { value: 'cinnamon_green', label: isJa ? 'シナモングリーン' : 'Cinnamon Green', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_aqua', label: isJa ? 'シナモンアクア' : 'Cinnamon Aqua', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_turquoise', label: isJa ? 'シナモンターコイズ' : 'Cinnamon Turquoise', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'cinnamon_seagreen', label: isJa ? 'シナモンシーグリーン' : 'Cinnamon Sea Green', group: isJa ? 'シナモン系（茶色メラニン）' : 'Cinnamon' },
-            { value: 'opaline_green', label: isJa ? 'オパーリングリーン' : 'Opaline Green', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_aqua', label: isJa ? 'オパーリンアクア' : 'Opaline Aqua', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_turquoise', label: isJa ? 'オパーリンターコイズ' : 'Opaline Turquoise', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'opaline_seagreen', label: isJa ? 'オパーリンシーグリーン' : 'Opaline Sea Green', group: isJa ? 'オパーリン系（模様変化）' : 'Opaline' },
-            { value: 'fallow_green', label: isJa ? 'フォローグリーン' : 'Fallow Green', group: isJa ? 'フォロー系（赤目）' : 'Fallow' },
-            { value: 'fallow_aqua', label: isJa ? 'フォローアクア' : 'Fallow Aqua', group: isJa ? 'フォロー系（赤目）' : 'Fallow' },
-            { value: 'pied_green', label: isJa ? 'パイドグリーン' : 'Pied Green', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_aqua', label: isJa ? 'パイドアクア' : 'Pied Aqua', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_turquoise', label: isJa ? 'パイドターコイズ' : 'Pied Turquoise', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-            { value: 'pied_seagreen', label: isJa ? 'パイドシーグリーン' : 'Pied Sea Green', group: isJa ? 'パイド系（まだら模様）' : 'Pied' },
-        ];
+
+        // COLOR_MASTERが定義されていない場合のフォールバック
+        if (typeof COLOR_MASTER === 'undefined') {
+            console.warn('[FamilyMap] COLOR_MASTER not defined, using empty options');
+            return [];
+        }
+
+        const options = [];
+        for (const key of this.UI_COLOR_KEYS) {
+            const def = COLOR_MASTER[key];
+            if (!def) {
+                console.warn(`[FamilyMap] Color key "${key}" not found in COLOR_MASTER`);
+                continue;
+            }
+
+            const category = def.category || 'other';
+            const categoryLabel = this.CATEGORY_LABELS[category];
+            const groupLabel = categoryLabel
+                ? (isJa ? categoryLabel.ja : categoryLabel.en)
+                : category;
+
+            options.push({
+                value: key,
+                label: isJa ? def.ja : def.en,
+                group: groupLabel,
+                eye: def.eye,
+                category: category,
+            });
+        }
+
+        return options;
     },
 
     get darknessOptions() {
@@ -390,7 +438,8 @@ const FamilyMap = {
             if (form.elements['bird_darkness']) form.elements['bird_darkness'].value = bird.phenotype?.darkness || 'none';
             if (form.elements['bird_eyeColor']) form.elements['bird_eyeColor'].value = bird.phenotype?.eyeColor || 'black';
             const geno = bird.genotype || {};
-            ['parblue', 'ino', 'op', 'cin', 'dark', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
+            // SSOT: genetics.phpのLOCI定義に準拠
+            ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed'].forEach(key => { const el = form.elements['geno_' + key]; if (el && geno[key]) el.value = geno[key]; });
         } else {
             if (form.elements['bird_name']) form.elements['bird_name'].value = '';
             if (form.elements['bird_baseColor']) form.elements['bird_baseColor'].value = 'green';
@@ -444,17 +493,32 @@ const FamilyMap = {
         const container = modal.querySelector('#familyGenotypeFields');
         if (!container) return;
         const sex = modal.querySelector('[name="bird_sex"]')?.value || 'male';
-        const loci = [
-            { key: 'parblue', label: 'Parblue', options: [['', '-- 不明 --'], ['++', 'B⁺/B⁺'], ['+aq', 'B⁺/b^aq'], ['+tq', 'B⁺/b^tq'], ['aqaq', 'b^aq/b^aq'], ['tqtq', 'b^tq/b^tq'], ['tqaq', 'b^tq/b^aq']]},
-            { key: 'ino', label: 'INO', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+pld', 'Z⁺/Z^pld'], ['+ino', 'Z⁺/Z^ino'], ['pldpld', 'Z^pld/Z^pld'], ['inoino', 'Z^ino/Z^ino'], ['pldino', 'Z^pld/Z^ino']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['pldW', 'Z^pld/W'], ['inoW', 'Z^ino/W']]},
-            { key: 'op', label: 'Opaline', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+op', 'Z⁺/Z^op'], ['opop', 'Z^op/Z^op']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['opW', 'Z^op/W']]},
-            { key: 'cin', label: 'Cinnamon', options: sex === 'male' ? [['', '-- 不明 --'], ['++', 'Z⁺/Z⁺'], ['+cin', 'Z⁺/Z^cin'], ['cincin', 'Z^cin/Z^cin']] : [['', '-- 不明 --'], ['+W', 'Z⁺/W'], ['cinW', 'Z^cin/W']]},
-            { key: 'dark', label: 'Dark', options: [['', '-- 不明 --'], ['dd', 'd/d'], ['Dd', 'D/d (SF)'], ['DD', 'D/D (DF)']]},
-            { key: 'vio', label: 'Violet', options: [['', '-- 不明 --'], ['vv', 'v/v'], ['Vv', 'V/v (SF)'], ['VV', 'V/V (DF)']]},
-            { key: 'fl', label: 'Fallow', options: [['', '-- 不明 --'], ['++', 'Fl⁺/Fl⁺'], ['+fl', 'Fl⁺/fl'], ['flfl', 'fl/fl']]},
-            { key: 'dil', label: 'Dilute', options: [['', '-- 不明 --'], ['++', 'Dil⁺/Dil⁺'], ['+dil', 'Dil⁺/dil'], ['dildil', 'dil/dil']]},
-            { key: 'pi', label: 'Pied', options: [['', '-- 不明 --'], ['++', 'Pi⁺/Pi⁺'], ['+pi', 'Pi⁺/pi'], ['pipi', 'pi/pi']]}
-        ];
+        const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        const unknownOption = ['', isJa ? '-- 不明 --' : '-- Unknown --'];
+
+        // SSOT: Use global constants from genetics.php
+        if (typeof GENOTYPE_OPTIONS === 'undefined' || typeof UI_GENOTYPE_LOCI === 'undefined') {
+            console.warn('[FamilyMap] GENOTYPE_OPTIONS or UI_GENOTYPE_LOCI not defined');
+            return;
+        }
+
+        const loci = UI_GENOTYPE_LOCI.map(config => {
+            const source = GENOTYPE_OPTIONS[config.source];
+            let options;
+            if (source.male && source.female) {
+                // Sex-linked locus
+                options = sex === 'male' ? source.male : source.female;
+            } else {
+                // Autosomal locus
+                options = source.options;
+            }
+            return {
+                key: config.key,
+                label: config.label,
+                options: [unknownOption, ...options]
+            };
+        });
+
         container.innerHTML = loci.map(locus => `<div class="form-group"><label class="form-label">${locus.label}</label><select name="geno_${locus.key}" class="form-select">${locus.options.map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}</select></div>`).join('');
     },
 
@@ -470,7 +534,8 @@ const FamilyMap = {
         else sex = this.getDefaultSex(position);
         const inputName = form.elements['bird_name'].value.trim();
         const genotype = {};
-        ['parblue', 'ino', 'op', 'cin', 'dark', 'vio', 'fl', 'dil', 'pi'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
+        // SSOT: genetics.phpのLOCI定義に準拠
+        ['parblue', 'ino', 'opaline', 'cinnamon', 'dark', 'violet', 'fallow_pale', 'fallow_bronze', 'dilute', 'pied_rec', 'pied_dom', 'edged', 'pale_headed'].forEach(key => { const el = form.elements['geno_' + key]; if (el && el.value) genotype[key] = el.value; });
         const phenotype = { baseColor: form.elements['bird_baseColor'].value, darkness: form.elements['bird_darkness'].value, eyeColor: form.elements['bird_eyeColor'].value };
         const geneticError = this.checkGeneticConsistency(position, phenotype, genotype);
         if (geneticError) { alert(geneticError); return; }
@@ -625,7 +690,9 @@ const FamilyMap = {
 
     async saveSnapshot() {
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
-        const name = await customPrompt(isJa ? 'スナップショット名を入力:' : 'Enter snapshot name:');
+        // v7.0: customPrompt未定義時はpromptにフォールバック
+        const promptFn = typeof customPrompt === 'function' ? customPrompt : (msg) => Promise.resolve(prompt(msg));
+        const name = await promptFn(isJa ? 'スナップショット名を入力:' : 'Enter snapshot name:');
         if (!name) return;
         const snapshot = { name: name, savedAt: new Date().toISOString(), ...this.data, targetPosition: this.targetPosition, familyMode: this.familyMode };
         const maps = JSON.parse(localStorage.getItem('familyMaps') || '[]');
@@ -638,9 +705,16 @@ const FamilyMap = {
     showLoadModal() {
         const maps = JSON.parse(localStorage.getItem('familyMaps') || '[]');
         const isJa = (typeof LANG !== 'undefined' && LANG === 'ja');
+        const untitledLabel = isJa ? '(無題)' : '(Untitled)';
         if (maps.length === 0) { alert(isJa ? '保存されたマップがありません' : 'No saved maps'); return; }
-        const options = maps.map((m, i) => { const date = m.savedAt ? new Date(m.savedAt).toLocaleString() : ''; return { label: `${m.name || '(無題)'} - ${date}`, value: i }; });
-        customSelect(isJa ? '読み込むマップを選択:' : 'Select map to load:', options).then(idx => { if (idx !== null) this.loadSnapshot(idx); });
+        const options = maps.map((m, i) => { const date = m.savedAt ? new Date(m.savedAt).toLocaleString() : ''; return { label: `${m.name || untitledLabel} - ${date}`, value: i }; });
+        // v7.0: customSelect未定義時は簡易セレクトにフォールバック
+        if (typeof customSelect === 'function') {
+            customSelect(isJa ? '読み込むマップを選択:' : 'Select map to load:', options).then(idx => { if (idx !== null) this.loadSnapshot(idx); });
+        } else {
+            const idx = parseInt(prompt((isJa ? '読み込むマップ番号を入力 (0-' : 'Enter map number (0-') + (options.length - 1) + '):'), '0');
+            if (!isNaN(idx) && idx >= 0 && idx < options.length) this.loadSnapshot(idx);
+        }
     },
 
     loadSnapshot(idx) {
@@ -690,15 +764,20 @@ const FamilyMap = {
     formatGenotypeShort(geno) {
         if (!geno || typeof geno !== 'object') return '';
         const parts = [];
+        // SSOT: genetics.phpのLOCI定義に準拠
         if (geno.parblue && geno.parblue !== '++') parts.push(`pb:${geno.parblue}`);
         if (geno.ino && geno.ino !== '++' && geno.ino !== '+W') parts.push(`ino:${geno.ino}`);
         if (geno.dark && geno.dark !== 'dd') parts.push(`D:${geno.dark}`);
-        if (geno.vio && geno.vio !== 'vv') parts.push(`vi:${geno.vio}`);
-        if (geno.op && geno.op !== '++' && geno.op !== '+W') parts.push(`op:${geno.op}`);
-        if (geno.cin && geno.cin !== '++' && geno.cin !== '+W') parts.push(`cin:${geno.cin}`);
-        if (geno.fl && geno.fl !== '++') parts.push(`fl:${geno.fl}`);
-        if (geno.dil && geno.dil !== '++') parts.push(`dil:${geno.dil}`);
-        if (geno.pi && geno.pi !== '++') parts.push(`pi:${geno.pi}`);
+        if (geno.violet && geno.violet !== 'vv') parts.push(`vi:${geno.violet}`);
+        if (geno.opaline && geno.opaline !== '++' && geno.opaline !== '+W') parts.push(`op:${geno.opaline}`);
+        if (geno.cinnamon && geno.cinnamon !== '++' && geno.cinnamon !== '+W') parts.push(`cin:${geno.cinnamon}`);
+        if (geno.fallow_pale && geno.fallow_pale !== '++') parts.push(`fl:${geno.fallow_pale}`);
+        if (geno.fallow_bronze && geno.fallow_bronze !== '++') parts.push(`flb:${geno.fallow_bronze}`);
+        if (geno.dilute && geno.dilute !== '++') parts.push(`dil:${geno.dilute}`);
+        if (geno.pied_rec && geno.pied_rec !== '++') parts.push(`pi:${geno.pied_rec}`);
+        if (geno.pied_dom && geno.pied_dom !== '++') parts.push(`Pi:${geno.pied_dom}`);
+        if (geno.edged && geno.edged !== '++') parts.push(`ed:${geno.edged}`);
+        if (geno.pale_headed && geno.pale_headed !== '++') parts.push(`ph:${geno.pale_headed}`);
         return parts.join(' ');
     },
 

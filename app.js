@@ -81,9 +81,11 @@ function resetLinkageSettings() {
 // ========================================
 // トースト通知
 // ========================================
-function showToast(msg) {
+function showToast(msg, type = 'info') {
     const toast = document.createElement('div');
     toast.className = 'toast';
+    if (type === 'error') toast.classList.add('toast-error');
+    else if (type === 'success') toast.classList.add('toast-success');
     toast.textContent = msg;
     document.body.appendChild(toast);
     setTimeout(() => toast.classList.add('show'), 10);
@@ -237,35 +239,37 @@ function closeBirdForm() {
 function generateGenotypeFields() {
     const container = document.getElementById('genotypeFields');
     if (!container) return;
-    
+
     const sex = document.getElementById('birdSex')?.value || 'male';
-    
-    const loci = [
-        { key: 'parblue', label: 'Parblue', options: { '++': 'B⁺/B⁺', '+b': 'B⁺/b', '+tq': 'B⁺/b^tq', 'bb': 'b/b', 'tqtq': 'b^tq/b^tq', 'tqb': 'b^tq/b' }},
-        { key: 'ino', label: 'INO', options: sex === 'male' 
-            ? { '++': 'Z⁺/Z⁺', '+pld': 'Z⁺/Z^pld', '+ino': 'Z⁺/Z^ino', 'pldpld': 'Z^pld/Z^pld', 'inoino': 'Z^ino/Z^ino', 'pldino': 'Z^pld/Z^ino' }
-            : { '+W': 'Z⁺/W', 'pldW': 'Z^pld/W', 'inoW': 'Z^ino/W' }
-        },
-        { key: 'op', label: 'Opaline', options: sex === 'male'
-            ? { '++': 'Z⁺/Z⁺', '+op': 'Z⁺/Z^op', 'opop': 'Z^op/Z^op' }
-            : { '+W': 'Z⁺/W', 'opW': 'Z^op/W' }
-        },
-        { key: 'cin', label: 'Cinnamon', options: sex === 'male'
-            ? { '++': 'Z⁺/Z⁺', '+cin': 'Z⁺/Z^cin', 'cincin': 'Z^cin/Z^cin' }
-            : { '+W': 'Z⁺/W', 'cinW': 'Z^cin/W' }
-        },
-        { key: 'dark', label: 'Dark', options: { 'dd': 'd/d', 'Dd': 'D/d (SF)', 'DD': 'D/D (DF)' }},
-        { key: 'vio', label: 'Violet', options: { 'vv': 'v/v', 'Vv': 'V/v (SF)', 'VV': 'V/V (DF)' }},
-        { key: 'fl', label: 'Fallow', options: { '++': 'Fl⁺/Fl⁺', '+fl': 'Fl⁺/fl', 'flfl': 'fl/fl' }},
-        { key: 'dil', label: 'Dilute', options: { '++': 'Dil⁺/Dil⁺', '+dil': 'Dil⁺/dil', 'dildil': 'dil/dil' }},
-        { key: 'pi', label: 'Pied', options: { '++': 'Pi⁺/Pi⁺', '+pi': 'Pi⁺/pi', 'pipi': 'pi/pi' }}
-    ];
-    
+
+    // SSOT: Use global constants from genetics.php
+    if (typeof GENOTYPE_OPTIONS === 'undefined' || typeof UI_GENOTYPE_LOCI === 'undefined') {
+        console.warn('[App] GENOTYPE_OPTIONS or UI_GENOTYPE_LOCI not defined');
+        return;
+    }
+
+    const loci = UI_GENOTYPE_LOCI.map(config => {
+        const source = GENOTYPE_OPTIONS[config.source];
+        let options;
+        if (source.male && source.female) {
+            // Sex-linked locus
+            options = sex === 'male' ? source.male : source.female;
+        } else {
+            // Autosomal locus
+            options = source.options;
+        }
+        return {
+            key: config.key,
+            label: config.label,
+            options: options
+        };
+    });
+
     container.innerHTML = loci.map(locus => `
         <div class="form-group">
             <label class="form-label">${locus.label}</label>
             <select id="geno_${locus.key}">
-                ${Object.entries(locus.options).map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}
+                ${locus.options.map(([val, label]) => `<option value="${val}">${label}</option>`).join('')}
             </select>
         </div>
     `).join('');
@@ -319,7 +323,17 @@ function saveBird(event) {
     
     const sireId = document.getElementById('birdSire').value;
     const damId = document.getElementById('birdDam').value;
-    
+
+    // v7.0: 循環参照チェック（親子関係のループ防止）
+    if (typeof BirdDB.validatePedigree === 'function') {
+        const loopError = BirdDB.validatePedigree(currentEditBirdId || null, sireId, damId);
+        if (loopError) {
+            showToast(loopError.error, 'error');
+            alert(loopError.error + '\n\n' + loopError.details);
+            return;
+        }
+    }
+
     const birdData = {
         name,
         code: document.getElementById('birdCode').value.trim(),
@@ -332,7 +346,7 @@ function saveBird(event) {
         sire: sireId ? { id: sireId, ...BirdDB.getBird(sireId) } : null,
         dam: damId ? { id: damId, ...BirdDB.getBird(damId) } : null
     };
-    
+
     if (currentEditBirdId) {
         BirdDB.updateBird(currentEditBirdId, birdData);
         showToast(t('updated'));
@@ -427,7 +441,7 @@ function importBirdDB(input) {
             refreshBirdList();
             refreshDBSelectors();
         } else {
-            showToast('Error: ' + result.error);
+            showToast(t('error') + ': ' + result.error, 'error');
         }
     };
     reader.readAsText(file);
@@ -479,7 +493,7 @@ function saveBreedingResult() {
         offspring.push({
             sex: card.dataset.sex,
             phenotype: card.dataset.pheno,
-            geno: JSON.parse(card.dataset.geno || '{}')
+            geno: (() => { try { return JSON.parse(card.dataset.geno || '{}'); } catch(e) { return {}; } })()
         });
     });
     
@@ -494,7 +508,7 @@ function saveBreedingResult() {
         offspring
     });
     
-    showToast(t('save') + ' OK');
+    showToast(t('save') + ' ' + t('ok'), 'success');
 }
 
 function registerOffspring(button) {
@@ -502,7 +516,8 @@ function registerOffspring(button) {
     if (!card) return;
     
     const sex = card.dataset.sex;
-    const geno = JSON.parse(card.dataset.geno || '{}');
+    let geno = {};
+    try { geno = JSON.parse(card.dataset.geno || '{}'); } catch(e) { console.warn('Invalid geno data:', e); }
     
     const sireId = document.getElementById('dbSelectSire')?.value;
     const damId = document.getElementById('dbSelectDam')?.value;

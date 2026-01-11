@@ -17,7 +17,7 @@ const BirdDB = {
     STORAGE_KEY_USER: 'geneforge_birds_user',
     STORAGE_KEY_DEMO: 'geneforge_birds_demo',
     MODE_KEY: 'geneforge_mode',
-    VERSION: '6.7.5',
+    VERSION: '7.0.0',
     
     _currentMode: 'user',
     _initialized: false,
@@ -327,7 +327,7 @@ const BirdDB = {
                         phase: 'independent',
                         phenotype: color.name,
                         inbreedingGen: 0,
-                        notes: `デモ用サンプル個体 (${color.name})`,
+                        notes: `${(window.T && T.demo_sample_note) || 'Demo sample bird'} (${color.name})`,
                         createdAt: now,
                         updatedAt: now
                     });
@@ -500,7 +500,7 @@ const BirdDB = {
         };
         
         return {
-            name: 'デモ家系図（希少色ファミリー）',
+            name: (window.T && T.demo_family_name) || 'Demo Family Tree (Rare Colors)',
             savedAt: new Date().toISOString(),
             // 曽祖父母
             sire_sire_sire: toBirdData(cfg.greatGrandparents.sire_sire_sire.id),
@@ -570,7 +570,7 @@ const BirdDB = {
         if (!bird.observed) {
             bird.observed = this.inferObservedFromPhenotype(bird.phenotype, bird.genotype);
         }
-        
+
         if (!bird.pedigree) {
             bird.pedigree = this.createEmptyPedigree();
             if (bird.sire?.id || bird.dam?.id) {
@@ -578,51 +578,223 @@ const BirdDB = {
                 bird.pedigree.dam = bird.dam?.id || null;
             }
         }
-        
+
+        // v7.0: 連鎖遺伝子座のハプロタイプ形式への移行
+        if (!bird.genotype.Z_linked) {
+            bird.genotype = this.migrateGenotypeToV7(bird.genotype, bird.sex, bird.observed?.baseColor);
+        }
+
         return bird;
     },
 
+    /**
+     * v7.0: 遺伝型をハプロタイプベース形式に変換
+     * @param {Object} oldGenotype - 旧形式の遺伝型
+     * @param {string} sex - 'male' | 'female'
+     * @param {string} baseColor - 表現型（相の推論に使用）
+     * @returns {Object} 新形式の遺伝型
+     */
+    migrateGenotypeToV7(oldGenotype, sex, baseColor) {
+        const isMale = sex === 'male';
+
+        // 旧形式の値をパース
+        const parseZLinkedAllele = (value, locusKey) => {
+            if (!value) return { a1: '+', a2: isMale ? '+' : null };
+
+            // メス形式: 'cinW', 'opW', 'inoW', 'pldW', '+W'
+            if (value.endsWith('W')) {
+                const allele = value.slice(0, -1);
+                return { a1: allele === '+' ? '+' : allele, a2: null };
+            }
+
+            // オス形式
+            if (value === '++') return { a1: '+', a2: '+' };
+            if (value === 'opop') return { a1: 'op', a2: 'op' };
+            if (value === 'cincin') return { a1: 'cin', a2: 'cin' };
+            if (value === 'inoino') return { a1: 'ino', a2: 'ino' };
+            if (value === 'pldpld') return { a1: 'pld', a2: 'pld' };
+            if (value === 'pldino') return { a1: 'pld', a2: 'ino' };
+            if (value === '+op') return { a1: 'op', a2: '+' };
+            if (value === '+cin') return { a1: 'cin', a2: '+' };
+            if (value === '+ino') return { a1: 'ino', a2: '+' };
+            if (value === '+pld') return { a1: 'pld', a2: '+' };
+
+            return { a1: '+', a2: isMale ? '+' : null };
+        };
+
+        const parseAutosomalAllele = (value, locusKey) => {
+            if (!value) return { a1: '+', a2: '+' };
+
+            // dark: 'dd', 'Dd', 'DD'
+            if (locusKey === 'dark') {
+                if (value === 'dd') return { a1: 'd', a2: 'd' };
+                if (value === 'Dd') return { a1: 'D', a2: 'd' };
+                if (value === 'DD') return { a1: 'D', a2: 'D' };
+            }
+
+            // parblue: '++', '+aq', '+tq', 'aqaq', 'tqtq', 'tqaq'
+            if (locusKey === 'parblue') {
+                if (value === '++') return { a1: '+', a2: '+' };
+                if (value === '+aq') return { a1: 'aq', a2: '+' };
+                if (value === '+tq') return { a1: 'tq', a2: '+' };
+                if (value === 'aqaq') return { a1: 'aq', a2: 'aq' };
+                if (value === 'tqtq') return { a1: 'tq', a2: 'tq' };
+                if (value === 'tqaq') return { a1: 'tq', a2: 'aq' };
+            }
+
+            return { a1: '+', a2: '+' };
+        };
+
+        // Z連鎖座位のパース
+        const cin = parseZLinkedAllele(oldGenotype.cin, 'cinnamon');
+        const ino = parseZLinkedAllele(oldGenotype.ino, 'ino');
+        const op = parseZLinkedAllele(oldGenotype.op, 'opaline');
+
+        // 常染色体連鎖座位のパース
+        const dark = parseAutosomalAllele(oldGenotype.dark, 'dark');
+        const parblue = parseAutosomalAllele(oldGenotype.parblue, 'parblue');
+
+        // 相の推論（表現型から）
+        // Lacewing (cinnamon + ino) → cin-ino は Cis
+        const isLacewing = baseColor && (
+            baseColor.includes('lacewing') ||
+            (baseColor.includes('cinnamon') && baseColor.includes('ino'))
+        );
+
+        // ハプロタイプ構築
+        // デフォルト: 変異アレルをZ1に配置
+        // 相が推論可能な場合はそれに従う
+        let Z_linked;
+        if (isMale) {
+            Z_linked = {
+                Z1: { cinnamon: cin.a1, ino: ino.a1, opaline: op.a1 },
+                Z2: { cinnamon: cin.a2, ino: ino.a2, opaline: op.a2 }
+            };
+        } else {
+            Z_linked = {
+                Z1: { cinnamon: cin.a1, ino: ino.a1, opaline: op.a1 },
+                Z2: null
+            };
+        }
+
+        const autosomal_1 = {
+            chr1: { dark: dark.a1, parblue: parblue.a1 },
+            chr2: { dark: dark.a2, parblue: parblue.a2 }
+        };
+
+        // 相の確定状態を記録
+        const hasMultipleZMutations =
+            (cin.a1 !== '+' || cin.a2 !== '+') &&
+            (ino.a1 !== '+' || ino.a2 !== '+' || op.a1 !== '+' || op.a2 !== '+');
+
+        const phaseKnown = isLacewing || !hasMultipleZMutations;
+
+        // 新形式の遺伝型を構築
+        // 独立座位は旧形式を維持（キー名を正規化）
+        return {
+            // 独立座位（LOCI準拠キー名）
+            violet: oldGenotype.vio || 'vv',
+            fallow_pale: oldGenotype.fl || '++',
+            fallow_bronze: '++',
+            pied_dom: '++',
+            pied_rec: oldGenotype.pi || '++',
+            dilute: oldGenotype.dil || '++',
+            edged: '++',
+            orangeface: '++',
+            pale_headed: '++',
+
+            // Z染色体連鎖グループ（v7新形式）
+            Z_linked: Z_linked,
+
+            // 常染色体連鎖グループ（v7新形式）
+            autosomal_1: autosomal_1,
+
+            // 相の確定状態
+            phase_known: phaseKnown,
+
+            // 後方互換性のため旧キーも維持（読み取り専用）
+            _legacy: {
+                parblue: oldGenotype.parblue,
+                ino: oldGenotype.ino,
+                op: oldGenotype.op,
+                cin: oldGenotype.cin,
+                dark: oldGenotype.dark,
+                vio: oldGenotype.vio,
+                fl: oldGenotype.fl,
+                dil: oldGenotype.dil,
+                pi: oldGenotype.pi
+            }
+        };
+    },
+
+    /**
+     * 表現型文字列から観察情報を推定（SSOT: COLOR_MASTER使用）
+     * COLOR_MASTERが利用可能な場合、ja/en両方の名前でマッチング
+     */
     inferObservedFromPhenotype(phenotype, genotype) {
         const observed = { baseColor: 'green', eyeColor: 'black', darkness: 'none' };
         if (!phenotype) return observed;
 
         const p = phenotype.toLowerCase();
 
-        if (p.includes('ルチノー') || p.includes('lutino')) { observed.baseColor = 'lutino'; observed.eyeColor = 'red'; }
-        else if (p.includes('クリーミノシーグリーン')) { observed.baseColor = 'creamino_seagreen'; observed.eyeColor = 'red'; }
-        else if (p.includes('クリーミノ') || p.includes('creamino')) { observed.baseColor = 'creamino'; observed.eyeColor = 'red'; }
-        else if (p.includes('ピュアホワイト') || p.includes('pure white') || p.includes('アルビノ')) { observed.baseColor = 'pure_white'; observed.eyeColor = 'red'; }
-        else if ((p.includes('フォロー') || p.includes('fallow')) && p.includes('アクア')) { observed.baseColor = 'fallow_aqua'; observed.eyeColor = 'red'; }
-        else if (p.includes('フォロー') || p.includes('fallow')) { observed.baseColor = 'fallow_green'; observed.eyeColor = 'red'; }
-        else if (p.includes('パリッド') && p.includes('シーグリーン')) { observed.baseColor = 'pallid_seagreen'; }
-        else if (p.includes('パリッド') && p.includes('ターコイズ')) { observed.baseColor = 'pallid_turquoise'; }
-        else if (p.includes('パリッド') && p.includes('アクア')) { observed.baseColor = 'pallid_aqua'; }
-        else if (p.includes('パリッド')) { observed.baseColor = 'pallid_green'; }
-        else if (p.includes('シナモン') && p.includes('シーグリーン')) { observed.baseColor = 'cinnamon_seagreen'; }
-        else if (p.includes('シナモン') && p.includes('ターコイズ')) { observed.baseColor = 'cinnamon_turquoise'; }
-        else if (p.includes('シナモン') && p.includes('アクア')) { observed.baseColor = 'cinnamon_aqua'; }
-        else if (p.includes('シナモン')) { observed.baseColor = 'cinnamon_green'; }
-        else if (p.includes('オパーリン') && p.includes('シーグリーン')) { observed.baseColor = 'opaline_seagreen'; }
-        else if (p.includes('オパーリン') && p.includes('ターコイズ')) { observed.baseColor = 'opaline_turquoise'; }
-        else if (p.includes('オパーリン') && p.includes('アクア')) { observed.baseColor = 'opaline_aqua'; }
-        else if (p.includes('オパーリン')) { observed.baseColor = 'opaline_green'; }
-        else if (p.includes('パイド') && p.includes('シーグリーン')) { observed.baseColor = 'pied_seagreen'; }
-        else if (p.includes('パイド') && p.includes('ターコイズ')) { observed.baseColor = 'pied_turquoise'; }
-        else if (p.includes('パイド') && p.includes('アクア')) { observed.baseColor = 'pied_aqua'; }
-        else if (p.includes('パイド')) { observed.baseColor = 'pied_green'; }
-        else if (p.includes('シーグリーンダーク')) { observed.baseColor = 'seagreen_dark'; observed.darkness = 'sf'; }
-        else if (p.includes('シーグリーン')) { observed.baseColor = 'seagreen'; }
-        else if (p.includes('ターコイズダーク')) { observed.baseColor = 'turquoise_dark'; observed.darkness = 'sf'; }
-        else if (p.includes('ターコイズ')) { observed.baseColor = 'turquoise'; }
-        else if (p.includes('アクアdd') || p.includes('モーブ')) { observed.baseColor = 'aqua_dd'; observed.darkness = 'df'; }
-        else if (p.includes('アクアダーク') || p.includes('コバルト')) { observed.baseColor = 'aqua_dark'; observed.darkness = 'sf'; }
-        else if (p.includes('アクア') || p.includes('ブルー')) { observed.baseColor = 'aqua'; }
-        else if (p.includes('オリーブ')) { observed.baseColor = 'olive'; observed.darkness = 'df'; }
-        else if (p.includes('ダークグリーン')) { observed.baseColor = 'darkgreen'; observed.darkness = 'sf'; }
-        else if (p.includes('グリーン') || p.includes('ノーマル')) { observed.baseColor = 'green'; }
+        // SSOT: COLOR_MASTERからマッチング（利用可能な場合）
+        if (typeof COLOR_MASTER !== 'undefined') {
+            // 長い名前を先にチェック（部分一致対策）
+            const sortedKeys = Object.keys(COLOR_MASTER).sort((a, b) => {
+                const aLen = Math.max((COLOR_MASTER[a].ja || '').length, (COLOR_MASTER[a].en || '').length);
+                const bLen = Math.max((COLOR_MASTER[b].ja || '').length, (COLOR_MASTER[b].en || '').length);
+                return bLen - aLen;
+            });
 
-        if (p.includes('df') || p.includes('ダブル')) { observed.darkness = 'df'; }
-        else if (p.includes('sf') || p.includes('シングル')) { observed.darkness = 'sf'; }
+            for (const key of sortedKeys) {
+                const def = COLOR_MASTER[key];
+                const jaName = (def.ja || '').toLowerCase();
+                const enName = (def.en || '').toLowerCase();
+                if ((jaName && p.includes(jaName)) || (enName && p.includes(enName))) {
+                    observed.baseColor = key;
+                    observed.eyeColor = def.eye || 'black';
+                    // ダーク因子の推定
+                    const geno = def.genotype || {};
+                    if (geno.dark === 'DD') observed.darkness = 'df';
+                    else if (geno.dark === 'Dd') observed.darkness = 'sf';
+                    break;
+                }
+            }
+        } else {
+            // フォールバック: COLOR_MASTER未定義時
+            if (p.includes('lutino')) { observed.baseColor = 'lutino'; observed.eyeColor = 'red'; }
+            else if (p.includes('creamino') && p.includes('seagreen')) { observed.baseColor = 'creamino_seagreen'; observed.eyeColor = 'red'; }
+            else if (p.includes('creamino')) { observed.baseColor = 'creamino'; observed.eyeColor = 'red'; }
+            else if (p.includes('pure') && p.includes('white')) { observed.baseColor = 'pure_white'; observed.eyeColor = 'red'; }
+            else if (p.includes('fallow') && p.includes('aqua')) { observed.baseColor = 'fallow_aqua'; observed.eyeColor = 'red'; }
+            else if (p.includes('fallow')) { observed.baseColor = 'fallow_green'; observed.eyeColor = 'red'; }
+            else if (p.includes('pallid') && p.includes('seagreen')) { observed.baseColor = 'pallid_seagreen'; }
+            else if (p.includes('pallid') && p.includes('turquoise')) { observed.baseColor = 'pallid_turquoise'; }
+            else if (p.includes('pallid') && p.includes('aqua')) { observed.baseColor = 'pallid_aqua'; }
+            else if (p.includes('pallid')) { observed.baseColor = 'pallid_green'; }
+            else if (p.includes('cinnamon') && p.includes('seagreen')) { observed.baseColor = 'cinnamon_seagreen'; }
+            else if (p.includes('cinnamon') && p.includes('turquoise')) { observed.baseColor = 'cinnamon_turquoise'; }
+            else if (p.includes('cinnamon') && p.includes('aqua')) { observed.baseColor = 'cinnamon_aqua'; }
+            else if (p.includes('cinnamon')) { observed.baseColor = 'cinnamon_green'; }
+            else if (p.includes('opaline') && p.includes('seagreen')) { observed.baseColor = 'opaline_seagreen'; }
+            else if (p.includes('opaline') && p.includes('turquoise')) { observed.baseColor = 'opaline_turquoise'; }
+            else if (p.includes('opaline') && p.includes('aqua')) { observed.baseColor = 'opaline_aqua'; }
+            else if (p.includes('opaline')) { observed.baseColor = 'opaline_green'; }
+            else if (p.includes('seagreen') && p.includes('dark')) { observed.baseColor = 'seagreen_dark'; observed.darkness = 'sf'; }
+            else if (p.includes('seagreen')) { observed.baseColor = 'seagreen'; }
+            else if (p.includes('turquoise') && p.includes('dark')) { observed.baseColor = 'turquoise_dark'; observed.darkness = 'sf'; }
+            else if (p.includes('turquoise')) { observed.baseColor = 'turquoise'; }
+            else if (p.includes('aqua') && (p.includes('olive') || p.includes('dd'))) { observed.baseColor = 'aqua_dd'; observed.darkness = 'df'; }
+            else if (p.includes('aqua') && (p.includes('dark') || p.includes('cobalt'))) { observed.baseColor = 'aqua_dark'; observed.darkness = 'sf'; }
+            else if (p.includes('aqua') || p.includes('blue')) { observed.baseColor = 'aqua'; }
+            else if (p.includes('olive')) { observed.baseColor = 'olive'; observed.darkness = 'df'; }
+            else if (p.includes('dark') && p.includes('green')) { observed.baseColor = 'darkgreen'; observed.darkness = 'sf'; }
+            else if (p.includes('green') || p.includes('normal')) { observed.baseColor = 'green'; }
+        }
+
+        // ダーク因子の追加判定
+        if (p.includes('df') || p.includes('double')) { observed.darkness = 'df'; }
+        else if (p.includes('sf') || p.includes('single')) { observed.darkness = 'sf'; }
 
         return observed;
     },
@@ -685,12 +857,13 @@ const BirdDB = {
             darkness: bird.darkness || 'none'
         };
 
+        // v7.0: 正しい座位名を使用
         const defaultGenotype = {
             parblue: '++',
             ino: bird.sex === 'female' ? '+W' : '++',
-            op: bird.sex === 'female' ? '+W' : '++',
-            cin: bird.sex === 'female' ? '+W' : '++',
-            dark: 'dd', vio: 'vv', fl: '++', dil: '++', pi: '++'
+            opaline: bird.sex === 'female' ? '+W' : '++',
+            cinnamon: bird.sex === 'female' ? '+W' : '++',
+            dark: 'dd', violet: 'vv', fallow_pale: '++', dilute: '++', pied_rec: '++'
         };
 
         const pedigree = bird.pedigree || this.buildPedigreeFromParents(
@@ -782,35 +955,38 @@ const BirdDB = {
     },
 
     calculatePhenotype(geno, sex, observed) {
-        if (observed?.baseColor) return this.getColorLabel(observed.baseColor, 'ja');
+        // v7.0: 現在の言語設定を使用
+        const lang = typeof LANG !== 'undefined' ? LANG : 'ja';
+        if (observed?.baseColor) return this.getColorLabel(observed.baseColor, lang);
 
+        // SSOT: genetics.phpのLOCI定義に準拠
         const parts = [];
-        let baseColor = 'グリーン';
+        let baseColor = lang === 'ja' ? 'グリーン' : 'Green';
 
-        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseColor = 'アクア';
-        else if (geno.parblue === 'tqtq') baseColor = 'ターコイズ';
-        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseColor = 'シーグリーン';
+        if (geno.parblue === 'aqaq' || geno.parblue === 'bb') baseColor = lang === 'ja' ? 'アクア' : 'Aqua';
+        else if (geno.parblue === 'tqtq') baseColor = lang === 'ja' ? 'ターコイズ' : 'Turquoise';
+        else if (geno.parblue === 'tqaq' || geno.parblue === 'tqb') baseColor = lang === 'ja' ? 'シーグリーン' : 'Sea Green';
 
         if (['inoino', 'inoW'].includes(geno.ino)) {
-            if (baseColor === 'アクア') { parts.push('クリーミノ'); baseColor = ''; }
-            else if (baseColor === 'ターコイズ') { parts.push('ピュアホワイト'); baseColor = ''; }
-            else if (baseColor === 'シーグリーン') { parts.push('クリーミノシーグリーン'); baseColor = ''; }
-            else { parts.push('ルチノー'); baseColor = ''; }
-        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push('パリッド');
+            if (baseColor.includes('アクア') || baseColor.includes('Aqua')) { parts.push(lang === 'ja' ? 'クリーミノ' : 'Creamino'); baseColor = ''; }
+            else if (baseColor.includes('ターコイズ') || baseColor.includes('Turquoise')) { parts.push(lang === 'ja' ? 'ピュアホワイト' : 'Pure White'); baseColor = ''; }
+            else if (baseColor.includes('シーグリーン') || baseColor.includes('Sea Green')) { parts.push(lang === 'ja' ? 'クリーミノシーグリーン' : 'Creamino Sea Green'); baseColor = ''; }
+            else { parts.push(lang === 'ja' ? 'ルチノー' : 'Lutino'); baseColor = ''; }
+        } else if (['pldpld', 'pldino', 'pldW'].includes(geno.ino)) parts.push(lang === 'ja' ? 'パリッド' : 'Pallid');
 
-        if (['opop', 'opW'].includes(geno.op)) parts.push('オパーリン');
-        if (['cincin', 'cinW'].includes(geno.cin)) parts.push('シナモン');
+        if (['opop', 'opW'].includes(geno.opaline)) parts.push(lang === 'ja' ? 'オパーリン' : 'Opaline');
+        if (['cincin', 'cinW'].includes(geno.cinnamon)) parts.push(lang === 'ja' ? 'シナモン' : 'Cinnamon');
 
         if (geno.dark === 'DD') {
-            if (baseColor === 'グリーン') baseColor = 'オリーブ';
-            else if (baseColor === 'アクア') baseColor = 'アクアDD';
+            if (baseColor.includes('グリーン') || baseColor === 'Green') baseColor = lang === 'ja' ? 'オリーブ' : 'Olive';
+            else if (baseColor.includes('アクア') || baseColor.includes('Aqua')) baseColor = lang === 'ja' ? 'アクアDD' : 'Aqua DD';
         } else if (geno.dark === 'Dd') {
-            if (baseColor === 'グリーン') baseColor = 'ダークグリーン';
-            else if (baseColor === 'アクア') baseColor = 'アクアダーク';
+            if (baseColor.includes('グリーン') || baseColor === 'Green') baseColor = lang === 'ja' ? 'ダークグリーン' : 'Dark Green';
+            else if (baseColor.includes('アクア') || baseColor.includes('Aqua')) baseColor = lang === 'ja' ? 'アクアダーク' : 'Aqua Dark';
         }
 
-        if (geno.fl === 'flfl') parts.push('フォロー');
-        if (geno.pi === 'pipi') parts.push('パイド');
+        if (['flpflp', 'flfl'].includes(geno.fallow_pale)) parts.push(lang === 'ja' ? 'フォロー' : 'Fallow');
+        if (geno.pied_rec === 'pipi') parts.push(lang === 'ja' ? 'パイド' : 'Pied');
 
         let result = parts.length > 0 ? parts.join(' ') + ' ' + baseColor : baseColor;
         return result.trim();
@@ -875,6 +1051,187 @@ const BirdDB = {
     getOffspring(id) {
         const birds = this.getAllBirds();
         return birds.filter(b => b.pedigree?.sire === id || b.pedigree?.dam === id);
+    },
+
+    // ========================================
+    // 循環参照検出（v7.0追加）
+    // ========================================
+
+    /**
+     * 指定した鳥のすべての祖先IDを取得（再帰的に6世代まで）
+     * @param {string} birdId - 対象の鳥ID
+     * @param {Set} visited - 訪問済みID（無限ループ防止）
+     * @returns {Set} 祖先IDのセット
+     */
+    getAllAncestorIds(birdId, visited = new Set()) {
+        if (!birdId || visited.has(birdId)) return visited;
+        visited.add(birdId);
+
+        const bird = this.getBird(birdId);
+        if (!bird || !bird.pedigree) return visited;
+
+        // 直接の親
+        if (bird.pedigree.sire) this.getAllAncestorIds(bird.pedigree.sire, visited);
+        if (bird.pedigree.dam) this.getAllAncestorIds(bird.pedigree.dam, visited);
+
+        // pedigreeに記録された祖先
+        const ancestorFields = ['sire_sire', 'sire_dam', 'dam_sire', 'dam_dam',
+            'sire_sire_sire', 'sire_sire_dam', 'sire_dam_sire', 'sire_dam_dam',
+            'dam_sire_sire', 'dam_sire_dam', 'dam_dam_sire', 'dam_dam_dam'];
+        for (const field of ancestorFields) {
+            if (bird.pedigree[field]) visited.add(bird.pedigree[field]);
+        }
+
+        return visited;
+    },
+
+    /**
+     * 指定した鳥のすべての子孫IDを取得（再帰的に6世代まで）
+     * @param {string} birdId - 対象の鳥ID
+     * @param {Set} visited - 訪問済みID（無限ループ防止）
+     * @param {number} depth - 現在の深さ
+     * @returns {Set} 子孫IDのセット
+     */
+    getAllDescendantIds(birdId, visited = new Set(), depth = 0) {
+        if (!birdId || visited.has(birdId) || depth > 6) return visited;
+        visited.add(birdId);
+
+        const offspring = this.getOffspring(birdId);
+        for (const child of offspring) {
+            this.getAllDescendantIds(child.id, visited, depth + 1);
+        }
+
+        return visited;
+    },
+
+    // 循環参照エラーメッセージ（6言語対応: ja, en, de, fr, es, it）
+    _loopMessages: {
+        parentLabel: {
+            sire: { ja: '父親', en: 'Sire', de: 'Vater', fr: 'Père', es: 'Padre', it: 'Padre' },
+            dam: { ja: '母親', en: 'Dam', de: 'Mutter', fr: 'Mère', es: 'Madre', it: 'Madre' }
+        },
+        selfAsParent: {
+            ja: '自分自身を親に設定することはできません',
+            en: 'Cannot set self as parent',
+            de: 'Kann sich selbst nicht als Elternteil festlegen',
+            fr: 'Impossible de se définir comme parent',
+            es: 'No se puede establecer a sí mismo como padre',
+            it: 'Non è possibile impostare se stesso come genitore'
+        },
+        selfAsParentDetail: {
+            ja: '{parent}に自分自身が選択されています',
+            en: 'Self selected as {parent}',
+            de: 'Selbst als {parent} ausgewählt',
+            fr: 'Soi-même sélectionné comme {parent}',
+            es: 'Seleccionado a sí mismo como {parent}',
+            it: 'Selezionato se stesso come {parent}'
+        },
+        descendantAsParent: {
+            ja: 'この個体は既にあなたの子孫として登録されています',
+            en: 'This bird is already registered as your descendant',
+            de: 'Dieser Vogel ist bereits als Ihr Nachkomme registriert',
+            fr: 'Cet oiseau est déjà enregistré comme votre descendant',
+            es: 'Esta ave ya está registrada como su descendiente',
+            it: 'Questo uccello è già registrato come tuo discendente'
+        },
+        descendantAsParentDetail: {
+            ja: '{name}はこの鳥の子孫です。親に設定すると循環参照が発生します。',
+            en: '{name} is a descendant of this bird. Setting as parent creates a loop.',
+            de: '{name} ist ein Nachkomme dieses Vogels. Als Elternteil entsteht eine Schleife.',
+            fr: '{name} est un descendant de cet oiseau. Le définir comme parent crée une boucle.',
+            es: '{name} es un descendiente de esta ave. Establecerlo como padre crea un bucle.',
+            it: '{name} è un discendente di questo uccello. Impostarlo come genitore crea un ciclo.'
+        },
+        ancestorLoop: {
+            ja: 'この個体の血統情報にあなたが祖先として記録されています',
+            en: 'You are recorded as an ancestor in this bird\'s pedigree',
+            de: 'Sie sind im Stammbaum dieses Vogels als Vorfahre verzeichnet',
+            fr: 'Vous êtes enregistré comme ancêtre dans le pedigree de cet oiseau',
+            es: 'Usted está registrado como ancestro en el pedigrí de esta ave',
+            it: 'Sei registrato come antenato nel pedigree di questo uccello'
+        },
+        ancestorLoopDetail: {
+            ja: '{name}の血統書にこの鳥が祖先として登録されています。',
+            en: 'This bird is listed as an ancestor in {name}\'s pedigree.',
+            de: 'Dieser Vogel ist im Stammbaum von {name} als Vorfahre aufgeführt.',
+            fr: 'Cet oiseau est listé comme ancêtre dans le pedigree de {name}.',
+            es: 'Esta ave está listada como ancestro en el pedigrí de {name}.',
+            it: 'Questo uccello è elencato come antenato nel pedigree di {name}.'
+        }
+    },
+
+    _getLoopMsg(key, lang) {
+        const msgs = this._loopMessages[key];
+        return msgs ? (msgs[lang] || msgs['en']) : key;
+    },
+
+    /**
+     * 親設定時の循環参照をチェック
+     * @param {string|null} currentBirdId - 編集中の鳥ID（新規の場合はnull）
+     * @param {string} parentId - 設定しようとしている親のID
+     * @param {string} parentType - 'sire' または 'dam'
+     * @returns {object|null} エラーがあれば {error: string, details: string}、なければnull
+     */
+    checkPedigreeLoop(currentBirdId, parentId, parentType) {
+        if (!parentId) return null;
+
+        const lang = (typeof LANG !== 'undefined') ? LANG : 'en';
+        const parentLabel = this._loopMessages.parentLabel[parentType]?.[lang] || parentType;
+
+        // 1. 自分自身を親に設定しようとしている
+        if (currentBirdId && currentBirdId === parentId) {
+            return {
+                error: this._getLoopMsg('selfAsParent', lang),
+                details: this._getLoopMsg('selfAsParentDetail', lang).replace('{parent}', parentLabel)
+            };
+        }
+
+        // 2. 自分の子孫を親に設定しようとしている（編集時のみ）
+        if (currentBirdId) {
+            const descendants = this.getAllDescendantIds(currentBirdId, new Set());
+            descendants.delete(currentBirdId);
+
+            if (descendants.has(parentId)) {
+                const parent = this.getBird(parentId);
+                const name = parent?.name || parentId;
+                return {
+                    error: this._getLoopMsg('descendantAsParent', lang),
+                    details: this._getLoopMsg('descendantAsParentDetail', lang).replace('{name}', name)
+                };
+            }
+        }
+
+        // 3. 選択した親の祖先に自分がいる
+        if (currentBirdId) {
+            const parentAncestors = this.getAllAncestorIds(parentId, new Set());
+            if (parentAncestors.has(currentBirdId)) {
+                const parent = this.getBird(parentId);
+                const name = parent?.name || parentId;
+                return {
+                    error: this._getLoopMsg('ancestorLoop', lang),
+                    details: this._getLoopMsg('ancestorLoopDetail', lang).replace('{name}', name)
+                };
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * 鳥の保存前に循環参照をチェック（addBird/updateBird用）
+     * @param {string|null} currentBirdId - 編集中の鳥ID
+     * @param {string|null} sireId - 父親ID
+     * @param {string|null} damId - 母親ID
+     * @returns {object|null} エラーがあれば {error: string, details: string}、なければnull
+     */
+    validatePedigree(currentBirdId, sireId, damId) {
+        const sireCheck = this.checkPedigreeLoop(currentBirdId, sireId, 'sire');
+        if (sireCheck) return sireCheck;
+
+        const damCheck = this.checkPedigreeLoop(currentBirdId, damId, 'dam');
+        if (damCheck) return damCheck;
+
+        return null;
     },
 
     calculateInbreedingCoefficient(sireId, damId, generations = 3) {

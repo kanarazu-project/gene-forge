@@ -1,5 +1,5 @@
 /**
- * Agapornis Gene-Forge v6.8
+ * Agapornis Gene-Forge v7.0
  * 血統書生成（Pedigree Certificate Generator）
  * 
  * 整合性原理：
@@ -218,18 +218,18 @@ const PedigreeGenerator = {
     formatConfidenceDisplay(confidence, source) {
         const T = window.T || {};
         if (source === 'phenotype') {
-            return T.confirmed_phenotype || '✓ 確定（表現型）';
+            return T.confirmed_phenotype || '✓ Confirmed (phenotype)';
         }
         if (confidence === 100) {
-            return T.confirmed || '✓ 確定';
+            return T.confirmed || '✓ Confirmed';
         }
         if (confidence > 0) {
             return `${confidence}%`;
         }
         if (source === 'manual') {
-            return T.manual_input || '手動入力';
+            return T.manual_input || 'Manual input';
         }
-        return T.unknown || '? 不明';
+        return T.unknown || '? Unknown';
     },
 
     // ========================================
@@ -247,8 +247,10 @@ const PedigreeGenerator = {
 
         const generations = options.generations || 4;
         const ancestors = BirdDB.getAncestors ? BirdDB.getAncestors(birdId, generations) : null;
-        const issueDate = new Date().toLocaleDateString('ja-JP');
         const lang = options.lang || (typeof LANG !== 'undefined' ? LANG : 'ja');
+        // v7.0: 言語に応じたロケール
+        const localeMap = { ja: 'ja-JP', en: 'en-US', de: 'de-DE', fr: 'fr-FR', it: 'it-IT', es: 'es-ES' };
+        const issueDate = new Date().toLocaleDateString(localeMap[lang] || 'ja-JP');
         const labels = this.getLabels(lang);
         const loci = this.getLoci();
 
@@ -267,7 +269,7 @@ const PedigreeGenerator = {
         <header class="cert-header">
             <div class="logo">🦜</div>
             <h1>${labels.title}</h1>
-            <div class="subtitle">Agapornis Gene-Forge v6.8</div>
+            <div class="subtitle">Agapornis Gene-Forge v7.0</div>
         </header>
 
         <section class="bird-info">
@@ -340,7 +342,7 @@ const PedigreeGenerator = {
         <footer class="cert-footer">
             <div class="footer-grid">
                 <div>${labels.issueDate}: ${issueDate}</div>
-                <div>${labels.generator}: Agapornis Gene-Forge v6.8</div>
+                <div>${labels.generator}: Agapornis Gene-Forge v7.0</div>
             </div>
             <div class="disclaimer">${labels.disclaimer}</div>
         </footer>
@@ -559,7 +561,13 @@ section h3 { font-size: 14px; color: #2c5282; border-bottom: 1px solid #e2e8f0; 
     downloadHTML(birdId, options = {}) {
         const html = this.generateHTML(birdId, options);
         if (!html) return;
+        // v7.0: BirdDB存在チェック追加
+        if (typeof BirdDB === 'undefined' || !BirdDB.getBird) {
+            console.error('BirdDB not available');
+            return;
+        }
         const bird = BirdDB.getBird(birdId);
+        if (!bird) return;
         const blob = new Blob([html], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
