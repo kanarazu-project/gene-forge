@@ -823,45 +823,45 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                     <?php if(!empty($result['scenario'])): ?>
                     <?php $scenario = $result['scenario']; ?>
 
-                    <div style="background:var(--accent-primary);color:#000;padding:.75rem 1rem;border-radius:8px 8px 0 0;margin-top:1rem;">
+                    <div style="background:#0097a7;color:#fff;padding:.75rem 1rem;border-radius:8px 8px 0 0;margin-top:1rem;">
                         <strong>📋 <?= t_pf('pf_breeding_scenario') ?></strong>
                         <span style="float:right;"><?= t_pf('pf_estimated_gen') ?>: <?= $scenario['totalGenerations'] ?? count($result['steps']) ?></span>
                     </div>
 
-                    <div style="border:2px solid var(--accent-primary);border-top:none;border-radius:0 0 8px 8px;padding:1rem;background:var(--bg-secondary);">
+                    <div style="border:2px solid #0097a7;border-top:none;border-radius:0 0 8px 8px;padding:1rem;background:#1a2332;color:#e0e0e0;">
 
                         <?php // 必要遺伝子リスト ?>
                         <?php if(!empty($scenario['requiredGenes'])): ?>
-                        <div style="margin-bottom:1rem;padding:.5rem;background:var(--bg-tertiary);border-radius:4px;">
-                            <strong>🧬 <?= t_pf('pf_required_genes') ?>:</strong>
+                        <div style="margin-bottom:1rem;padding:.5rem;background:#151c28;border-radius:4px;color:#b0bec5;">
+                            <strong style="color:#4fc3f7;">🧬 <?= t_pf('pf_required_genes') ?>:</strong>
                             <?= htmlspecialchars(implode(', ', $scenario['requiredGenes'])) ?>
                         </div>
                         <?php endif; ?>
 
                         <?php // フェーズごとの表示 ?>
                         <?php foreach($scenario['phases'] ?? [] as $phase): ?>
-                        <div style="margin:1rem 0;padding:1rem;background:var(--bg-tertiary);border-radius:8px;border-left:4px solid var(--accent-secondary);">
+                        <div style="margin:1rem 0;padding:1rem;background:#151c28;border-radius:8px;border-left:4px solid #69f0ae;color:#e0e0e0;">
 
                             <?php // フェーズタイトル ?>
-                            <div style="font-weight:bold;font-size:1.1em;margin-bottom:.75rem;color:var(--accent-primary);">
+                            <div style="font-weight:bold;font-size:1.1em;margin-bottom:.75rem;color:#4fc3f7;">
                                 <?= t_pf('pf_phase_label', ['n' => $phase['phase']]) ?>:
                                 <?= htmlspecialchars(t_pf($phase['title_key'] ?? '', $phase['title_params'] ?? [])) ?>
                             </div>
 
                             <?php // フェーズ説明 ?>
                             <?php if(!empty($phase['description_key'])): ?>
-                            <p style="color:var(--text-secondary);margin-bottom:.75rem;font-size:.9em;">
+                            <p style="color:#b0bec5;margin-bottom:.75rem;font-size:.9em;">
                                 <?= htmlspecialchars(t_pf($phase['description_key'], $phase['description_params'] ?? [])) ?>
                             </p>
                             <?php endif; ?>
 
                             <?php // ペアリング ?>
                             <?php foreach($phase['pairings'] ?? [] as $pairing): ?>
-                            <div style="background:var(--bg-primary);padding:.75rem;border-radius:4px;margin:.5rem 0;">
+                            <div style="background:#0f1520;padding:.75rem;border-radius:4px;margin:.5rem 0;color:#e0e0e0;">
 
                                 <?php // 目的 ?>
                                 <?php if(!empty($pairing['purpose_key'])): ?>
-                                <div style="font-size:.85em;color:var(--text-secondary);margin-bottom:.5rem;">
+                                <div style="font-size:.85em;color:#b0bec5;margin-bottom:.5rem;">
                                     📌 <?= htmlspecialchars(t_pf($pairing['purpose_key'], $pairing['purpose_params'] ?? [])) ?>
                                 </div>
                                 <?php endif; ?>
@@ -877,9 +877,9 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                                 ?>
                                 <div style="margin:.25rem 0;">
                                     <span style="color:#6cf;">♂</span>
-                                    <strong><?= htmlspecialchars($maleName) ?></strong>
+                                    <strong style="color:#fff;"><?= htmlspecialchars($maleName) ?></strong>
                                     <?php if($maleNote): ?>
-                                    <span style="color:var(--text-secondary);font-size:.9em;"> — <?= htmlspecialchars($maleNote) ?></span>
+                                    <span style="color:#b0bec5;font-size:.9em;"> — <?= htmlspecialchars($maleNote) ?></span>
                                     <?php endif; ?>
                                 </div>
 
@@ -894,15 +894,15 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                                 ?>
                                 <div style="margin:.25rem 0;">
                                     <span style="color:#f6c;">♀</span>
-                                    <strong><?= htmlspecialchars($femaleName) ?></strong>
+                                    <strong style="color:#fff;"><?= htmlspecialchars($femaleName) ?></strong>
                                     <?php if($femaleNote): ?>
-                                    <span style="color:var(--text-secondary);font-size:.9em;"> — <?= htmlspecialchars($femaleNote) ?></span>
+                                    <span style="color:#b0bec5;font-size:.9em;"> — <?= htmlspecialchars($femaleNote) ?></span>
                                     <?php endif; ?>
                                 </div>
 
                                 <?php // 結果 ?>
                                 <?php if(!empty($pairing['result_key'])): ?>
-                                <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px dashed var(--border-color);color:var(--accent-secondary);">
+                                <div style="margin-top:.5rem;padding-top:.5rem;border-top:1px dashed #444;color:#69f0ae;">
                                     → <?= htmlspecialchars(t_pf($pairing['result_key'], $pairing['result_params'] ?? [])) ?>
                                 </div>
                                 <?php endif; ?>
@@ -912,7 +912,7 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
 
                             <?php // フェーズ最終ノート ?>
                             <?php if(!empty($phase['final_note_key'])): ?>
-                            <div style="margin-top:.75rem;padding:.5rem;background:var(--accent-primary);color:#000;border-radius:4px;font-size:.9em;">
+                            <div style="margin-top:.75rem;padding:.5rem;background:#00838f;color:#fff;border-radius:4px;font-size:.9em;">
                                 💡 <?= htmlspecialchars(t_pf($phase['final_note_key'], $phase['final_note_params'] ?? [])) ?>
                             </div>
                             <?php endif; ?>
@@ -922,7 +922,7 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
 
                         <?php // サマリー ?>
                         <?php if(!empty($scenario['summary_key'])): ?>
-                        <div style="margin-top:1rem;padding:1rem;background:linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);color:#000;border-radius:8px;">
+                        <div style="margin-top:1rem;padding:1rem;background:linear-gradient(135deg, #0097a7 0%, #00796b 100%);color:#fff;border-radius:8px;">
                             <strong>✅ <?= t_pf('pf_summary') ?>:</strong><br>
                             <?= htmlspecialchars(t_pf($scenario['summary_key'], $scenario['summary_params'] ?? [])) ?>
                         </div>
@@ -933,9 +933,9 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
 
                     <?php // v7.0 連鎖遺伝情報 ?>
                     <?php if(!empty($result['linkage']) && !empty($result['linkage']['Z_linked']['needsLinkage'])): ?>
-                    <div style="margin-top:1rem;padding:.75rem;background:var(--bg-secondary);border-radius:4px;border:1px solid var(--accent-secondary);">
-                        <strong>🔗 <?= t('phase') ?></strong>
-                        <p style="margin:.5rem 0;font-size:.9em;"><?= htmlspecialchars($result['linkage']['Z_linked']['note'] ?? '') ?></p>
+                    <div style="margin-top:1rem;padding:.75rem;background:#1a2332;border-radius:4px;border:1px solid #69f0ae;color:#e0e0e0;">
+                        <strong style="color:#4fc3f7;">🔗 <?= t('phase') ?></strong>
+                        <p style="margin:.5rem 0;font-size:.9em;color:#b0bec5;"><?= htmlspecialchars($result['linkage']['Z_linked']['note'] ?? '') ?></p>
                     </div>
                     <?php endif; ?>
                 </div>

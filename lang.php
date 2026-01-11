@@ -74,20 +74,15 @@ function t_pf(string $key, array $params = []): string {
     // 翻訳テキストを取得
     $text = $translations[$lang][$key] ?? $translations['ja'][$key] ?? $key;
 
-    // パラメータ置換
+    // パラメータ置換 (全てのプレースホルダーを汎用的に置換)
     foreach ($params as $paramKey => $value) {
-        // {locus_name} → locus座位の翻訳済み名称
+        // {locus_name} 特殊処理: locus座位の翻訳済み名称
         if ($paramKey === 'locus') {
-            $locusNameKey = $value; // locus キーをそのまま翻訳キーとして使用
             $locusName = $translations[$lang][$value] ?? $translations['ja'][$value] ?? ucfirst($value);
             $text = str_replace('{locus_name}', $locusName, $text);
-        } elseif ($paramKey === 'gen') {
-            $text = str_replace('{gen}', (string)$value, $text);
-        } elseif ($paramKey === 'tier') {
-            $text = str_replace('{tier}', (string)$value, $text);
-        } elseif ($paramKey === 'target') {
-            $text = str_replace('{target}', (string)$value, $text);
         }
+        // 汎用置換: {key} → value
+        $text = str_replace('{' . $paramKey . '}', (string)$value, $text);
     }
 
     return $text;
