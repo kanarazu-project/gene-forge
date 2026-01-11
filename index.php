@@ -702,7 +702,7 @@ const INDEPENDENT_LOCI = <?= json_encode(AgapornisLoci::INDEPENDENT_LOCI) ?>;
                     <div class="card-header">
                         <div class="card-icon">🛡️</div>
                         <div>
-                            <h2 class="card-title">Health Guardian v6.7.4</h2>
+                            <h2 class="card-title">Health Guardian v7.0</h2>
                             <p class="card-subtitle"><?= t('health_guardian_desc') ?></p>
                         </div>
                     </div>
