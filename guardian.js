@@ -1,23 +1,13 @@
 /**
- * Agapornis Gene-Forge v6.7.5
+ * Agapornis Gene-Forge v7.0
  * 虚弱体質回避ガードレール (Health Guardian)
- * 
+ *
+ * v7.0変更点:
+ * - i18n: 不足していた翻訳キー追加（summary_no_breed, summary_caution）
+ *
  * v6.7.5変更点:
  * - SSOT化: _getINOTypeName()をCOLOR_LABELS参照に変更
  * - genetics.phpのAgapornisLoci::labels()がSSOT
- * 
- * v6.7.4変更点:
- * - BreedingValidator 追加（近親交配制御）
- * - 事実モード / 倫理計画モード 対応
- * - 近交係数計算（Wright's F）
- * - サラブレッド規則準拠の閾値設定
- * 
- * v6.7.3変更点:
- * - 32色対応
- * - blue系→aqua系に改名
- * - albino→pure_white
- * - creamino追加（INO系・赤目）
- * - ALBS Peachfaced部門準拠
  * - INO/Creamino/Pure White の健康リスク管理強化
  * - parblue短縮形統一: bb→aqaq, tqb→tqaq, +b→+aq
  */

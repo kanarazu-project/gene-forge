@@ -89,6 +89,8 @@ $guardian_translations = [
     
     // --- サマリー ---
     'summary_blocked' => '⛔ 繁殖非推奨: {msg}',
+    'summary_no_breed' => '繁殖非推奨',
+    'summary_caution' => '注意',
     'summary_high' => '⚠️ 高リスク: {msg}',
     'summary_moderate' => '⚡ 注意事項あり',
     'summary_safe' => '✓ 健康リスク: 低',
@@ -184,6 +186,8 @@ $guardian_translations = [
     
     // --- サマリー ---
     'summary_blocked' => '⛔ Breeding not recommended: {msg}',
+    'summary_no_breed' => 'Breeding not recommended',
+    'summary_caution' => 'Caution',
     'summary_high' => '⚠️ High risk: {msg}',
     'summary_moderate' => '⚡ Caution required',
     'summary_safe' => '✓ Health risk: Low',
@@ -279,6 +283,8 @@ $guardian_translations = [
     
     // --- サマリー ---
     'summary_blocked' => '⛔ Zucht nicht empfohlen: {msg}',
+    'summary_no_breed' => 'Zucht nicht empfohlen',
+    'summary_caution' => 'Vorsicht',
     'summary_high' => '⚠️ Hohes Risiko: {msg}',
     'summary_moderate' => '⚡ Vorsicht erforderlich',
     'summary_safe' => '✓ Gesundheitsrisiko: Niedrig',
@@ -374,6 +380,8 @@ $guardian_translations = [
     
     // --- サマリー ---
     'summary_blocked' => '⛔ Élevage non recommandé: {msg}',
+    'summary_no_breed' => 'Élevage non recommandé',
+    'summary_caution' => 'Prudence',
     'summary_high' => '⚠️ Risque élevé: {msg}',
     'summary_moderate' => '⚡ Prudence requise',
     'summary_safe' => '✓ Risque santé: Faible',
@@ -469,6 +477,8 @@ $guardian_translations = [
     
     // --- サマリー ---
     'summary_blocked' => '⛔ Allevamento non raccomandato: {msg}',
+    'summary_no_breed' => 'Allevamento non raccomandato',
+    'summary_caution' => 'Cautela',
     'summary_high' => '⚠️ Alto rischio: {msg}',
     'summary_moderate' => '⚡ Cautela richiesta',
     'summary_safe' => '✓ Rischio salute: Basso',
@@ -564,6 +574,8 @@ $guardian_translations = [
     
     // --- サマリー ---
     'summary_blocked' => '⛔ Cría no recomendada: {msg}',
+    'summary_no_breed' => 'Cría no recomendada',
+    'summary_caution' => 'Precaución',
     'summary_high' => '⚠️ Alto riesgo: {msg}',
     'summary_moderate' => '⚡ Precaución requerida',
     'summary_safe' => '✓ Riesgo salud: Bajo',
